@@ -1,0 +1,5 @@
+-- CreateEnum
+CREATE TYPE "RaffleStatus" AS ENUM ('NOT_STARTED', 'REGISTRATION_OPEN', 'SIMULATING', 'COMPLETED');
+
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN     "raffleStatus" "RaffleStatus" NOT NULL DEFAULT 'NOT_STARTED';
