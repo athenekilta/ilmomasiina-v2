@@ -3,6 +3,7 @@ import { api } from "@/utils/api";
 import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
 import Link from "next/link";
+import { useUser } from "@/features/auth/hooks/useUser";
 
 const formatRegistration = (start: Date, end: Date) => {
   const now = new Date();
@@ -33,6 +34,9 @@ const formatRegistration = (start: Date, end: Date) => {
 export default function DesktopPage() {
   const getEvents = api.events.getEvents.useQuery();
 
+  const user = useUser();
+  const isAdmin = user.data?.role === "admin";
+
   return (
     <>
       <PageHead title="Tapahtumat" />
@@ -57,6 +61,10 @@ export default function DesktopPage() {
                     <th scope="col" className="py-3 px-6">
                       Ilmoittautuneita
                     </th>
+                    { isAdmin &&
+                    <th className="py-3 px-6">
+                      Toiminto
+                    </th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -84,10 +92,22 @@ export default function DesktopPage() {
                           </p>
                         ))}
                       </td>
+                      {isAdmin && (
+                        <td className="py-4 px-6">
+                          <Link href={`events/edit/${event.id}`}>
+                            Muokkaa
+                          </Link>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {isAdmin && (
+                <div className="mt-4">
+                  <Link href="events/create">Luo uusi tapahtuma</Link>
+                </div>
+              )}
             </div>
           </div>
         ) : (
