@@ -15,7 +15,7 @@ export const eventsRouter = router({
       where: {
         draft: false,
         date: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 7)), // Show events that are at most 7 days old
+          gte: new Date(new Date().setDate(new Date().getDate() - 7)), // Show events that have passed are at most 7 days old
         },
       },
       include: {
@@ -38,6 +38,47 @@ export const eventsRouter = router({
 
     return enrichedEvents;
   }),
+    
+  getEventsAdmin: adminProcedure
+    .input(
+      z.object({
+        includeDrafts: z.boolean().optional().default(false),
+        includeOlderEvents: z.boolean().optional().default(false),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const dateFilter = input.includeOlderEvents 
+        ? {} 
+        : { 
+          gte: new Date(new Date().setDate(new Date().getDate() - 7))
+        };
+      
+      const events = await ctx.prisma.event.findMany({
+        orderBy: { date: "asc" },
+        where: {
+          draft: input.includeDrafts ? {} : false,
+          date: dateFilter,
+        },
+        include: {
+          Quotas: {
+            include: {
+              Signups: true,
+            },
+          },
+        },
+      });
+
+      // Enrich events with signup counts per quota
+      const enrichedEvents = events.map((event) => ({
+        ...event,
+        Quotas: event.Quotas.map((quota) => ({
+          ...quota,
+          signupCount: quota.Signups.length,
+        })),
+      }));
+
+      return enrichedEvents;
+    }),
   getEventEditId: adminProcedure
     .input(
       z.object({
