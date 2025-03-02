@@ -244,7 +244,7 @@ export function EventForm({ editId }: EventFormProps) {
     } else {
       const event = await createMutation.mutateAsync(data);
       alert.success("Event created successfully");
-      router.push(`/events/edit/${event.id}`);
+      router.push(`/events/${event.id}/edit`);
     }
   });
 
