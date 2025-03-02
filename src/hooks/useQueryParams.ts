@@ -2,5 +2,7 @@ import { querySchema } from "@/schemas/querySchema";
 import { useRouter } from "next/router";
 
 export function useQueryParams() {
-  return querySchema.parse(useRouter().query);
+
+  const router = useRouter();
+  return {...querySchema.parse(router.query), isReady: router.isReady};
 }

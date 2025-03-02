@@ -119,8 +119,8 @@ export function EventForm({ editId }: EventFormProps) {
           setValue("signupsPublic", data.signupsPublic);
         if (!formValues.verificationEmail && data.verificationEmail)
           setValue("verificationEmail", data.verificationEmail);
-        if (!formValues.quotas) setValue("quotas", data.Quotas);
-        if (!formValues.questions) setValue("questions", data.Questions);
+        if (formValues.quotas.length === 0) setValue("quotas", data.Quotas);
+        if (formValues.questions.length === 0) setValue("questions", data.Questions);
         if (!formValues.raffleEnabled)
           setValue("raffleEnabled", data.raffleEnabled);
         setIsInitialized(true);
@@ -203,11 +203,13 @@ export function EventForm({ editId }: EventFormProps) {
     ]);
   };
 
+  console.log(editId)
+
   useEffect(() => {
-    if (watch("quotas").length === 0) {
+    if (watch("quotas").length === 0 && editId === undefined) {
       createQuota();
     }
-  }, [watch("quotas"), createQuota, watch]);
+  }, [watch("quotas"), createQuota, watch, editId]);
 
   const deleteQuota = (id: string) => {
     const quotas = getValues("quotas");
