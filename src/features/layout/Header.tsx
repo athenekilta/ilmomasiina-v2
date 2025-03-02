@@ -10,16 +10,6 @@ export const Header = () => {
       <Link href="/">
         <h1>Ilmomasiina</h1>
       </Link>
-
-      {user.data ? (
-        <div>
-          <Link href={routes.app.settings.user}>Profile</Link>
-          <br />
-          <button onClick={() => signOut()}>Logout</button>
-        </div>
-      ) : (
-        <Link href="/auth/login">Login</Link>
-      )}
     </nav>
   );
 };
