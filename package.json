@@ -15,7 +15,8 @@
     "add-fake-data": "tsx src/scripts/add-fake-data.ts",
     "delete-signups": "tsx src/scripts/delete-signups.ts",
     "test:raffle": "tsx src/scripts/test-raffle.ts",
-    "test:raffle-simulation": "tsx src/scripts/test-raffle-simulation.ts"
+    "test:raffle-simulation": "tsx src/scripts/test-raffle-simulation.ts",
+    "studio": "prisma studio"
   },
   "dependencies": {
     "@azure/communication-email": "^1.0.0",

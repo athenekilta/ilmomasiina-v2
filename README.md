@@ -67,3 +67,8 @@ The worker checks every minute for events with raffles that need to be started a
 - tRPC
 - NextAuth.js
 - Pusher (Real-time updates) 
+
+## Prisma studio
+To modify data manually, for example to add admins, you can use the prisma studio. 
+
+Run `npm run studio`
