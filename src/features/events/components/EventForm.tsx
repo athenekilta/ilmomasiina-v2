@@ -23,6 +23,7 @@ import { TextArea } from "@/components/TextArea";
 import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
+import { ValidationSummary } from "./ValidationSummary";
 
 export type EventFormProps = {
   /**
@@ -283,6 +284,7 @@ export function EventForm({ editId }: EventFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="relative">
+      {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
       <div className="flex flex-col gap-6 px-11">
         <div className="flex flex-row justify-between">
           <h1 className="text-4xl font-semibold text-black">
@@ -420,6 +422,24 @@ export function EventForm({ editId }: EventFormProps) {
               Lisää avoin jono
             </Button>
           </div>
+          
+          {errors.quotas && (
+            <div className="mb-4 rounded-md bg-red-50 p-3">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-700">
+                    {typeof errors.quotas.message === 'string' ? errors.quotas.message : "Please add at least one valid quota"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <DragDropContext onDragEnd={onDragEndQuota}>
             <Droppable droppableId="quotas">
               {(droppableProvided) => (
