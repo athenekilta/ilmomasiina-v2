@@ -32,7 +32,7 @@ export const authRouter = router({
         data: {
           email: input.email,
           password: hashedPassword,
-          name: getNameFromEmail(input.email),
+          name: input.name,
         },
       });
       await sendNewEmailVerificationToken(

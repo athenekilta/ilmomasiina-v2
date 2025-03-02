@@ -25,6 +25,7 @@ export function SignupForm() {
     defaultValues: {
       email: "",
       password: "",
+      name: "",
     },
   });
 
@@ -40,6 +41,13 @@ export function SignupForm() {
   return (
     <form className="felx relative flex-col gap-12" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-6">
+      <Input
+          {...register("name")}
+          fullWidth
+          placeholder="Name"
+          error={!!errors.email}
+          helperText={errors.email?.message}
+        />
         <Input
           {...register("email")}
           fullWidth
