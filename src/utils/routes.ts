@@ -23,8 +23,8 @@ export const routes = {
     events: {
       root: "/events",
       create: "/events/create",
-      event: (id: string) => `/events/${id}`,
-      edit: (id: string) => `/events/${id}/edit`,
+      event: (id: number) => `/events/${id}`,
+      edit: (id: number) => `/events/${id}/edit`,
     },
     settings: {
       user: "/settings/user",

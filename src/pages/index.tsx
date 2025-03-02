@@ -4,6 +4,7 @@ import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
 import Link from "next/link";
 import { useUser } from "@/features/auth/hooks/useUser";
+import { routes } from "@/utils/routes";
 import { useState } from "react";
 
 const formatRegistration = (start: Date, end: Date) => {
@@ -152,10 +153,7 @@ export default function DesktopPage() {
                       </td>
                       {isAdmin && (
                         <td className="py-4 px-6">
-                          <Link 
-                            href={`events/edit/${event.id}`}
-                            className="font-medium text-blue-600 hover:underline dark:text-blue-500"
-                          >
+                          <Link href={routes.app.events.edit(event.id)}>
                             Muokkaa
                           </Link>
                         </td>
