@@ -10,6 +10,14 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 - Modern UI with Tailwind CSS
 - Authentication system
 
+## Postgres
+If you have docker installed, postgres can be easily run with the following command:
+```
+docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql/data postgres
+```
+
+Otherwise, run a postgres instance with this password & secret.
+
 ## Getting Started
 
 1. Clone the repository
