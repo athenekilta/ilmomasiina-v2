@@ -15,8 +15,9 @@ If you have docker installed, postgres can be easily run with the following comm
 ```
 docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql/data postgres
 ```
+Otherwise, run a postgres instance manually.
 
-Otherwise, run a postgres instance with this password & secret.
+Update DATABASE_URL in your .env to match the password & user.
 
 ## Getting Started
 
