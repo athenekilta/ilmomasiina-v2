@@ -65,7 +65,7 @@ export function EventCard({ event, isAdmin }: {
           : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
       }`}
     >
-      <div className="p-5">
+      <div className="bg-brand-darkbeige p-5">
         {/* Card Header with Title and Status */}
         <div className="mb-3">
           <Link 

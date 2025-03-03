@@ -8,7 +8,7 @@ export const Header = () => {
   return (
     <nav className="flex h-16 items-center justify-between bg-brand-primary p-6">
       <Link href="/">
-        <h1>Ilmomasiina</h1>
+        <h1 className="font-primary text-white text-2xl">Athenen Ilmomasiina</h1>
       </Link>
       {user.data && (
         <div>

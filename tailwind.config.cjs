@@ -4,6 +4,8 @@ const plugin = require("tailwindcss/plugin");
 
 const BRAND_GREEN = "#688B67";
 const BRAND_LIME = "#D8DA71";
+const BRAND_DARKBEIGE = "#EEE4D5";
+const BRAND_BEIGE = "#F4EEE7";
 
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
@@ -15,7 +17,8 @@ module.exports = {
         85: "0.85",
       },
       fontFamily: {
-        primary: ["Space Grotesk"],
+        primary: ["Gentium Book Plus", "sans-serif"],
+        secondary: ["Open Sans", "sans-serif"]
       },
       colors: {
         brand: {
@@ -24,6 +27,8 @@ module.exports = {
           secondary: BRAND_LIME,
           green: BRAND_GREEN,
           lime: BRAND_LIME,
+          beige: BRAND_BEIGE,
+          darkbeige: BRAND_DARKBEIGE,
         },
         green: colors.green,
         lime: colors.lime,
