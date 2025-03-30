@@ -12,17 +12,11 @@ export const Header = () => {
         <h1 className="font-primary text-white text-2xl">Athenen Ilmomasiina</h1>
       </Link>
 
-      {user.data ? (
+      {user.data && (
         <div>
           <Link href={routes.app.settings.user}>Profile</Link>
           <br />
           <button onClick={() => signOut()}>Logout</button>
-        </div>
-      ) : (
-        <div>
-          <Link href={routes.auth.login}>Login</Link>
-          <br />
-          <Link href={routes.auth.signup}>Signup</Link>
         </div>
       )}
     </nav>
