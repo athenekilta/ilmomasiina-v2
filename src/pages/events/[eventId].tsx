@@ -153,7 +153,11 @@ export default function EventPage() {
                           {quota.title}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {quota.size} spots available
+                          {quota.size? (
+                            `${quota.size} total spots`
+                          ) : (
+                            `${quota.Signups.length} registrations`
+                          )}
                         </p>
                       </div>
                       <Button
@@ -194,6 +198,7 @@ export default function EventPage() {
                 Registered Participants
               </h2>
               {event.Quotas.map((quota) => (
+                (!(quota.id == 'queue' && quota.Signups.length == 0) &&
                 <div key={quota.id} className="rounded-lg border border-gray-200">
                   <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
                     {quota.title}
@@ -245,7 +250,7 @@ export default function EventPage() {
                     )}
                   </div>
                 </div>
-              ))}
+                )))}
             </div>
           )}
         </div>
