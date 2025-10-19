@@ -96,7 +96,9 @@ function Registration({
   return (
     <div className="mb-8">
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-800">Registration</h2>
+        <h2 className="text-xl font-semibold text-gray-800">
+          Ilmoittautuminen
+        </h2>
         {isEditingUserData ? (
           <form
             className="space-y-2"
@@ -104,11 +106,15 @@ function Registration({
               await saveUserData(data);
             })}
           >
-            <p>Set name and email before registering</p>
+            <p>
+              Tallenna nimi ja sähköposti ennen ilmoittautumista. Voit
+              ilmoittautua vain kerran per sähköpostiosoite.
+            </p>
             <FieldSet title="Name">
               <Input {...register("name")} placeholder="Your name" />
               <span className="text-sm text-gray-500">
-                You may use a pseudonym to remain anonymous
+                {event.signupsPublic ? "Nimi on julkinen tieto." : ""} Voit
+                halutessasi ilmoittautua salanimellä tapahtumaan.
               </span>
             </FieldSet>
 
@@ -144,10 +150,20 @@ function Registration({
         ) : (
           <div>
             <div className="flex items-center gap-4">
-              <p>
-                You are signing up as {storedUser?.name} {storedUser?.email}
+              <p className="text-md text-gray-600">
+                <p className="mb-1">
+                  Olet ilmoittautumassa nimellä{" "}
+                  <span className="text-gray-900">{storedUser?.name}</span> ja
+                  sähköpostilla{" "}
+                  <span className="text-gray-900">{storedUser?.email}</span>
+                  <button
+                    onClick={() => setIsEditingUserData(true)}
+                    className="ml-2 cursor-pointer border-none p-0 text-brand-primary hover:underline"
+                  >
+                    Vaihda
+                  </button>
+                </p>
               </p>
-              <Button onClick={() => setIsEditingUserData(true)}>Change</Button>
             </div>
             <div className="my-1 flex flex-col gap-1">
               {event.Quotas.filter((quota) => quota.id !== "queue").map(
@@ -162,8 +178,8 @@ function Registration({
                       </h3>
                       <p className="text-sm text-gray-500">
                         {quota.size
-                          ? `${quota.size} total spots`
-                          : `${quota.Signups.length} registrations`}
+                          ? `${quota.size} paikkaa yhteensä`
+                          : `${quota.Signups.length} ilmoittautumista`}
                       </p>
                     </div>
                     <Button
@@ -264,7 +280,7 @@ export default function EventPage() {
           </HydrationZustand>
 
           {/* Terms Section */}
-          <div className="mb-8 rounded-lg bg-gray-50 p-4">
+          <div className="mb-8 rounded-lg bg-gray-50 py-4">
             <h2 className="mb-4 text-lg font-semibold text-gray-800">
               Terms and Conditions
             </h2>
@@ -288,6 +304,7 @@ export default function EventPage() {
               <h2 className="text-xl font-semibold text-gray-800">
                 Registered Participants
               </h2>
+
               {event.Quotas.map(
                 (quota) =>
                   !(quota.id == "queue" && quota.Signups.length == 0) && (
@@ -295,29 +312,33 @@ export default function EventPage() {
                       key={quota.id}
                       className="rounded-lg border border-gray-200"
                     >
-                      <div className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium flex items-center">
+                      <div className="flex items-center border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
                         <h3 className="w-30 text-wrap">{quota.title}</h3>
                         {quota.id !== "queue" && (
                           <>
-                            <span className="mx-5 w-40 text-md font-normal text-gray-700 ">{quota.Signups.length} / {quota.size ?? "∞"}</span>
+                            <span className="text-md mx-5 w-40 font-normal text-gray-700">
+                              {quota.Signups.length} / {quota.size ?? "∞"}
+                            </span>
                             {quota.size && (
                               <div className="ml-auto h-2 w-60 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                              <div 
-                                className={`h-full ${
-                                quota.Signups.length >= quota.size 
-                                  ? "bg-red-500" 
-                                  : quota.Signups.length / quota.size > 0.75
-                                  ? "bg-yellow-500"
-                                  : "bg-green-500"
-                                }`} 
-                                style={{ width: `${Math.min(quota.Signups.length / quota.size * 100, 100)}%` }}
-                              ></div>
+                                <div
+                                  className={`h-full ${
+                                    quota.Signups.length >= quota.size
+                                      ? "bg-red-500"
+                                      : quota.Signups.length / quota.size > 0.75
+                                        ? "bg-yellow-500"
+                                        : "bg-green-500"
+                                  }`}
+                                  style={{
+                                    width: `${Math.min((quota.Signups.length / quota.size) * 100, 100)}%`,
+                                  }}
+                                ></div>
                               </div>
                             )}
                           </>
                         )}
                         {quota.id === "queue" && (
-                          <span className="ml-5 text-md font-normal text-gray-700">
+                          <span className="text-md ml-5 font-normal text-gray-700">
                             {quota.Signups.length}
                           </span>
                         )}
@@ -348,22 +369,28 @@ export default function EventPage() {
                                 0,
                                 quota.size || quota.Signups.length,
                               ).map((signup, index) => {
-                                const rowStyle = signup.confirmedAt ? "px-6 py-2" : "px-6 py-2 text-gray-400";
+                                const rowStyle = signup.confirmedAt
+                                  ? "px-6 py-2"
+                                  : "px-6 py-2 text-gray-400";
                                 return (
-                                <tr key={signup.id}>
-                                  <td className={rowStyle}>{index + 1}.</td>
-                                  <td className={rowStyle}>{signup.name}</td>
-                                  <SignupRow signup={signup} rowStyle={rowStyle} />
-                                  {quota.id === "queue" && (
-                                    <td className={rowStyle}>
-                                      {OriginalQuotaTitle(
-                                        event.Quotas,
-                                        signup.quotaId,
-                                      )}
-                                    </td>
-                                  )}
-                                </tr>
-                              )})}
+                                  <tr key={signup.id}>
+                                    <td className={rowStyle}>{index + 1}.</td>
+                                    <td className={rowStyle}>{signup.name}</td>
+                                    <SignupRow
+                                      signup={signup}
+                                      rowStyle={rowStyle}
+                                    />
+                                    {quota.id === "queue" && (
+                                      <td className={rowStyle}>
+                                        {OriginalQuotaTitle(
+                                          event.Quotas,
+                                          signup.quotaId,
+                                        )}
+                                      </td>
+                                    )}
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         ) : (

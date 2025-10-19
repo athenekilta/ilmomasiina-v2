@@ -20,6 +20,7 @@ export const routes = {
   },
   app: {
     _root: "/",
+    admin: '/admin',
     events: {
       root: "/events",
       create: "/events/create",
