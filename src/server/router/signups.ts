@@ -89,6 +89,8 @@ export const signupsRouter = router({
     .input(
       z.object({
         quotaId: z.string(),
+        name: z.string(),
+        email: z.string().email(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -118,8 +120,8 @@ export const signupsRouter = router({
       const signup = await ctx.prisma.signup.create({
         data: {
           quotaId: input.quotaId,
-          name: ctx.user?.name || "",
-          email: ctx.user?.email || "",
+          name: input.name,
+          email: input.email,
         },
       });
       return signup;

@@ -9,17 +9,45 @@ import { RegistrationDate } from "@/features/events/utils/utils";
 import { RaffleSignup } from "@/features/raffle/RaffleSignup";
 import { pusherClient } from "@/utils/pusher";
 import { useEffect } from "react";
+import { Input } from "@/components/Input";
+import { FieldSet } from "@/components/FieldSet";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+
+const formschema = z.object({
+  email: z.string().email(),
+  name: z.string().min(3),
+});
 
 export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
   const createSignupMutation = api.signups.createSignup.useMutation();
 
-  const handleSignup = async (quotaId: string) => {
-    const result = await createSignupMutation.mutateAsync({ quotaId });
-    if (result) {
-      router.push(`/events/${eventId}/${result.id}`);
+  const {
+    register,
+    formState: { isSubmitting, errors, isValid },
+    handleSubmit
+  } = useForm({
+    resolver: zodResolver(formschema),
+    defaultValues: {
+      email: "",
+      name: "",
+    },
+    mode: 'all'
+  });
+
+  const getHandleSignup = (quotaId: string) => {
+    return async (data: z.infer<typeof formschema>) => {
+      console.log('createSignup')
+      const result = await createSignupMutation.mutateAsync({ quotaId, name: data.name, email: data.email  });
+      if (result) {
+        router.push(`/events/${eventId}/${result.id}`);
+      }
     }
+    
   };
 
   const { data: event, isLoading, refetch } = api.events.getEventByID.useQuery(
@@ -162,16 +190,17 @@ export default function EventPage() {
                       </div>
                       <Button
                         className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
-                        onClick={() => handleSignup(quota.id)}
-                        disabled={!isRegistrationOpen}
+                        onClick={handleSubmit(getHandleSignup(quota.id))}
+                        disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                        loading={isSubmitting}
                       >
                         Sign Up
                       </Button>
+                      <p>To sign up, fill name & email first</p>
                     </div>
-                  ),
-                )}
-              </div>
-            )}
+                )
+              )}
+            </div>)}
           </div>
 
           {/* Terms Section */}
