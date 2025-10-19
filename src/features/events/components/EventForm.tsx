@@ -1,11 +1,12 @@
 "use client";
 
 import { eventFormSchema } from "../utils/eventFormSchema";
+import type { FieldErrorsImpl} from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { addDays, set } from "date-fns";
 import type { Quota, Question } from "@prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -86,7 +87,10 @@ export function EventForm({ editId }: EventFormProps) {
       registrationStartTime: editEvent?.registrationStartDate ? nativeTime.stringify(set(new Date(editEvent.registrationStartDate), {seconds:0, milliseconds:0})) : nativeTime.stringify(
         set(new Date(), { hours: 12, minutes: 0 }),
       ),
-      Quotas: editEvent?.Quotas || [],
+      Quotas: editEvent?.Quotas.map((quota) => ({
+        ...quota,
+        signupCount: signups.data?.filter((s) => s.quotaId === quota.id).length || 0,
+      })) || [] ,
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
       price: editEvent?.price || "",
@@ -110,7 +114,7 @@ export function EventForm({ editId }: EventFormProps) {
     return combined;
   };
 
-  const createQuota = () => {
+  const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
     const id = cuid();
     const sortId = quotas.length + 1;
@@ -122,9 +126,10 @@ export function EventForm({ editId }: EventFormProps) {
         size: null,
         sortId,
         eventId: editEvent?.id ?? NaN,
+        signupCount: 0,
       },
     ]);
-  };
+  }, [getValues, setValue, editEvent]);
 
   const createQuestion = () => {
     const questions = getValues("Questions");
@@ -159,11 +164,12 @@ export function EventForm({ editId }: EventFormProps) {
     setValue("Quotas", [
       ...quotas,
       {
-        id: "public-quota",
+        id: editEvent?.id ? ("public-quota-" + editEvent?.id) : "public-quota",
         title: "Avoin kiintiö",
         size: null,
         sortId,
         eventId: editEvent?.id ?? NaN,
+        signupCount: 0,
       },
     ]);
   };
@@ -380,7 +386,7 @@ export function EventForm({ editId }: EventFormProps) {
               type="button"
               onClick={() => createPublicQueue()}
               disabled={
-                !!watch("Quotas").find((quota) => quota.id === "public-quota")
+                !!watch("Quotas").find((quota) => quota.id.includes("public-quota"))
               }
             >
               Lisää avoin kiintiö
@@ -434,6 +440,7 @@ export function EventForm({ editId }: EventFormProps) {
                               setValue("Quotas", quotas);
                             }}
                             deleteQuota={deleteQuota}
+                            errors={errors.Quotas && (errors.Quotas[index])}
                           />
                         </div>
                       )}
@@ -481,6 +488,8 @@ export function EventForm({ editId }: EventFormProps) {
                               setValue("Questions", questions);
                             }}
                             deleteQuestion={deleteQuestion}
+                            signupCount={signups.data ? signups.data.length : 0}
+                            errors={errors.Questions && (errors.Questions[index] as FieldErrorsImpl<Question>)}
                           />
                         </div>
                       )}
@@ -502,10 +511,11 @@ export function EventForm({ editId }: EventFormProps) {
             <div className="flex items-center gap-4">
               <Switch
                 value={watch("raffleEnabled")}
+                disabled
                 onChange={(value) => setValue("raffleEnabled", value)}
               />
               <span className="text-sm text-gray-600">
-                Enable 30-second raffle registration window
+                Enable 30-second raffle registration window. Feature currently disabled.
               </span>
             </div>
             {watch("raffleEnabled") && (

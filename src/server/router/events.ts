@@ -228,6 +228,7 @@ export const eventsRouter = router({
       const quotas = input.quotas.map((quota) => ({
         ...quota,
         eventId: event.id,
+        id: quota.id.includes("public-quota") ? "public-quota-" + event.id : quota.id,
       }));
 
       const questions = input.questions.map((question) => ({

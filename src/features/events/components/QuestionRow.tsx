@@ -10,15 +10,20 @@ import {
   SelectValue,
 } from "@/components/Select";
 import { questionSchema } from "../utils/eventFormSchema";
+import type { FieldErrorsImpl } from "react-hook-form";
 
 export function QuestionRow({
   question,
   onChange,
   deleteQuestion,
+  signupCount,
+  errors,
 }: {
   question: Question;
   onChange: (value: Question) => void;
   deleteQuestion: (id: string) => void;
+  signupCount: number,
+  errors: FieldErrorsImpl<Question> | undefined;
 }) {
   const addOption = () => {
     onChange({
@@ -35,9 +40,10 @@ export function QuestionRow({
       options: newOptions,
     });
   };
+  console.log(errors)
   return (
     <div className="my-1 gap-6 rounded-md border-2 border-slate-300 p-3 odd:bg-gray-100 even:bg-slate-100">
-      <div className="max-w-3/4 mb-3 flex flex-col gap-6">
+      <div className="max-w-3/4 mb-10 flex flex-col gap-6">
         <div className="flex flex-row items-center gap-2 px-7">
           <label htmlFor="name" className="w-28">
             Kysymys:
@@ -49,10 +55,17 @@ export function QuestionRow({
             onChange={(value) =>
               onChange({ ...question, question: value.target.value })
             }
+            error={!!errors?.question}
+            helperText={errors?.question ?
+              errors.question.message :
+              undefined}
           />
         </div>
       </div>
       <div className="mt-4 mb-6 flex flex-row items-center gap-6 px-7">
+        <label className="w-32">
+          Tyyppi:
+        </label>
         <Select
           onValueChange={(value) => {
             onChange({ ...question, type: value as Question["type"] });
@@ -115,7 +128,7 @@ export function QuestionRow({
             ))}
           </div>
         ) : null}
-      <div className="flex flex-row gap-5">
+      <div className="flex flex-row gap-5 items-center">
         <Button
           onClick={() => deleteQuestion(question.id)}
           type="button"
@@ -129,6 +142,7 @@ export function QuestionRow({
             Lisää vaihtoehto
           </Button>
         )}
+        {signupCount > 0 && <p><b>HUOM! Kysymyksen poistaminen poistaa myös siihen saadut vastaukset pysyvästi.</b></p>}
       </div>
     </div>
   );
