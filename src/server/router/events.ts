@@ -91,15 +91,7 @@ export const eventsRouter = router({
           id: input.eventId,
         },
         include: {
-          Quotas: {
-            include: {
-              Signups: {
-                include: {
-                  Answers: true,
-                },
-              },
-            },
-          },
+          Quotas: true,
           Questions: true,
         },
       });

@@ -42,6 +42,9 @@ export const eventFormSchema = z.object({
   registrationEndDate: z.preprocess((arg) => {
     if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
   }, z.date()),
+  time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
+  registrationStartTime: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
+  registrationEndTime: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
   description: z.string().optional(),
   location: z.string().optional(),
   price: z.string().optional(),
@@ -50,6 +53,6 @@ export const eventFormSchema = z.object({
   signupsPublic: z.boolean(),
   verificationEmail: z.string().optional(),
   raffleEnabled: z.boolean().default(false),
-  quotas: z.array(quotaSchema),
-  questions: z.array(questionSchema),
+  Quotas: z.array(quotaSchema),
+  Questions: z.array(questionSchema),
 });

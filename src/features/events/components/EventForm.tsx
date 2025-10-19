@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { addDays, set } from "date-fns";
 import type { Quota, Question } from "@prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -50,6 +50,16 @@ export function EventForm({ editId }: EventFormProps) {
   if (queryError) {
     alert.error("Error: " + queryError);
   }
+
+  const {data: editEvent, isLoading} = api.events.getEventEditId.useQuery(
+    {
+      eventId: editId ?? NaN,
+    },
+    {
+      enabled: !!editId,
+    },
+  );
+
   const {
     register,
     watch,
@@ -59,82 +69,36 @@ export function EventForm({ editId }: EventFormProps) {
     setValue,
   } = useForm({
     resolver: zodResolver(eventFormSchema),
-    defaultValues: {
-      title: "",
-      date: nativeDate.stringify(addDays(new Date(), 7)) as unknown as Date,
-      time: nativeTime.stringify(
+    values: {...(editEvent ? editEvent : {}),
+      date: editEvent?.date ? nativeDate.stringify(editEvent.date) as unknown as Date : nativeDate.stringify(addDays(new Date(), 7)) as unknown as Date,
+      time: editEvent?.date ? nativeTime.stringify(set(new Date(editEvent.date), {seconds:0, milliseconds:0})): nativeTime.stringify(
         set(new Date(), { hours: 12, minutes: 0 }),
-      ) as unknown as Date,
-      registrationStartDate: nativeDate.stringify(
+      ),
+      registrationStartDate: editEvent?.registrationStartDate ? nativeDate.stringify(editEvent.registrationStartDate) as unknown as Date : nativeDate.stringify(
         addDays(new Date(), 1),
       ) as unknown as Date,
-      registrationStartTime: nativeTime.stringify(
-        set(new Date(), { hours: 12, minutes: 0 }),
-      ) as unknown as Date,
-      registrationEndDate: nativeDate.stringify(
+      registrationEndDate: editEvent?.registrationEndDate ? nativeDate.stringify(editEvent.registrationEndDate) as unknown as Date : nativeDate.stringify(
         addDays(new Date(), 5),
       ) as unknown as Date,
-      registrationEndTime: nativeTime.stringify(
+      registrationEndTime: editEvent?.registrationEndDate ? nativeTime.stringify(set(new Date(editEvent.registrationEndDate), {seconds:0, milliseconds:0})): nativeTime.stringify(
         set(new Date(), { hours: 23, minutes: 59 }),
-      ) as unknown as Date,
-      description: "",
-      location: "",
-      price: "",
-      webpageUrl: "",
-      draft: true,
-      signupsPublic: false,
-      verificationEmail: "",
-      quotas: [] as Quota[],
-      questions: [] as Question[],
-      raffleEnabled: false,
+      ),
+      registrationStartTime: editEvent?.registrationStartDate ? nativeTime.stringify(set(new Date(editEvent.registrationStartDate), {seconds:0, milliseconds:0})) : nativeTime.stringify(
+        set(new Date(), { hours: 12, minutes: 0 }),
+      ),
+      Quotas: editEvent?.Quotas || [],
+      Questions: editEvent?.Questions || [],
+      raffleEnabled: editEvent?.raffleEnabled || false,
+      price: editEvent?.price || "",
+      location: editEvent?.location || "",
+      title: editEvent?.title || "",
+      webpageUrl: editEvent?.webpageUrl || "",
+      description: editEvent?.description || "",
+      draft: editEvent?.draft ?? true,
+      signupsPublic: editEvent?.signupsPublic ?? false,
+      verificationEmail: editEvent?.verificationEmail || "",
     },
   });
-
-  const [isInitialized, setIsInitialized] = useState(false);
-  const editEvent = api.events.getEventEditId.useQuery(
-    {
-      eventId: editId ?? NaN,
-    },
-    {
-      enabled: !!editId,
-      async onSuccess(data) {
-        if (isInitialized || !data) return;
-        const formValues = getValues();
-
-        if (!formValues.title) setValue("title", data.title);
-        if (!formValues.date) setValue("date", data.date);
-        if (!formValues.time) setValue("time", getTimeFromDate(data.date));
-        if (!formValues.registrationStartDate)
-          setValue("registrationStartDate", data.registrationStartDate);
-        if (!formValues.registrationEndDate)
-          setValue("registrationEndDate", data.registrationEndDate);
-        if (!formValues.description && data.description)
-          setValue("description", data.description);
-        if (!formValues.location && data.location)
-          setValue("location", data.location);
-        if (!formValues.price && data.price) setValue("price", data.price);
-        if (!formValues.webpageUrl && data.webpageUrl)
-          setValue("webpageUrl", data.webpageUrl);
-        if (!formValues.draft) setValue("draft", data.draft);
-        if (!formValues.signupsPublic)
-          setValue("signupsPublic", data.signupsPublic);
-        if (!formValues.verificationEmail && data.verificationEmail)
-          setValue("verificationEmail", data.verificationEmail);
-        if (formValues.quotas.length === 0) setValue("quotas", data.Quotas);
-        if (formValues.questions.length === 0) setValue("questions", data.Questions);
-        if (!formValues.raffleEnabled)
-          setValue("raffleEnabled", data.raffleEnabled);
-        setIsInitialized(true);
-      },
-    },
-  );
-
-  const getTimeFromDate = (date: Date) => {
-    return set(new Date(), {
-      hours: date.getHours(),
-      minutes: date.getMinutes(),
-    });
-  };
 
   const combineDates = (date: Date, time: string) => {
     const combined = new Date(date);
@@ -147,26 +111,26 @@ export function EventForm({ editId }: EventFormProps) {
   };
 
   const createQuota = () => {
-    const quotas = getValues("quotas");
+    const quotas = getValues("Quotas");
     const id = cuid();
     const sortId = quotas.length + 1;
-    setValue("quotas", [
+    setValue("Quotas", [
       ...quotas,
       {
         id,
         title: "",
         size: null,
         sortId,
-        eventId: editEvent.data?.id ?? NaN,
+        eventId: editEvent?.id ?? NaN,
       },
     ]);
   };
 
   const createQuestion = () => {
-    const questions = getValues("questions");
+    const questions = getValues("Questions");
     const id = cuid();
     const sortId = questions.length + 1;
-    setValue("questions", [
+    setValue("Questions", [
       ...questions,
       {
         id,
@@ -176,30 +140,30 @@ export function EventForm({ editId }: EventFormProps) {
         sortId,
         options: [],
         public: false,
-        eventId: editEvent.data?.id ?? NaN,
+        eventId: editEvent?.id ?? NaN,
       },
     ]);
   };
 
   const deleteQuestion = (id: string) => {
-    const questions = getValues("questions");
+    const questions = getValues("Questions");
     setValue(
-      "questions",
+      "Questions",
       questions.filter((question: Question) => question.id !== id),
     );
   };
 
   const createPublicQueue = () => {
-    const quotas = getValues("quotas");
+    const quotas = getValues("Quotas");
     const sortId = quotas.length + 1;
-    setValue("quotas", [
+    setValue("Quotas", [
       ...quotas,
       {
         id: "public-quota",
         title: "Avoin kiintiö",
         size: null,
         sortId,
-        eventId: editEvent.data?.id ?? NaN,
+        eventId: editEvent?.id ?? NaN,
       },
     ]);
   };
@@ -207,43 +171,43 @@ export function EventForm({ editId }: EventFormProps) {
   console.log(editId)
 
   useEffect(() => {
-    if (watch("quotas").length === 0 && editId === undefined) {
+    if (watch("Quotas").length === 0 && editId === undefined) {
       createQuota();
     }
-  }, [watch("quotas"), createQuota, watch, editId]);
+  }, [watch("Quotas"), createQuota, watch, editId]);
 
   const deleteQuota = (id: string) => {
-    const quotas = getValues("quotas");
+    const quotas = getValues("Quotas");
     setValue(
-      "quotas",
+      "Quotas",
       quotas.filter((quota: Quota) => quota.id !== id),
     );
   };
 
   const onSubmit = handleSubmit(async (data) => {
     console.log("handleSubmit", data);
-    console.log(data.time);
     console.log(getValues("time"));
+    if(!data.date)return;
     const formData = {
       ...data,
       date: combineDates(
         new Date(data.date),
-        getValues("time") as unknown as string,
+        getValues("time"),
       ),
-      // registrationStartDate: combineDates(
-      //   new Date(data.registrationStartDate),
-      //   getValues("registrationStartTime")
-      // ),
-      // registrationEndDate: combineDates(
-      //   new Date(data.registrationEndDate),
-      //   getValues("registrationEndTime")
-      // ),
+      registrationStartDate: combineDates(
+        new Date(data.registrationStartDate),
+        getValues("registrationStartTime"),
+      ),
+      registrationEndDate: combineDates(
+        new Date(data.registrationEndDate),
+        getValues("registrationEndTime"),
+      ),
     };
     if (editId) {
-      await updateMutation.mutateAsync({ ...formData, id: editId });
+      await updateMutation.mutateAsync({ ...formData, id: editId, quotas: data.Quotas, questions: data.Questions });
       alert.success("Event updated successfully");
     } else {
-      const event = await createMutation.mutateAsync(data);
+      const event = await createMutation.mutateAsync({ ...formData, quotas: data.Quotas, questions: data.Questions });
       alert.success("Event created successfully");
       router.push(`/events/${event.id}/edit`);
     }
@@ -252,7 +216,7 @@ export function EventForm({ editId }: EventFormProps) {
   const onDragEndQuota = (result: DragUpdate) => {
     if (!result.destination) return;
 
-    const quotas = getValues("quotas");
+    const quotas = getValues("Quotas");
 
     const [removed] = quotas.splice(result.source.index, 1);
     if (!removed) {
@@ -266,7 +230,7 @@ export function EventForm({ editId }: EventFormProps) {
       quota.sortId = index + 1;
     });
 
-    setValue("quotas", quotas);
+    setValue("Quotas", quotas);
   };
 
   const onDragEndQuestions = (result: DragUpdate) => {
@@ -274,7 +238,7 @@ export function EventForm({ editId }: EventFormProps) {
     console.log(result);
   };
 
-  if (editId && !isInitialized && !editEvent.isLoading) {
+  if (editId && (signups.isLoading || isLoading)) {
     return (
       <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center bg-white/70 p-6">
         Loading...
@@ -416,14 +380,14 @@ export function EventForm({ editId }: EventFormProps) {
               type="button"
               onClick={() => createPublicQueue()}
               disabled={
-                !!watch("quotas").find((quota) => quota.id === "public-quota")
+                !!watch("Quotas").find((quota) => quota.id === "public-quota")
               }
             >
               Lisää avoin jono
             </Button>
           </div>
           
-          {errors.quotas && (
+          {errors.Quotas && (
             <div className="mb-4 rounded-md bg-red-50 p-3">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -433,7 +397,7 @@ export function EventForm({ editId }: EventFormProps) {
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-red-700">
-                    {typeof errors.quotas.message === 'string' ? errors.quotas.message : "Please add at least one valid quota"}
+                    {typeof errors.Quotas.message === 'string' ? errors.Quotas.message : "Please add at least one valid quota"}
                   </p>
                 </div>
               </div>
@@ -441,14 +405,14 @@ export function EventForm({ editId }: EventFormProps) {
           )}
           
           <DragDropContext onDragEnd={onDragEndQuota}>
-            <Droppable droppableId="quotas">
+            <Droppable droppableId="Quotas">
               {(droppableProvided) => (
                 <div
                   ref={droppableProvided.innerRef}
                   {...droppableProvided.droppableProps}
                   className="space-y-4"
                 >
-                  {watch("quotas").map((quota, index) => (
+                  {watch("Quotas").map((quota, index) => (
                     <Draggable
                       key={quota.id}
                       draggableId={quota.id}
@@ -463,11 +427,11 @@ export function EventForm({ editId }: EventFormProps) {
                           <QuotaRow
                             key={quota.id}
                             quota={quota}
-                            quotasLength={watch("quotas").length}
+                            quotasLength={watch("Quotas").length}
                             onChange={(value) => {
-                              const quotas = getValues("quotas");
+                              const quotas = getValues("Quotas");
                               quotas[index] = value;
-                              setValue("quotas", quotas);
+                              setValue("Quotas", quotas);
                             }}
                             deleteQuota={deleteQuota}
                           />
@@ -489,14 +453,14 @@ export function EventForm({ editId }: EventFormProps) {
             </Button>
           </div>
           <DragDropContext onDragEnd={onDragEndQuestions}>
-            <Droppable droppableId="quotas">
+            <Droppable droppableId="Quotas">
               {(droppableProvided) => (
                 <div
                   ref={droppableProvided.innerRef}
                   {...droppableProvided.droppableProps}
                   className="space-y-4"
                 >
-                  {watch("questions").map((question, index) => (
+                  {watch("Questions").map((question, index) => (
                     <Draggable
                       key={question.id}
                       draggableId={question.id}
@@ -512,9 +476,9 @@ export function EventForm({ editId }: EventFormProps) {
                             key={question.id}
                             question={question}
                             onChange={(value) => {
-                              const questions = getValues("questions");
+                              const questions = getValues("Questions");
                               questions[index] = value;
-                              setValue("questions", questions);
+                              setValue("Questions", questions);
                             }}
                             deleteQuestion={deleteQuestion}
                           />
