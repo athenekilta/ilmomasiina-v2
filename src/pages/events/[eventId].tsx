@@ -88,7 +88,7 @@ function Registration({
           );
         }
       } catch (error) {
-        alert.warning(`${error.message}`);
+        alert.warning(`${error.message}`, { timeoutMs: 10000 });
       }
     };
   };
@@ -107,8 +107,8 @@ function Registration({
             })}
           >
             <p>
-              Tallenna nimi ja sähköposti ennen ilmoittautumista. Voit
-              ilmoittautua vain kerran per sähköpostiosoite.
+              Tallenna nimi ja sähköposti ennen ilmoittautumista. Huomaa, että
+              ilmoittautua tapahtumaan vain kerran.
             </p>
             <FieldSet title="Name">
               <Input {...register("name")} placeholder="Your name" />

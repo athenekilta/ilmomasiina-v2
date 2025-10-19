@@ -146,8 +146,8 @@ export const signupsRouter = router({
 
       if (existingSignup) {
         // return the existing event instead of creating a new one
-        if (existingSignup.status === SignupStatus.PENDING) return {signup: existingSignup, isExistingSignup: true};
-        throw new TRPCError({code: 'BAD_REQUEST', message: "A registration exists with this email. Edit your existing signup via the confirmation email."});
+        if (!existingSignup.confirmedAt) return {signup: existingSignup, isExistingSignup: true};
+        throw new TRPCError({code: 'BAD_REQUEST', message: "A confirmed signup already exists with this email. Edit your existing signup via the confirmation email."});
       }
 
       const signup = await ctx.prisma.signup.create({
@@ -157,6 +157,7 @@ export const signupsRouter = router({
           email: input.email,
         },
       });
+
       return {signup: signup};
     }),
 
@@ -164,8 +165,6 @@ export const signupsRouter = router({
     .input(
       z.object({
         signupId: z.string(),
-        name: z.string(),
-        email: z.string(),
         answers: z.array(
           z.object({
             questionId: z.string(),
@@ -212,10 +211,7 @@ export const signupsRouter = router({
           id: input.signupId,
         },
         data: {
-          name: input.name,
-          email: input.email,
           confirmedAt: new Date(),
-          status: SignupStatus.CONFIRMED,
         },
         include: {
           Quota: {

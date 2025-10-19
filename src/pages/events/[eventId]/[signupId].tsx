@@ -62,8 +62,6 @@ export default function SignupPage() {
           questionId: ans.questionId,
           answer: ans.answer,
         })),
-        name: values.name,
-        email: values.email,
       });
     } catch (error) {
       console.error(error);
@@ -91,8 +89,9 @@ export default function SignupPage() {
     <div className="rounded-lg bg-white p-5 shadow-lg">
       <h2 className="mb-4 text-xl font-bold">Signup Form</h2>
       {isExistingSignup && (
-        <p className="mb-4 text-sm text-gray-600">
-          You are editing your already existing signup with this email.
+        <p className="text-md mb-4 text-orange-600">
+          You already have an existing unconfirmed signup. A new signup was not
+          created. Edit and confirm the existing signup below.
         </p>
       )}
       <p>Quota: {signup.Quota.title}</p>
@@ -102,20 +101,22 @@ export default function SignupPage() {
       <form onSubmit={onSubmit} className="space-y-4">
         <fieldset className="flex flex-1 flex-col gap-2">
           <label htmlFor="name" className="flex items-center">
-            Nimi / Name: <span className="text-red-500"> *</span>
+            Nimi / Name:
           </label>
           <Input
             {...register("name")}
+            disabled={true}
             error={!!errors?.name}
             helperText={errors?.name?.message}
           />
         </fieldset>
         <fieldset className="flex flex-1 flex-col gap-2">
           <label htmlFor="email" className="flex items-center">
-            Email: <span className="text-red-500"> *</span>
+            Email:
           </label>
           <Input
             {...register("email")}
+            disabled={true}
             error={!!errors?.email}
             helperText={errors?.email?.message}
           />
