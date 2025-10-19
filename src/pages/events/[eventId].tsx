@@ -116,59 +116,6 @@ export default function EventPage() {
 
           {/* Registration Section */}
           <div className="mb-8">
-            {event.raffleEnabled ? (
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Raffle Registration
-                </h2>
-                {(() => {
-                  const firstQuota = event.Quotas.filter(q => q.id !== "queue")[0];
-                  if (!firstQuota) return null;
-                  
-                  return (
-                    <>
-                      <RaffleSignup
-                        key={firstQuota.id}
-                        eventId={event.id}
-                        quotaId={firstQuota.id}
-                        raffleStartTime={event.raffleStartTime}
-                        raffleEndTime={event.raffleEndTime}
-                      />
-                      
-                      {/* Show normal signup buttons if raffle has ended */}
-                      {event.raffleEndTime && new Date() > new Date(event.raffleEndTime) && (
-                        <div className="mt-8 space-y-4">
-                          <h2 className="text-xl font-semibold text-gray-800">
-                            Regular Registration
-                          </h2>
-                          {event.Quotas.filter((quota) => quota.id !== "queue").map(
-                            (quota) => (
-                              <div key={quota.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                                <div>
-                                  <h3 className="text-lg font-medium text-gray-700">
-                                    {quota.title}
-                                  </h3>
-                                  <p className="text-sm text-gray-500">
-                                    {quota.size} spots available
-                                  </p>
-                                </div>
-                                <Button
-                                  className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
-                                  onClick={() => handleSignup(quota.id)}
-                                  disabled={!isRegistrationOpen}
-                                >
-                                  Sign Up
-                                </Button>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            ) : (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-800">
                   Registration
@@ -200,7 +147,7 @@ export default function EventPage() {
                     </div>
                 )
               )}
-            </div>)}
+            </div>
           </div>
 
           {/* Terms Section */}
