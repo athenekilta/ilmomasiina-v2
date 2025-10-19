@@ -114,7 +114,7 @@ async function drawRaffle(prisma, eventId) {
             data: {
                 status: isConfirmed ? "CONFIRMED" : "REJECTED",
                 createdAt: newTime,
-                confirmedAt: newTime
+                completedAt: newTime
             }
         });
         // Send appropriate email based on status
