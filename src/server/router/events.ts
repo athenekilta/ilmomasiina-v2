@@ -164,7 +164,7 @@ export const eventsRouter = router({
         }
       });
 
-      // Return event if singups are not public
+      // Return event if singups are public
       if (event.signupsPublic) return event;
 
       // If signups are not public, return event with quotas that have signup counts
@@ -263,10 +263,20 @@ export const eventsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // First delete existing quotas and questions
-      await ctx.prisma.quota.deleteMany({
+      // Delete quotas by IDs that are not in the input anymore and do not have signups
+      const existingQuotas = await ctx.prisma.quota.findMany({
         where: { eventId: input.id },
+        include: {
+          Signups: true,
+        },
       });
+      const quotasToDelete = existingQuotas.filter(
+        (eq) => !input.quotas.some((iq) => iq.id === eq.id) && eq.Signups.length === 0,
+      );
+      // Create quotas that are new
+      const newQuotas = input.quotas.filter((q) => !q.id);
+      // Update existing quotas
+      const existingQuotasToUpdate = input.quotas.filter((q) => q.id);
 
       await ctx.prisma.question.deleteMany({
         where: { eventId: input.id },
@@ -289,9 +299,15 @@ export const eventsRouter = router({
           draft: input.draft,
           signupsPublic: input.signupsPublic,
           verificationEmail: input.verificationEmail,
-          Quotas: {
+          Quotas: {    
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            create: input.quotas.map(({ eventId, ...quota }) => quota),
+            create: newQuotas.map(({ eventId, ...quota }) => quota),
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            update: existingQuotasToUpdate.map((quota) => ({
+              where: { id: quota.id },
+              data: quota,
+            })),
+            delete: quotasToDelete.map((quota) => ({ id: quota.id })),
           },
           Questions: {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
