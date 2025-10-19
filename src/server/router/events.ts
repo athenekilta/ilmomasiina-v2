@@ -50,8 +50,8 @@ export const eventsRouter = router({
       const dateFilter = input.includeOlderEvents
         ? {}
         : {
-            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-          };
+          gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+        };
 
       const events = await ctx.prisma.event.findMany({
         orderBy: { date: "asc" },
@@ -280,9 +280,16 @@ export const eventsRouter = router({
       // Update existing quotas
       const existingQuotasToUpdate = input.quotas.filter((q) => q.id);
 
-      await ctx.prisma.question.deleteMany({
+      // Delete questions that are not in the input anymore
+      const existingQuestions = await ctx.prisma.question.findMany({
         where: { eventId: input.id },
       });
+      const questionsToDelete = existingQuestions.filter(
+        (eq) => !input.questions.some((iq) => iq.id === eq.id),
+      );
+      // Update existing questions and create new ones
+      const questionsToUpdate = input.questions.filter((q) => q.id);
+      const newQuestions = input.questions.filter((q) => !q.id);
 
       // Then update event with new data
       return ctx.prisma.event.update({
@@ -305,7 +312,7 @@ export const eventsRouter = router({
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             create: newQuotas.map(({ eventId, ...quota }) => quota),
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            update: existingQuotasToUpdate.map((quota) => ({
+            update: existingQuotasToUpdate.map(({eventId, ...quota}) => ({
               where: { id: quota.id },
               data: quota,
             })),
@@ -313,7 +320,13 @@ export const eventsRouter = router({
           },
           Questions: {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            create: input.questions.map(({ eventId, ...question }) => question),
+            create: newQuestions.map(({ eventId, ...question }) => question),
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            update: questionsToUpdate.map(({eventId, ...question}) => ({
+              where: { id: question.id },
+              data: question,
+            })),
+            delete: questionsToDelete.map((question) => ({ id: question.id }) ),
           },
         },
       });

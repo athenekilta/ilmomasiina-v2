@@ -22,6 +22,7 @@ export const quotaSchema = z.object({
 });
 
 export const questionSchema = z.object({
+  id: z.string(),
   question: z.string().min(1),
   type: z.enum(["text", "textarea", "radio", "checkbox"]),
   options: z.array(z.string()),
