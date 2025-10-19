@@ -129,7 +129,7 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
         data: {
           status: isConfirmed ? "CONFIRMED" : "REJECTED",
           createdAt: newTime,
-          confirmedAt: newTime
+          completedAt: newTime
         }
       });
 

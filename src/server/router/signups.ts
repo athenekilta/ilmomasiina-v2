@@ -93,7 +93,6 @@ export const signupsRouter = router({
         },
       });
 
-      
       return {
         ...signup,
         answers,
@@ -146,8 +145,13 @@ export const signupsRouter = router({
 
       if (existingSignup) {
         // return the existing event instead of creating a new one
-        if (!existingSignup.confirmedAt) return {signup: existingSignup, isExistingSignup: true};
-        throw new TRPCError({code: 'BAD_REQUEST', message: "A confirmed signup already exists with this email. Edit your existing signup via the confirmation email."});
+        if (!existingSignup.completedAt)
+          return { signup: existingSignup, isExistingSignup: true };
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "A completed signup already exists with this email. Edit your existing signup via the confirmation email.",
+        });
       }
 
       const signup = await ctx.prisma.signup.create({
@@ -158,7 +162,7 @@ export const signupsRouter = router({
         },
       });
 
-      return {signup: signup};
+      return { signup: signup };
     }),
 
   updateSignup: publicProcedure
@@ -176,14 +180,15 @@ export const signupsRouter = router({
     .mutation(async ({ ctx, input }) => {
       // First get the current signup to check if it was already confirmed
       const currentSignup = await ctx.prisma.signup.findUnique({
-        where: { id: input.signupId }
+        where: { id: input.signupId },
+        include: { Quota: { include: { Event: true } } },
       });
 
       if (!currentSignup) {
         throw new Error("Signup not found");
       }
 
-      const wasConfirmedBefore = currentSignup.confirmedAt !== null;
+      const wasCompletedBefore = currentSignup.completedAt !== null;
 
       // Update answers
       for (const answer of input.answers) {
@@ -205,39 +210,69 @@ export const signupsRouter = router({
         });
       }
 
-      // Update signup
-      const signup = await ctx.prisma.signup.update({
-        where: {
-          id: input.signupId,
-        },
-        data: {
-          confirmedAt: new Date(),
-        },
-        include: {
-          Quota: {
-            include: {
-              Event: true
-            }
-          }
-        }
+      const newSignup = await ctx.prisma.$transaction(async (tx) => {
+        const firstIds = currentSignup.Quota.size
+          ? await tx.signup.findMany({
+              where: {
+                quotaId: currentSignup.quotaId,
+              },
+              orderBy: [
+                { createdAt: "asc" },
+                { id: "asc" }, // tie-breaker to keep order deterministic
+              ],
+              take: currentSignup.Quota.size,
+              select: { id: true },
+            })
+          : [];
+
+        const isWithinQuota =
+          !currentSignup.Quota.size ||
+          firstIds.some((s) => s.id === input.signupId);
+
+        // Update signup
+        const signup = await ctx.prisma.signup.update({
+          where: {
+            id: input.signupId,
+          },
+          data: {
+            completedAt: new Date(),
+            ...(isWithinQuota ? { status: SignupStatus.CONFIRMED } : {}),
+          },
+        });
+
+        return signup;
       });
 
       // Only send confirmation email if this is the first time being confirmed
-      if (!wasConfirmedBefore) {
-        const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-        const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-        const editUrl = `${nextAuthUrl}events/${signup.Quota.eventId}/${signup.id}`;
-
-        await (await ctx.mail.templates.eventSignup({
-          eventName: signup.Quota.Event.title,
-          editUrl
-        })).send({
-          to: { displayName: signup.name, address: signup.email },
+      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+      const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+      const editUrl = `${nextAuthUrl}events/${currentSignup.Quota.eventId}/${currentSignup.id}`;
+      if (
+        currentSignup.status !== SignupStatus.CONFIRMED &&
+        newSignup.status === SignupStatus.CONFIRMED
+      ) {
+        await (
+          await ctx.mail.templates.eventSignup({
+            eventName: currentSignup.Quota.Event.title,
+            editUrl,
+          })
+        ).send({
+          to: { displayName: newSignup.name, address: newSignup.email },
+          from: "DoNotReply@athene.fi",
+        });
+      } else if (!wasCompletedBefore) {
+        await (
+          await ctx.mail.templates.eventQueue({
+            eventName: currentSignup.Quota.Event.title,
+            editUrl,
+          })
+        ).send({
+          to: { displayName: newSignup.name, address: newSignup.email },
           from: "DoNotReply@athene.fi",
         });
       }
 
-      return signup;
+      return newSignup;
     }),
 
   deleteSignup: publicProcedure
@@ -256,12 +291,12 @@ export const signupsRouter = router({
               Event: true,
               Signups: {
                 orderBy: {
-                  createdAt: 'asc'
-                }
-              }
-            }
-          }
-        }
+                  createdAt: "asc",
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!signup) {
@@ -283,85 +318,101 @@ export const signupsRouter = router({
       });
 
       // Helper function to move a person and send notification
-      const movePersonAndNotify = async (person: { id: string, name: string, email: string }) => {
+      const movePersonAndNotify = async (person: {
+        id: string;
+        name: string;
+        email: string;
+      }) => {
         await ctx.prisma.signup.update({
           where: { id: person.id },
-          data: { quotaId: signup.quotaId }
+          data: { quotaId: signup.quotaId, status: SignupStatus.CONFIRMED },
         });
 
         const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
         const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
         const editUrl = `${nextAuthUrl}events/${signup.Quota.Event.id}/${person.id}`;
 
-        await (await ctx.mail.templates.eventQueueAccepted({
-          eventName: signup.Quota.Event.title,
-          editUrl
-        })).send({
+        await (
+          await ctx.mail.templates.eventQueueAccepted({
+            eventName: signup.Quota.Event.title,
+            editUrl,
+          })
+        ).send({
           to: { displayName: person.name, address: person.email },
           from: "DoNotReply@athene.fi",
         });
       };
 
-      // 1. First check if there are people in the same quota's queue
-      const quotaSignups = await ctx.prisma.signup.findMany({
-        where: {
-          quotaId: signup.quotaId,
-          status: "PENDING",  // Assuming we use status to indicate queue position
-        },
-        orderBy: {
-          createdAt: 'asc'
-        },
-        take: 1
-      });
-
-      if (quotaSignups[0]) {
-        await movePersonAndNotify(quotaSignups[0]);
-        return signup;
-      }
-
-      // 2. Then check if there are people in the open quota
-      const openQuota = await ctx.prisma.quota.findFirst({
-        where: {
-          eventId: signup.Quota.Event.id,
-          title: "Open", // Assuming open quota has title "Open"
-        },
-        include: {
-          Signups: {
-            where: {
-              status: "PENDING"
+      await ctx.prisma.$transaction(async (tx) => {
+        // 1. First check if there are people in the same quota's queue
+        const quotaSignup = await ctx.prisma.signup.findFirst({
+          where: {
+            quotaId: signup.quotaId,
+            status: SignupStatus.PENDING,
+            NOT: {
+              completedAt: null,
             },
-            orderBy: {
-              createdAt: 'asc'
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
+        });
+
+        if (quotaSignup) {
+          movePersonAndNotify(quotaSignup);
+          return signup;
+        }
+
+        // 2. Then check if there are people in the open quota
+        const openQuota = await ctx.prisma.quota.findFirst({
+          where: {
+            eventId: signup.Quota.Event.id,
+            title: "Open", // Assuming open quota has title "Open"
+          },
+          include: {
+            Signups: {
+              where: {
+                status: SignupStatus.PENDING,
+                NOT: {
+                  completedAt: null,
+                },
+              },
+              orderBy: {
+                createdAt: "asc",
+              },
+              take: 1,
             },
-            take: 1
-          }
+          },
+        });
+
+        if (openQuota?.Signups[0]) {
+          movePersonAndNotify(openQuota.Signups[0]);
+          return signup;
+        }
+
+        // 3. Finally check any other quota
+        const anyPendingSignup = await ctx.prisma.signup.findFirst({
+          where: {
+            Quota: { eventId: signup.Quota.Event.id },
+            status: SignupStatus.PENDING,
+            NOT: {
+              completedAt: null,
+            },
+          },
+          include: {
+            Quota: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+          take: 1,
+        });
+
+        if (anyPendingSignup) {
+          movePersonAndNotify(anyPendingSignup);
         }
       });
-
-      if (openQuota?.Signups[0]) {
-        await movePersonAndNotify(openQuota.Signups[0]);
-        return signup;
-      }
-
-      // 3. Finally check the general queue
-      const queueQuota = await ctx.prisma.quota.findFirst({
-        where: {
-          eventId: signup.Quota.Event.id,
-          id: 'queue'
-        },
-        include: {
-          Signups: {
-            orderBy: {
-              createdAt: 'asc'
-            },
-            take: 1
-          }
-        }
-      });
-
-      if (queueQuota?.Signups[0]) {
-        await movePersonAndNotify(queueQuota.Signups[0]);
-      }
 
       return signup;
     }),
@@ -369,7 +420,7 @@ export const signupsRouter = router({
   deleteUnconfirmedSignups: publicProcedure.mutation(async ({ ctx }) => {
     await ctx.prisma.signup.deleteMany({
       where: {
-        confirmedAt: null,
+        completedAt: null,
         createdAt: {
           lte: new Date(new Date().getTime() - 1000 * 60 * 1), // Older than 20 minutes
         },

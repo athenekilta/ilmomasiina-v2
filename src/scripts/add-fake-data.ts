@@ -86,7 +86,7 @@ async function createFakeData() {
           quotaId: quota.id, // Link to the correct quota ID
           name: faker.person.fullName(),
           email: faker.internet.email(),
-          confirmedAt: moment().subtract(1, "minutes").toDate(),
+          completedAt: moment().subtract(1, "minutes").toDate(),
         },
       });
 

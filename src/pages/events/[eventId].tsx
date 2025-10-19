@@ -369,7 +369,7 @@ export default function EventPage() {
                                 0,
                                 quota.size || quota.Signups.length,
                               ).map((signup, index) => {
-                                const rowStyle = signup.confirmedAt
+                                const rowStyle = signup.completedAt
                                   ? "px-6 py-2"
                                   : "px-6 py-2 text-gray-400";
                                 return (

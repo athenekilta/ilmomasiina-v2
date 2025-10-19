@@ -38,21 +38,21 @@ export const eventsRouter = router({
 
     return enrichedEvents;
   }),
-    
+
   getEventsAdmin: adminProcedure
     .input(
       z.object({
         includeDrafts: z.boolean().optional().default(false),
         includeOlderEvents: z.boolean().optional().default(false),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
-      const dateFilter = input.includeOlderEvents 
-        ? {} 
-        : { 
-          gte: new Date(new Date().setDate(new Date().getDate() - 7))
-        };
-      
+      const dateFilter = input.includeOlderEvents
+        ? {}
+        : {
+            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+          };
+
       const events = await ctx.prisma.event.findMany({
         orderBy: { date: "asc" },
         where: {
@@ -115,7 +115,7 @@ export const eventsRouter = router({
                 orderBy: {
                   createdAt: "asc",
                 },
-              }
+              },
             },
           },
           Questions: {
@@ -134,8 +134,10 @@ export const eventsRouter = router({
       event.Quotas.forEach((quota) => {
         quota.Signups = quota.Signups.map((signup) => ({
           ...signup,
-          email: signup.confirmedAt ? signup.email : "",
-          name: signup.confirmedAt ? signup.name : "Vahvistamatta / Unconfirmed singup",
+          email: signup.completedAt ? signup.email : "",
+          name: signup.completedAt
+            ? signup.name
+            : "Vahvistamatta / Unconfirmed singup",
         }));
       });
 
@@ -334,7 +336,7 @@ export const eventsRouter = router({
           raffleEnabled: true,
           raffleStartTime: startTime,
           raffleEndTime: endTime,
-          raffleStatus: RaffleStatus.NOT_STARTED
+          raffleStatus: RaffleStatus.NOT_STARTED,
         },
       });
 

@@ -54,7 +54,7 @@
     "matter-js": "^0.20.0",
     "md-editor-rt": "^4.21.2",
     "moment": "^2.30.1",
-    "next": "15.0.2",
+    "next": "^15.0.2",
     "next-auth": "^4.24.10",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
