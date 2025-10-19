@@ -347,13 +347,15 @@ export default function EventPage() {
                               {quota.Signups.slice(
                                 0,
                                 quota.size || quota.Signups.length,
-                              ).map((signup, index) => (
+                              ).map((signup, index) => {
+                                const rowStyle = signup.confirmedAt ? "px-6 py-2" : "px-6 py-2 text-gray-400";
+                                return (
                                 <tr key={signup.id}>
-                                  <td className="px-6 py-4">{index + 1}.</td>
-                                  <td className="px-6 py-4">{signup.name}</td>
-                                  <SignupRow signup={signup} />
+                                  <td className={rowStyle}>{index + 1}.</td>
+                                  <td className={rowStyle}>{signup.name}</td>
+                                  <SignupRow signup={signup} rowStyle={rowStyle} />
                                   {quota.id === "queue" && (
-                                    <td className="px-6 py-4">
+                                    <td className={rowStyle}>
                                       {OriginalQuotaTitle(
                                         event.Quotas,
                                         signup.quotaId,
@@ -361,7 +363,7 @@ export default function EventPage() {
                                     </td>
                                   )}
                                 </tr>
-                              ))}
+                              )})}
                             </tbody>
                           </table>
                         ) : (

@@ -135,7 +135,7 @@ export const eventsRouter = router({
         quota.Signups = quota.Signups.map((signup) => ({
           ...signup,
           email: signup.confirmedAt ? signup.email : "",
-          name: signup.confirmedAt ? signup.name : "Unconfirmed singup",
+          name: signup.confirmedAt ? signup.name : "Vahvistamatta / Unconfirmed singup",
         }));
       });
 

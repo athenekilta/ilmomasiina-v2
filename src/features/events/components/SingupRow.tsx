@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { Signup } from "@prisma/client";
 
-export function SignupRow({ signup }: { signup: Signup }) {
+export function SignupRow({ signup, rowStyle }: { signup: Signup, rowStyle: string }) {
   const [showMilliseconds, setShowMilliseconds] = useState(false);
 
   const handleMouseEnter = () => {
@@ -21,7 +21,7 @@ export function SignupRow({ signup }: { signup: Signup }) {
 
   return (
     <td
-      className="whitespace inline-block w-52 overflow-hidden text-ellipsis py-4"
+      className={"whitespace inline-block w-52 overflow-hidden text-ellipsis py-2" + " " + rowStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
