@@ -8,27 +8,201 @@ import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { RaffleSignup } from "@/features/raffle/RaffleSignup";
 import { pusherClient } from "@/utils/pusher";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useUserStore } from "@/stores/userStore";
+import { Input } from "@/components/Input";
+import { FieldSet } from "@/components/FieldSet";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { InputHelperText } from "@/components/InputHelperText";
+import HydrationZustand from "@/components/HydrationZustand";
+import { Event } from "@prisma/client";
+import { RouteOutput } from "@/types/types";
+import { TRPCError } from "@trpc/server";
+import { useAlert } from "@/features/alert/hooks/useAlert";
+
+const formschema = z.object({
+  email: z.string().email(),
+  name: z.string().min(3),
+});
+
+function Registration({
+  event,
+}: {
+  event: RouteOutput["events"]["getEventByID"];
+}) {
+  const router = useRouter();
+  const { isRegistrationOpen } = RegistrationDate(event);
+
+  const alert = useAlert();
+
+  // use zustand store for persisted signup user
+  const { user: storedUser, setUser, clearUser } = useUserStore();
+  const [isEditingUserData, setIsEditingUserData] = useState(false);
+
+  const createSignupMutation = api.signups.createSignup.useMutation();
+
+  // store these just locally to prefill email & name for the user
+  const {
+    register,
+    formState: { isSubmitting, errors, isValid },
+    handleSubmit,
+    reset,
+  } = useForm({
+    resolver: zodResolver(formschema),
+    values: {
+      name: storedUser?.name ?? "",
+      email: storedUser?.email ?? "",
+    },
+    mode: "all",
+  });
+
+  // if no stored user, start in editing mode
+  useEffect(() => {
+    if (!storedUser) {
+      setIsEditingUserData(true);
+    }
+  }, [storedUser]);
+
+  const saveUserData = async (data: z.infer<typeof formschema>) => {
+    try {
+      setUser({ name: data.name, email: data.email });
+      setIsEditingUserData(false);
+    } catch (e) {
+      console.error("Failed to save user data to store", e);
+    }
+  };
+
+  const getHandleSignup = (quotaId: string) => {
+    return async (data: z.infer<typeof formschema>) => {
+      try {
+        const result = await createSignupMutation.mutateAsync({
+          quotaId,
+          name: data.name,
+          email: data.email,
+        });
+        if (result) {
+          router.push(
+            `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
+          );
+        }
+      } catch (error) {
+        alert.warning(`${error.message}`);
+      }
+    };
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-gray-800">Registration</h2>
+        {isEditingUserData ? (
+          <form
+            className="space-y-2"
+            onSubmit={handleSubmit(async (data) => {
+              await saveUserData(data);
+            })}
+          >
+            <p>Set name and email before registering</p>
+            <FieldSet title="Name">
+              <Input {...register("name")} placeholder="Your name" />
+              <span className="text-sm text-gray-500">
+                You may use a pseudonym to remain anonymous
+              </span>
+            </FieldSet>
+
+            <FieldSet title="Email">
+              <Input {...register("email")} placeholder="you@example.com" />
+            </FieldSet>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="bg-green-600">
+                Save
+              </Button>
+              <Button
+                type="button"
+                className="bg-gray-300 text-black"
+                onClick={() => {
+                  // Cancel editing: if we had stored data, revert to it; otherwise keep editing
+                  if (storedUser) {
+                    reset({
+                      name: storedUser.name ?? "",
+                      email: storedUser.email ?? "",
+                    });
+                    setIsEditingUserData(false);
+                  } else {
+                    // clear form
+                    reset({ name: "", email: "" });
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div>
+            <div className="flex items-center gap-4">
+              <p>
+                You are signing up as {storedUser?.name} {storedUser?.email}
+              </p>
+              <Button onClick={() => setIsEditingUserData(true)}>Change</Button>
+            </div>
+            <div className="my-1 flex flex-col gap-1">
+              {event.Quotas.filter((quota) => quota.id !== "queue").map(
+                (quota) => (
+                  <div
+                    key={quota.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
+                  >
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-700">
+                        {quota.title}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {quota.size
+                          ? `${quota.size} total spots`
+                          : `${quota.Signups.length} registrations`}
+                      </p>
+                    </div>
+                    <Button
+                      className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
+                      onClick={handleSubmit(getHandleSignup(quota.id))}
+                      disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                      loading={
+                        isSubmitting &&
+                        createSignupMutation.variables?.quotaId === quota.id
+                      }
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
-  const createSignupMutation = api.signups.createSignup.useMutation();
 
-  const handleSignup = async (quotaId: string) => {
-    const result = await createSignupMutation.mutateAsync({ quotaId });
-    if (result) {
-      router.push(`/events/${eventId}/${result.id}`);
-    }
-  };
-
-  const { data: event, isLoading, refetch } = api.events.getEventByID.useQuery(
+  const {
+    data: event,
+    isLoading,
+    refetch,
+  } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
-    { 
+    {
       enabled: !isNaN(eventId),
       staleTime: 0, // Always fetch fresh data
-      cacheTime: 0  // Don't cache the data
-    }
+      cacheTime: 0, // Don't cache the data
+    },
   );
 
   // Listen for raffle status updates
@@ -38,11 +212,11 @@ export default function EventPage() {
 
     const channel = pusherClient.subscribe(`raffle-${id}`);
     // Refetch event data when raffle status changes
-    channel.bind('status-update', () => {
+    channel.bind("status-update", () => {
       refetch();
     });
 
-    channel.bind('simulation-complete', () => {
+    channel.bind("simulation-complete", () => {
       refetch();
     });
 
@@ -54,8 +228,6 @@ export default function EventPage() {
   if (isLoading || !event) {
     return <div>Loading...</div>;
   }
-
-  const { isRegistrationOpen } = RegistrationDate(event);
 
   return (
     <>
@@ -86,97 +258,16 @@ export default function EventPage() {
             )}
           </div>
 
-          {/* Registration Section */}
-          <div className="mb-8">
-            {event.raffleEnabled ? (
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Raffle Registration
-                </h2>
-                {(() => {
-                  const firstQuota = event.Quotas.filter(q => q.id !== "queue")[0];
-                  if (!firstQuota) return null;
-                  
-                  return (
-                    <>
-                      <RaffleSignup
-                        key={firstQuota.id}
-                        eventId={event.id}
-                        quotaId={firstQuota.id}
-                        raffleStartTime={event.raffleStartTime}
-                        raffleEndTime={event.raffleEndTime}
-                      />
-                      
-                      {/* Show normal signup buttons if raffle has ended */}
-                      {event.raffleEndTime && new Date() > new Date(event.raffleEndTime) && (
-                        <div className="mt-8 space-y-4">
-                          <h2 className="text-xl font-semibold text-gray-800">
-                            Regular Registration
-                          </h2>
-                          {event.Quotas.filter((quota) => quota.id !== "queue").map(
-                            (quota) => (
-                              <div key={quota.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                                <div>
-                                  <h3 className="text-lg font-medium text-gray-700">
-                                    {quota.title}
-                                  </h3>
-                                  <p className="text-sm text-gray-500">
-                                    {quota.size} spots available
-                                  </p>
-                                </div>
-                                <Button
-                                  className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
-                                  onClick={() => handleSignup(quota.id)}
-                                  disabled={!isRegistrationOpen}
-                                >
-                                  Sign Up
-                                </Button>
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Registration
-                </h2>
-                {event.Quotas.filter((quota) => quota.id !== "queue").map(
-                  (quota) => (
-                    <div key={quota.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-700">
-                          {quota.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {quota.size? (
-                            `${quota.size} total spots`
-                          ) : (
-                            `${quota.Signups.length} registrations`
-                          )}
-                        </p>
-                      </div>
-                      <Button
-                        className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
-                        onClick={() => handleSignup(quota.id)}
-                        disabled={!isRegistrationOpen}
-                      >
-                        Sign Up
-                      </Button>
-                    </div>
-                  ),
-                )}
-              </div>
-            )}
-          </div>
+          {/* Registration Section, render only on client-side after zustand load */}
+          <HydrationZustand>
+            {event && <Registration event={event} />}
+          </HydrationZustand>
 
           {/* Terms Section */}
           <div className="mb-8 rounded-lg bg-gray-50 p-4">
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">Terms and Conditions</h2>
+            <h2 className="mb-4 text-lg font-semibold text-gray-800">
+              Terms and Conditions
+            </h2>
             <p className="mb-4 text-gray-700">
               Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
               jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
@@ -185,9 +276,9 @@ export default function EventPage() {
             </p>
             <p className="text-gray-700">
               The sign up is binding when sign-up closes. After this, the person
-              who has signed up is obligated to pay the participation fee or find
-              another participant to attend in one&apos;s place. Athene&apos;s common
-              principles are to be followed in the event.
+              who has signed up is obligated to pay the participation fee or
+              find another participant to attend in one&apos;s place.
+              Athene&apos;s common principles are to be followed in the event.
             </p>
           </div>
 
@@ -197,60 +288,67 @@ export default function EventPage() {
               <h2 className="text-xl font-semibold text-gray-800">
                 Registered Participants
               </h2>
-              {event.Quotas.map((quota) => (
-                (!(quota.id == 'queue' && quota.Signups.length == 0) &&
-                <div key={quota.id} className="rounded-lg border border-gray-200">
-                  <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
-                    {quota.title}
-                  </h3>
-                  <div className="overflow-x-auto p-4">
-                    {quota.Signups.length > 0 ? (
-                      <table className="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead>
-                          <tr className="bg-gray-50">
-                            <th className="px-6 py-3 text-left font-medium text-gray-900">
-                              Sija
-                            </th>
-                            <th className="px-6 py-3 text-left font-medium text-gray-900">
-                              Nimi
-                            </th>
-                            <th className="py-3 text-left font-medium text-gray-900">
-                              Ilmoittautumisaika
-                            </th>
-                            {quota.id === "queue" && (
-                              <th className="px-6 py-3 text-left font-medium text-gray-900">
-                                Quota
-                              </th>
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                          {quota.Signups.slice(
-                            0,
-                            quota.size || quota.Signups.length,
-                          ).map((signup, index) => (
-                            <tr key={signup.id}>
-                              <td className="px-6 py-4">{index + 1}.</td>
-                              <td className="px-6 py-4">{signup.name}</td>
-                              <SignupRow signup={signup} />
-                              {quota.id === "queue" && (
-                                <td className="px-6 py-4">
-                                  {OriginalQuotaTitle(
-                                    event.Quotas,
-                                    signup.quotaId,
+              {event.Quotas.map(
+                (quota) =>
+                  !(quota.id == "queue" && quota.Signups.length == 0) && (
+                    <div
+                      key={quota.id}
+                      className="rounded-lg border border-gray-200"
+                    >
+                      <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
+                        {quota.title}
+                      </h3>
+                      <div className="overflow-x-auto p-4">
+                        {quota.Signups.length > 0 ? (
+                          <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                  Sija
+                                </th>
+                                <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                  Nimi
+                                </th>
+                                <th className="py-3 text-left font-medium text-gray-900">
+                                  Ilmoittautumisaika
+                                </th>
+                                {quota.id === "queue" && (
+                                  <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                    Quota
+                                  </th>
+                                )}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {quota.Signups.slice(
+                                0,
+                                quota.size || quota.Signups.length,
+                              ).map((signup, index) => (
+                                <tr key={signup.id}>
+                                  <td className="px-6 py-4">{index + 1}.</td>
+                                  <td className="px-6 py-4">{signup.name}</td>
+                                  <SignupRow signup={signup} />
+                                  {quota.id === "queue" && (
+                                    <td className="px-6 py-4">
+                                      {OriginalQuotaTitle(
+                                        event.Quotas,
+                                        signup.quotaId,
+                                      )}
+                                    </td>
                                   )}
-                                </td>
-                              )}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <p className="px-6 py-4 text-gray-500">No participants yet</p>
-                    )}
-                  </div>
-                </div>
-                )))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p className="px-6 py-4 text-gray-500">
+                            No participants yet
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ),
+              )}
             </div>
           )}
         </div>

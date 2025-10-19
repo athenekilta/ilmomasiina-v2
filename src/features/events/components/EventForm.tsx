@@ -95,7 +95,7 @@ export function EventForm({ editId }: EventFormProps) {
       webpageUrl: editEvent?.webpageUrl || "",
       description: editEvent?.description || "",
       draft: editEvent?.draft ?? true,
-      signupsPublic: editEvent?.signupsPublic ?? false,
+      signupsPublic: editEvent?.signupsPublic ?? true,
       verificationEmail: editEvent?.verificationEmail || "",
     },
   });

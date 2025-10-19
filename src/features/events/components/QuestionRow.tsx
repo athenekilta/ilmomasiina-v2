@@ -91,7 +91,7 @@ export function QuestionRow({
       question.type === questionSchema.shape.type.Values.checkbox ? (
           <div className="mb-7 flex flex-col gap-3 px-7">
             {question.options.map((option, index) => (
-              <div className="flex flex-row items-center gap-5" key="index">
+              <div className="flex flex-row items-center gap-5" key={index}>
                 <span>Vaihtoehto:</span>
                 <Input
                   key={index}

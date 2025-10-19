@@ -6,31 +6,18 @@ import type { z } from "zod";
 import { signupFormSchema } from "../../../features/events/utils/signupFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/Input";
-import { useUser } from "@/features/auth/hooks/useUser";
 import { Button } from "@/components/Button";
 import { useState } from "react";
 
 export default function SignupPage() {
   const router = useRouter();
-  const user = useUser();
   const { eventId, signupId } = useQueryParams();
+  const { existing } = router.query;
   const updateMutation = api.signups.updateSignup.useMutation();
   const deleteMutation = api.signups.deleteSignup.useMutation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const {
-    handleSubmit,
-    register,
-    setValue,
-    getValues,
-    formState: {  errors },
-  } = useForm<z.TypeOf<typeof signupFormSchema>>({
-    resolver: zodResolver(signupFormSchema),
-    defaultValues: {
-      name: user.data?.name || "",
-      email: user.data?.emailVerified ? user.data.email || "" : "",
-    },
-  });
+  const isExistingSignup = existing === "true";
 
   const {
     data: signup,
@@ -42,30 +29,32 @@ export default function SignupPage() {
       eventId: eventId!,
     },
     {
-      enabled: !!eventId && !!signupId,
-      async onSuccess(data) {
-        const formValues = getValues();
-        // Set the name and email if they are not already set
-        if (!formValues.name && data?.name) setValue("name", data.name);
-        if (!formValues.email && data?.email) setValue("email", data.email);
-
-        if (data) {
-          data.questions.forEach((question, idx) => {
-            setValue(`answers.${idx}.questionId`, question.id);
-            const answer = data.answers.find(
-              (a) => a.questionId === question.id
-            );
-            if (answer) {
-              setValue(`answers.${idx}.answer`, answer.answer);
-            }
-          });
-        }
-      },
-    }
+      enabled: !!eventId && !!signupId && deleteMutation.isIdle,
+    },
   );
 
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<z.TypeOf<typeof signupFormSchema>>({
+    resolver: zodResolver(signupFormSchema),
+    // transform answers such that possible missing answers are filled
+    values: signup
+      ? {
+          ...signup,
+          answers: signup.questions.map((q) => {
+            const existing = signup.answers.find((a) => a.questionId === q.id);
+            return {
+              questionId: q.id,
+              answer: existing ? existing.answer : "",
+            };
+          }),
+        }
+      : undefined,
+  });
+
   const onSubmit = handleSubmit(async (values) => {
-    console.log("values", values);
     try {
       await updateMutation.mutateAsync({
         signupId: signupId!,
@@ -94,16 +83,25 @@ export default function SignupPage() {
   };
 
   if (isLoading) return <div>Loading...</div>;
-  if (isError || !signup){
+  if (isError || !signup) {
     return <div>Error loading signup details or not found.</div>;
   }
 
   return (
     <div className="rounded-lg bg-white p-5 shadow-lg">
       <h2 className="mb-4 text-xl font-bold">Signup Form</h2>
+      {isExistingSignup && (
+        <p className="mb-4 text-sm text-gray-600">
+          You are editing your already existing signup with this email.
+        </p>
+      )}
+      <p>Quota: {signup.Quota.title}</p>
+      <p>
+        Place: {signup.indexOfSignupInQuota} / {signup.Quota.size}
+      </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <fieldset className="flex flex-1 flex-col gap-2">
-          <label htmlFor="name" className="flex items-center ">
+          <label htmlFor="name" className="flex items-center">
             Nimi / Name: <span className="text-red-500"> *</span>
           </label>
           <Input
@@ -139,7 +137,7 @@ export default function SignupPage() {
             />
           </fieldset>
         ))}
-        
+
         <div className="flex justify-between pt-4">
           <Button
             type="submit"
@@ -148,7 +146,7 @@ export default function SignupPage() {
           >
             {updateMutation.isLoading ? "Saving..." : "Save Changes"}
           </Button>
-          
+
           <Button
             type="button"
             color="danger"
@@ -166,7 +164,8 @@ export default function SignupPage() {
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-4 text-lg font-semibold">Confirm Deletion</h3>
             <p className="mb-6 text-gray-600">
-              Are you sure you want to delete your signup? This action cannot be undone.
+              Are you sure you want to delete your signup? This action cannot be
+              undone.
             </p>
             <div className="flex justify-end space-x-4">
               <Button

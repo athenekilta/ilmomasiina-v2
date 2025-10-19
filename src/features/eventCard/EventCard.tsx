@@ -70,11 +70,11 @@ export function EventCard({ event, isAdmin }: {
         <div className="bg-brand-darkbeige p-5">
           {/* Card Header with Title and Status */}
           <div className="mb-3">
-            <t 
+            <h2 
               className="text-xl font-bold text-gray-900 dark:text-white"
             >
               {event.title}
-            </t>
+            </h2>
             <div className="mt-2 flex flex-wrap gap-2">
               {event.draft && (
                 <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">

@@ -3,6 +3,7 @@ import { router } from "../trpc/trpc";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { TRPCError } from "@trpc/server";
+import { SignupStatus } from "@prisma/client";
 
 export const signupsRouter = router({
   getSignupByEventIds: publicProcedure
@@ -62,6 +63,9 @@ export const signupsRouter = router({
         where: {
           id: input.signupId,
         },
+        include: {
+          Quota: true,
+        },
       });
 
       if (!signup) {
@@ -79,16 +83,31 @@ export const signupsRouter = router({
           signupId: input.signupId,
         },
       });
+
+      const indexOfSignupInQuota = await ctx.prisma.signup.count({
+        where: {
+          quotaId: signup.quotaId,
+          createdAt: {
+            lt: signup.createdAt,
+          },
+        },
+      });
+
+      
       return {
         ...signup,
         answers,
         questions,
+        event,
+        indexOfSignupInQuota,
       };
     }),
   createSignup: publicProcedure
     .input(
       z.object({
         quotaId: z.string(),
+        name: z.string(),
+        email: z.string().email(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -115,14 +134,30 @@ export const signupsRouter = router({
         throw new Error("Registration is closed");
       }
 
+      // check if email is already signed up for this event
+      const existingSignup = await ctx.prisma.signup.findFirst({
+        where: {
+          Quota: {
+            eventId: quota.eventId,
+          },
+          email: input.email,
+        },
+      });
+
+      if (existingSignup) {
+        // return the existing event instead of creating a new one
+        if (existingSignup.status === SignupStatus.PENDING) return {signup: existingSignup, isExistingSignup: true};
+        throw new TRPCError({code: 'BAD_REQUEST', message: "A registration exists with this email. Edit your existing signup via the confirmation email."});
+      }
+
       const signup = await ctx.prisma.signup.create({
         data: {
           quotaId: input.quotaId,
-          name: ctx.user?.name || "",
-          email: ctx.user?.email || "",
+          name: input.name,
+          email: input.email,
         },
       });
-      return signup;
+      return {signup: signup};
     }),
 
   updateSignup: publicProcedure
@@ -180,6 +215,7 @@ export const signupsRouter = router({
           name: input.name,
           email: input.email,
           confirmedAt: new Date(),
+          status: SignupStatus.CONFIRMED,
         },
         include: {
           Quota: {
