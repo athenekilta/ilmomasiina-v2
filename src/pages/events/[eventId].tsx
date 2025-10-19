@@ -295,33 +295,33 @@ export default function EventPage() {
                       key={quota.id}
                       className="rounded-lg border border-gray-200"
                     >
-                      <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
-                        {quota.title}
+                      <div className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium flex items-center">
+                        <h3 className="w-30 text-wrap">{quota.title}</h3>
                         {quota.id !== "queue" && (
-                          <span className="ml-5 text-md font-normal text-gray-700">
-                            {quota.Signups.length} / {quota.size ?? "∞"}
+                          <>
+                            <span className="mx-5 w-40 text-md font-normal text-gray-700 ">{quota.Signups.length} / {quota.size ?? "∞"}</span>
                             {quota.size && (
-                              <div className="ml-2 h-2 w-16 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div 
-                                  className={`h-full ${
-                                    quota.Signups.length >= quota.size 
-                                      ? "bg-red-500" 
-                                      : quota.Signups.length / quota.size > 0.75
-                                        ? "bg-yellow-500"
-                                        : "bg-green-500"
-                                  }`} 
-                                  style={{ width: `${Math.min(quota.Signups.length / quota.size * 100, 100)}%` }}
-                                ></div>
+                              <div className="ml-auto h-2 w-60 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                              <div 
+                                className={`h-full ${
+                                quota.Signups.length >= quota.size 
+                                  ? "bg-red-500" 
+                                  : quota.Signups.length / quota.size > 0.75
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                                }`} 
+                                style={{ width: `${Math.min(quota.Signups.length / quota.size * 100, 100)}%` }}
+                              ></div>
                               </div>
                             )}
-                          </span>
+                          </>
                         )}
                         {quota.id === "queue" && (
                           <span className="ml-5 text-md font-normal text-gray-700">
                             {quota.Signups.length}
                           </span>
                         )}
-                      </h3>
+                      </div>
                       <div className="overflow-x-auto p-4">
                         {quota.Signups.length > 0 ? (
                           <table className="min-w-full divide-y divide-gray-200 text-sm">
