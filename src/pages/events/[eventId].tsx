@@ -260,18 +260,12 @@ export default function EventPage() {
               <strong>Ajankohta: </strong>
               {event.date.toLocaleDateString()}
             </p>
-            <p className="text-lg">
+            {event.location && <p className="text-lg">
               <strong>Sijainti: </strong>
               {event.location}
-            </p>
+            </p>}
             <hr className="my-4" />
             <p className="text-base leading-relaxed">{event.description}</p>
-            {!!event.openQuotaSize && (
-              <p className="text-base">
-                <strong className="font-semibold">Open Quota Size: </strong>
-                {event.openQuotaSize}
-              </p>
-            )}
           </div>
 
           {/* Registration Section, render only on client-side after zustand load */}

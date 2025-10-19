@@ -33,7 +33,7 @@ export default function ManageAdmins() {
           </>
         ) : (
           <p className="text-center text-xl font-semibold">
-            Ei admin käyttäjiä
+            Ei admin-käyttäjiä
           </p>
         )}
         {nonAdminUsers?.length ? (

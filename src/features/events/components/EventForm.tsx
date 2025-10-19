@@ -279,6 +279,9 @@ export function EventForm({ editId }: EventFormProps) {
                 >
                   {watch("draft") ? "Julkaise" : "Muuta luonnokseksi"}
                 </Button>
+                <Button type="button" variant="text" onClick={() => router.push(`/events/${editId}`)}>
+                  Siirry ilmosivulle
+                </Button>
               </>
             )}
           </div>
