@@ -11,11 +11,12 @@ export default function ManageAdmins() {
   const updateRoleMutation = api.users.updateUserRole.useMutation();
 
   const adminUsers = users?.filter((user) => user.role == UserRole.admin);
-  const nonAdminUsers = users?.filter((user) => user.role == "user");
+  const nonAdminUsers = users?.filter((user) => user.role == UserRole.user);
 
   const handleRoleUpdate = (userId: string) => {
     const currentRole = users?.find((user) => user.id === userId)?.role;
-    const updatedRole = currentRole === UserRole.admin ? "user" : "admin";
+    const updatedRole =
+      currentRole === UserRole.admin ? UserRole.user : UserRole.admin;
     updateRoleMutation.mutate({ userId, role: updatedRole });
   };
 
