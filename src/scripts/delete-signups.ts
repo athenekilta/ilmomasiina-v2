@@ -8,7 +8,7 @@ async function deleteUnconfirmedSignups() {
     const twentyMinutesAgo = new Date(Date.now() - 1000 * 60 * 20);
     await prisma.signup.deleteMany({
       where: {
-        confirmedAt: null,
+        completedAt: null,
         createdAt: {
           lte: twentyMinutesAgo,
         },

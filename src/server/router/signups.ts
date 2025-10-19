@@ -146,7 +146,7 @@ export const signupsRouter = router({
 
       if (existingSignup) {
         // return the existing event instead of creating a new one
-        if (!existingSignup.confirmedAt) return {signup: existingSignup, isExistingSignup: true};
+        if (!existingSignup.completedAt) return {signup: existingSignup, isExistingSignup: true};
         throw new TRPCError({code: 'BAD_REQUEST', message: "A confirmed signup already exists with this email. Edit your existing signup via the confirmation email."});
       }
 
@@ -183,7 +183,7 @@ export const signupsRouter = router({
         throw new Error("Signup not found");
       }
 
-      const wasConfirmedBefore = currentSignup.confirmedAt !== null;
+      const wasCompletedBefore = currentSignup.completedAt !== null;
 
       // Update answers
       for (const answer of input.answers) {
@@ -211,7 +211,7 @@ export const signupsRouter = router({
           id: input.signupId,
         },
         data: {
-          confirmedAt: new Date(),
+          completedAt: new Date(),
         },
         include: {
           Quota: {
@@ -223,7 +223,7 @@ export const signupsRouter = router({
       });
 
       // Only send confirmation email if this is the first time being confirmed
-      if (!wasConfirmedBefore) {
+      if (!wasCompletedBefore) {
         const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
         const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
         const editUrl = `${nextAuthUrl}events/${signup.Quota.eventId}/${signup.id}`;
@@ -369,7 +369,7 @@ export const signupsRouter = router({
   deleteUnconfirmedSignups: publicProcedure.mutation(async ({ ctx }) => {
     await ctx.prisma.signup.deleteMany({
       where: {
-        confirmedAt: null,
+        completedAt: null,
         createdAt: {
           lte: new Date(new Date().getTime() - 1000 * 60 * 1), // Older than 20 minutes
         },
