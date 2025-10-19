@@ -4,6 +4,7 @@ import { eventsRouter } from "./events";
 import { signupsRouter } from "./signups";
 import { profileRouter } from "./profile";
 import { raffleRouter } from "./raffle";
+import { usersRouter } from "./users";
 
 export const appRouter = router({
   auth: authRouter,
@@ -11,6 +12,7 @@ export const appRouter = router({
   signups: signupsRouter,
   profile: profileRouter,
   raffle: raffleRouter,
+  users: usersRouter
 });
 
 // export type definition of API
