@@ -213,16 +213,16 @@ export const signupsRouter = router({
       const newSignup = await ctx.prisma.$transaction(async (tx) => {
         const firstIds = currentSignup.Quota.size
           ? await tx.signup.findMany({
-              where: {
-                quotaId: currentSignup.quotaId,
-              },
-              orderBy: [
-                { createdAt: "asc" },
-                { id: "asc" }, // tie-breaker to keep order deterministic
-              ],
-              take: currentSignup.Quota.size,
-              select: { id: true },
-            })
+            where: {
+              quotaId: currentSignup.quotaId,
+            },
+            orderBy: [
+              { createdAt: "asc" },
+              { id: "asc" }, // tie-breaker to keep order deterministic
+            ],
+            take: currentSignup.Quota.size,
+            select: { id: true },
+          })
           : [];
 
         const isWithinQuota =
@@ -368,7 +368,7 @@ export const signupsRouter = router({
         const openQuota = await ctx.prisma.quota.findFirst({
           where: {
             eventId: signup.Quota.Event.id,
-            title: "Open", // Assuming open quota has title "Open"
+            id: "public-quota-" + signup.Quota.Event.id,
           },
           include: {
             Signups: {

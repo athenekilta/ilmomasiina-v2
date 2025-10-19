@@ -88,7 +88,8 @@ function Registration({
           );
         }
       } catch (error) {
-        alert.warning(`${error.message}`, { timeoutMs: 10000 });
+        if (error instanceof Error)
+          alert.warning(`${error.message}`, { timeoutMs: 10000 });
       }
     };
   };
