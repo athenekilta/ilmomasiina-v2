@@ -208,6 +208,8 @@ export const eventsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const openQuotaSize = input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
+
       const event = await ctx.prisma.event.create({
         data: {
           title: input.title,
@@ -222,6 +224,7 @@ export const eventsRouter = router({
           signupsPublic: input.signupsPublic,
           verificationEmail: input.verificationEmail,
           raffleEnabled: input.raffle,
+          openQuotaSize: openQuotaSize,
         },
       });
 
@@ -292,6 +295,8 @@ export const eventsRouter = router({
       const questionsToUpdate = input.questions.filter((q) => q.id);
       const newQuestions = input.questions.filter((q) => !q.id);
 
+      const openQuotaSize = input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
+
       // Then update event with new data
       return ctx.prisma.event.update({
         where: {
@@ -309,6 +314,7 @@ export const eventsRouter = router({
           draft: input.draft,
           signupsPublic: input.signupsPublic,
           verificationEmail: input.verificationEmail,
+          openQuotaSize: openQuotaSize,
           Quotas: {    
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             create: newQuotas.map(({ eventId, ...quota }) => quota),
