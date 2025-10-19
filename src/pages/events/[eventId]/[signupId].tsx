@@ -12,9 +12,12 @@ import { useState } from "react";
 export default function SignupPage() {
   const router = useRouter();
   const { eventId, signupId } = useQueryParams();
+  const { existing } = router.query;
   const updateMutation = api.signups.updateSignup.useMutation();
   const deleteMutation = api.signups.deleteSignup.useMutation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const isExistingSignup = existing === "true";
 
   const {
     data: signup,
@@ -84,13 +87,18 @@ export default function SignupPage() {
     return <div>Error loading signup details or not found.</div>;
   }
 
-  console.log(errors);
-
-  console.log(signup);
-
   return (
     <div className="rounded-lg bg-white p-5 shadow-lg">
       <h2 className="mb-4 text-xl font-bold">Signup Form</h2>
+      {isExistingSignup && (
+        <p className="mb-4 text-sm text-gray-600">
+          You are editing your already existing signup with this email.
+        </p>
+      )}
+      <p>Quota: {signup.Quota.title}</p>
+      <p>
+        Place: {signup.indexOfSignupInQuota} / {signup.Quota.size}
+      </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <fieldset className="flex flex-1 flex-col gap-2">
           <label htmlFor="name" className="flex items-center">

@@ -19,6 +19,8 @@ import { InputHelperText } from "@/components/InputHelperText";
 import HydrationZustand from "@/components/HydrationZustand";
 import { Event } from "@prisma/client";
 import { RouteOutput } from "@/types/types";
+import { TRPCError } from "@trpc/server";
+import { useAlert } from "@/features/alert/hooks/useAlert";
 
 const formschema = z.object({
   email: z.string().email(),
@@ -32,6 +34,8 @@ function Registration({
 }) {
   const router = useRouter();
   const { isRegistrationOpen } = RegistrationDate(event);
+
+  const alert = useAlert();
 
   // use zustand store for persisted signup user
   const { user: storedUser, setUser, clearUser } = useUserStore();
@@ -72,13 +76,19 @@ function Registration({
 
   const getHandleSignup = (quotaId: string) => {
     return async (data: z.infer<typeof formschema>) => {
-      const result = await createSignupMutation.mutateAsync({
-        quotaId,
-        name: data.name,
-        email: data.email,
-      });
-      if (result) {
-        router.push(`/events/${event.id}/${result.id}`);
+      try {
+        const result = await createSignupMutation.mutateAsync({
+          quotaId,
+          name: data.name,
+          email: data.email,
+        });
+        if (result) {
+          router.push(
+            `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
+          );
+        }
+      } catch (error) {
+        alert.warning(`${error.message}`);
       }
     };
   };
