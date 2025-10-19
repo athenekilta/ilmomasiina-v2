@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
-import { Event, Quota, Signup } from "@prisma/client";
+import type { Event, Quota, Signup } from "@prisma/client";
 
 // Define a simpler type that matches the manual enrichment in the events router
 type EnrichedQuota = Quota & {
@@ -113,7 +113,7 @@ export function EventCard({ event, isAdmin }: {
           <div className="mb-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
             <div className="flex items-center">
               <Icon icon="calendar_today" className="mr-2 h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400" />
-              <span>{new Date(event.date).toLocaleDateString('fi-FI')}</span>
+              <span>{new Date(event.date).toLocaleString('fi-FI', {dateStyle: "medium", timeStyle: 'short'})}</span>
             </div>
             
             <div className="flex items-start">

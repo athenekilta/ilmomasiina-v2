@@ -18,7 +18,7 @@ import { z } from "zod";
 import { InputHelperText } from "@/components/InputHelperText";
 import HydrationZustand from "@/components/HydrationZustand";
 import { Event } from "@prisma/client";
-import { RouteOutput } from "@/types/types";
+import type { RouteOutput } from "@/types/types";
 import { TRPCError } from "@trpc/server";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 
@@ -297,6 +297,30 @@ export default function EventPage() {
                     >
                       <h3 className="border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
                         {quota.title}
+                        {quota.id !== "queue" && (
+                          <span className="ml-5 text-md font-normal text-gray-700">
+                            {quota.Signups.length} / {quota.size ?? "∞"}
+                            {quota.size && (
+                              <div className="ml-2 h-2 w-16 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div 
+                                  className={`h-full ${
+                                    quota.Signups.length >= quota.size 
+                                      ? "bg-red-500" 
+                                      : quota.Signups.length / quota.size > 0.75
+                                        ? "bg-yellow-500"
+                                        : "bg-green-500"
+                                  }`} 
+                                  style={{ width: `${Math.min(quota.Signups.length / quota.size * 100, 100)}%` }}
+                                ></div>
+                              </div>
+                            )}
+                          </span>
+                        )}
+                        {quota.id === "queue" && (
+                          <span className="ml-5 text-md font-normal text-gray-700">
+                            {quota.Signups.length}
+                          </span>
+                        )}
                       </h3>
                       <div className="overflow-x-auto p-4">
                         {quota.Signups.length > 0 ? (

@@ -371,10 +371,10 @@ export function EventForm({ editId }: EventFormProps) {
             onChange={(value) => setValue("description", value)}
           />
         </FieldSet>
-        <FieldSet title="Jonot">
+        <FieldSet title="Kiintiöt">
           <div className="mb-5 mt-2 flex flex-row gap-4">
             <Button onClick={() => createQuota()} type="button">
-              Lisää jono
+              Lisää kiintiö
             </Button>
             <Button
               type="button"
@@ -383,7 +383,7 @@ export function EventForm({ editId }: EventFormProps) {
                 !!watch("Quotas").find((quota) => quota.id === "public-quota")
               }
             >
-              Lisää avoin jono
+              Lisää avoin kiintiö
             </Button>
           </div>
           
