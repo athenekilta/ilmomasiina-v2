@@ -82,7 +82,7 @@ export function EventForm({ editId }: EventFormProps) {
       price: "",
       webpageUrl: "",
       draft: true,
-      signupsPublic: false,
+      signupsPublic: true,
       verificationEmail: "",
       quotas: [] as Quota[],
       questions: [] as Question[],
