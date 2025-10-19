@@ -161,7 +161,7 @@ model Signup {
   id                 String       @id @default(cuid())
   name               String
   email              String
-  completedAt        DateTime?
+  completedAt        DateTime? // when signup process is completed
   createdAt          DateTime     @default(now())
   quotaId            String
   registrationIntent DateTime?
