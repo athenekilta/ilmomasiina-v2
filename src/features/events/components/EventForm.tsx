@@ -25,6 +25,7 @@ import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { ValidationSummary } from "./ValidationSummary";
+import { SignupsTable } from "./SignupsTable";
 
 export type EventFormProps = {
   /**
@@ -37,7 +38,7 @@ export function EventForm({ editId }: EventFormProps) {
   const createMutation = api.events.createEvent.useMutation();
   const updateMutation = api.events.updateEvent.useMutation();
   const router = useRouter();
-  const signups = api.signups.getSignupByEventIds.useQuery(
+  const {data: signups, isLoading: signUpsLoading} = api.signups.getSignupByEventIds.useQuery(
     {
       eventId: editId!,
     },
@@ -45,6 +46,7 @@ export function EventForm({ editId }: EventFormProps) {
       enabled: !!editId,
     },
   );
+  
   const alert = useAlert();
 
   const { error: queryError } = useQueryParams();
@@ -89,7 +91,7 @@ export function EventForm({ editId }: EventFormProps) {
       ),
       Quotas: editEvent?.Quotas.map((quota) => ({
         ...quota,
-        signupCount: signups.data?.filter((s) => s.quotaId === quota.id).length || 0,
+        signupCount: signups?.filter((s) => s.quotaId === quota.id).length || 0,
       })) || [] ,
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
@@ -244,7 +246,7 @@ export function EventForm({ editId }: EventFormProps) {
     console.log(result);
   };
 
-  if (editId && (signups.isLoading || isLoading)) {
+  if (editId && (signUpsLoading || isLoading)) {
     return (
       <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center bg-white/70 p-6">
         Loading...
@@ -491,7 +493,7 @@ export function EventForm({ editId }: EventFormProps) {
                               setValue("Questions", questions);
                             }}
                             deleteQuestion={deleteQuestion}
-                            signupCount={signups.data ? signups.data.length : 0}
+                            signupCount={signups ? signups.length : 0}
                             errors={errors.Questions && (errors.Questions[index] as FieldErrorsImpl<Question>)}
                           />
                         </div>
@@ -536,10 +538,8 @@ export function EventForm({ editId }: EventFormProps) {
         </FieldSet>
 
         <FieldSet title="Ilmoittautuneet">
-          {signups.data ? (
-            <div>
-              <p>{signups.data[0]?.name}</p>
-            </div>
+          {signups ? (
+            <SignupsTable signups={signups} />
           ) : (
             <p> Ei Ilmoittautuneita</p>
           )}
