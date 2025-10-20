@@ -63,8 +63,7 @@ export function EventCard({
     );
 
   return (
-    <a href={`events/${event.id}`}>
-      {/* Make whole card clickable with <a> tag */}
+    <Link href={`events/${event.id}`}>
       <div
         className={`rounded-lg border shadow-sm transition-all duration-300 hover:shadow-md ${
           event.draft
@@ -207,6 +206,6 @@ export function EventCard({
           )}
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

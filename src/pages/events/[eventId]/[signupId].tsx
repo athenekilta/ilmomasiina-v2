@@ -42,15 +42,15 @@ export default function SignupPage() {
     // transform answers such that possible missing answers are filled
     values: signup
       ? {
-          ...signup,
-          answers: signup.questions.map((q) => {
-            const existing = signup.answers.find((a) => a.questionId === q.id);
-            return {
-              questionId: q.id,
-              answer: existing ? existing.answer : "",
-            };
-          }),
-        }
+        ...signup,
+        answers: signup.questions.map((q) => {
+          const existing = signup.answers.find((a) => a.questionId === q.id);
+          return {
+            questionId: q.id,
+            answer: existing ? existing.answer : "",
+          };
+        }),
+      }
       : undefined,
   });
 

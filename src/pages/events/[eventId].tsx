@@ -6,7 +6,6 @@ import { OriginalQuotaTitle } from "@/features/events/utils/utils";
 import { SignupRow } from "@/features/events/components/SingupRow";
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
-import { RaffleSignup } from "@/features/raffle/RaffleSignup";
 import { pusherClient } from "@/utils/pusher";
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/stores/userStore";
@@ -15,12 +14,10 @@ import { FieldSet } from "@/components/FieldSet";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { InputHelperText } from "@/components/InputHelperText";
 import HydrationZustand from "@/components/HydrationZustand";
-import { Event } from "@prisma/client";
 import type { RouteOutput } from "@/types/types";
-import { TRPCError } from "@trpc/server";
 import { useAlert } from "@/features/alert/hooks/useAlert";
+import Link from "next/link";
 
 const formschema = z.object({
   email: z.string().email(),
@@ -250,7 +247,16 @@ export default function EventPage() {
     <>
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
-        <div className="mx-auto mt-5 max-w-4xl rounded-lg bg-white p-4 shadow-md">
+        <div className="m-4">
+          <Link
+                    href="/"
+                    className="cursor-pointer border-none p-0 text-brand-primary hover:underline"
+                  >
+                    <span>&#8592; </span>
+                    Takaisin etusivulle
+                  </Link>
+        </div>
+        <div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md">
           <h1 className="mb-2 text-3xl font-bold text-gray-800">
             {event.title}
           </h1>
