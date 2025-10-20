@@ -239,10 +239,6 @@ export default function EventPage() {
     };
   }, [router.query.eventId, refetch]);
 
-  if (isLoading || !event) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <>
       <PageHead title={event?.title || "Loading..."} />
@@ -257,6 +253,10 @@ export default function EventPage() {
                   </Link>
         </div>
         <div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md">
+        {isLoading || !event ? (
+          <div className="h-xl">Loading...</div>
+        ) : (
+          <>
           <h1 className="mb-2 text-3xl font-bold text-gray-800">
             {event.title}
           </h1>
@@ -405,6 +405,8 @@ export default function EventPage() {
               )}
             </div>
           )}
+        </>
+        )}
         </div>
       </Layout>
     </>
