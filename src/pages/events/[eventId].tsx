@@ -9,6 +9,7 @@ import { RegistrationDate } from "@/features/events/utils/utils";
 import { pusherClient } from "@/utils/pusher";
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/stores/userStore";
+import { useUser } from "@/features/auth/hooks/useUser";
 import { Input } from "@/components/Input";
 import { FieldSet } from "@/components/FieldSet";
 import { useForm } from "react-hook-form";
@@ -206,6 +207,10 @@ export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
 
+  
+  const loginUser = useUser();
+  const isAdmin = loginUser.data?.role === "admin";
+
   const {
     data: event,
     isLoading,
@@ -252,11 +257,18 @@ export default function EventPage() {
                     Takaisin etusivulle
                   </Link>
         </div>
-        <div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md">
+        <div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md mb-10">
         {isLoading || !event ? (
-          <div className="h-xl">Loading...</div>
+          <div>Loading...</div>
         ) : (
           <>
+          {isAdmin && 
+          <div className="mb-6 flex justify-start">
+            <Button.Link href={`/events/${event.id}/edit`} className="bg-brand-primary text-white">
+              Muokkaa tapahtumaa
+            </Button.Link>
+          </div>
+          }
           <h1 className="mb-2 text-3xl font-bold text-gray-800">
             {event.title}
           </h1>
