@@ -7,9 +7,11 @@ export const Header = () => {
 
   console.log(user.data);
   return (
-    <nav className="flex h-16 items-center justify-between bg-brand-primary p-6">
+    <nav className="bg-brand-primary flex h-16 items-center justify-between p-6">
       <Link href="/">
-        <h1 className="font-primary text-white text-2xl">Athenen Ilmomasiina</h1>
+        <h1 className="font-primary text-2xl font-extrabold text-white uppercase">
+          Athenen Ilmomasiina
+        </h1>
       </Link>
 
       {user.data && (
