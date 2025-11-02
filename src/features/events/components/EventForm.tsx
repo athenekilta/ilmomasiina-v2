@@ -560,8 +560,12 @@ export function EventForm({ editId }: EventFormProps) {
           <TextArea {...register("verificationEmail")} rows={5} />
         </FieldSet>
         <FieldSet title="Ilmoittautuneet">
-          {signups ? (
-            <SignupsTable signups={signups} />
+          {signups && editId ? (
+            <SignupsTable
+              signups={signups}
+              eventId={editId}
+              eventName={editEvent?.title}
+            />
           ) : (
             <p> Ei Ilmoittautuneita</p>
           )}

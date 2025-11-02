@@ -2,8 +2,10 @@ import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
+import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import { TRPCError } from "@trpc/server";
 import { SignupStatus } from "@prisma/client";
+import { createSignupsCsv } from "../features/exports/buildSignupsCsv";
 
 export const signupsRouter = router({
   getSignupByEventIds: publicProcedure
@@ -213,16 +215,16 @@ export const signupsRouter = router({
       const newSignup = await ctx.prisma.$transaction(async (tx) => {
         const firstIds = currentSignup.Quota.size
           ? await tx.signup.findMany({
-            where: {
-              quotaId: currentSignup.quotaId,
-            },
-            orderBy: [
-              { createdAt: "asc" },
-              { id: "asc" }, // tie-breaker to keep order deterministic
-            ],
-            take: currentSignup.Quota.size,
-            select: { id: true },
-          })
+              where: {
+                quotaId: currentSignup.quotaId,
+              },
+              orderBy: [
+                { createdAt: "asc" },
+                { id: "asc" }, // tie-breaker to keep order deterministic
+              ],
+              take: currentSignup.Quota.size,
+              select: { id: true },
+            })
           : [];
 
         const isWithinQuota =
@@ -498,5 +500,15 @@ export const signupsRouter = router({
       });
 
       return signup;
+    }),
+
+  exportSignupsCsv: adminProcedure
+    .input(
+      z.object({
+        eventId: z.number(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return createSignupsCsv(ctx.prisma, input.eventId);
     }),
 });
