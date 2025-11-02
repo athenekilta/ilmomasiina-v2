@@ -164,9 +164,11 @@ model Signup {
   completedAt        DateTime? // when signup process is completed
   createdAt          DateTime     @default(now())
   quotaId            String
+  originalQuotaId    String
   registrationIntent DateTime?
   status             SignupStatus @default(PENDING)
-  Quota              Quota        @relation(fields: [quotaId], references: [id])
+  Quota              Quota        @relation("Quota", fields: [quotaId], references: [id])
+  OriginalQuota      Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
   Answers            Answer[]
 
   @@index([quotaId])
@@ -197,7 +199,8 @@ model Quota {
   sortId  Int
   eventId Int
   Event   Event    @relation(fields: [eventId], references: [id])
-  Signups Signup[]
+  Signups Signup[] @relation("Quota")
+  OriginalSignups Signup[] @relation("OriginalQuota")
 
   @@index([eventId])
 }
