@@ -301,13 +301,13 @@ export default function EventPage() {
               Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
               jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
               tai löytämään paikalleen toisen osallistujan. Osallistumalla
-              tapahtumaan sitoudut noudattamaan Athenen yhteisiä periaatteita.
+              tapahtumaan sitoudut noudattamaan <a href="https://athene.fi/periaatteet/" target="_blank"> Athenen yhteisiä periaatteita.</a>
             </p>
             <p className="text-gray-700">
               The sign up is binding when sign-up closes. After this, the person
               who has signed up is obligated to pay the participation fee or
               find another participant to attend in one&apos;s place.
-              Athene&apos;s common principles are to be followed in the event.
+              <a href="https://athene.fi/en/principles/" target="_blank"> Athene&apos;s common principles</a> are to be followed in the event.
             </p>
           </div>
 
