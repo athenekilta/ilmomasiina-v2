@@ -182,7 +182,7 @@ function Registration({
                       </p>
                     </div>
                     <Button
-                      className="rounded-sm bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
+                      className="rounded-sm bg-blue-500 px-4 py-2 text-white transition duration-300"
                       onClick={handleSubmit(getHandleSignup(quota.id))}
                       disabled={!isRegistrationOpen || !isValid || isSubmitting}
                       loading={

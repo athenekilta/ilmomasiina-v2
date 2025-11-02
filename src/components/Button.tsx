@@ -45,7 +45,7 @@ export const Button = Object.assign(
       stopPropagation,
       ...htmlProps
     },
-    ref
+    ref,
   ) {
     return (
       <button
@@ -70,7 +70,7 @@ export const Button = Object.assign(
         {
           // Loading icon
           loading && (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <LoadingSpinner />
             </div>
           )
@@ -119,7 +119,7 @@ export const Button = Object.assign(
         </Link>
       );
     },
-  }
+  },
 );
 
 /**
@@ -136,7 +136,7 @@ function getClassName(props: {
   size?: ButtonSize;
 }) {
   const classNameList = [
-    "relative flex items-center justify-center rounded-lg font-medium",
+    "relative cursor-pointer flex items-center justify-center rounded-lg font-medium",
     variableButtonClassNames[props.variant ?? "filled"][0],
     variableButtonClassNames[props.variant ?? "filled"][1][
       props.color ?? "primary"
@@ -160,37 +160,54 @@ const variableButtonClassNames: Record<
   [string, Record<ColorVariant, string>]
 > = {
   filled: [
-    "enabled:hover:bg-opacity-75 enabled:active:bg-opacity-70",
+    "",
     {
-      black: "bg-black text-white",
-      white: "bg-white text-black",
-      primary: "bg-brand-primary text-white",
-      secondary: "bg-brand-lime text-black",
-      danger: "bg-danger text-white",
-      warning: "bg-warning text-white",
+      black:
+        "bg-black text-white enabled:hover:bg-black/75 enabled:active:bg-black/70",
+      white:
+        "bg-white text-black enabled:hover:bg-black/75 enabled:active:bg-black/70",
+      primary:
+        "bg-brand-primary text-white enabled:hover:bg-brand-primary/75 enabled:active:bg-brand-primary/70",
+      secondary:
+        "bg-brand-lime text-black enabled:hover:bg-brand-lime/75 enabled:active:bg-brand-lime/70",
+      danger:
+        "bg-danger text-white enabled:hover:bg-danger/75 enabled:active:bg-danger/70",
+      warning:
+        "bg-warning text-white enabled:hover:bg-warning/75 enabled:active:bg-warning/70",
     },
   ],
   bordered: [
-    "border bg-opacity-0 border-opacity-50 enabled:hover:bg-opacity-15 enabled:hover:border-opacity-60 enabled:active:bg-opacity-10 enabled:hover:border-opacity-70",
+    "border",
     {
-      black: "text-black bg-black border-black",
-      white: "text-white bg-white border-white",
-      primary: "text-brand-primary bg-brand-primary border-brand-primary",
+      black:
+        "text-black bg-black/0 enabled:hover:bg-black/15 enabled:active:bg-black/10 border-black/50 enabled:hover:border-black/70",
+      white:
+        "text-white bg-white/0 enabled:hover:bg-white/15 enabled:active:bg-white/10 border-white/50 enabled:hover:border-white/70",
+      primary:
+        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/15 enabled:active:bg-brand-primary/10 border-brand-primary/50 enabled:hover:border-brand-primary/70",
       secondary:
-        "text-brand-secondary bg-brand-secondary border-brand-secondary",
-      danger: "text-danger  bg-danger  border-danger",
-      warning: "text-warning bg-warning border-warning",
+        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/15 enabled:active:bg-brand-secondary/10 border-brand-secondary/50 enabled:hover:border-brand-secondary/70",
+      danger:
+        "text-danger bg-danger/0 enabled:hover:bg-danger/15 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/70",
+      warning:
+        "text-warning bg-warning/0 enabled:hover:bg-warning/15 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/70",
     },
   ],
   text: [
-    "bg-opacity-0 enabled:hover:bg-opacity-10 enabled:active:bg-opacity-20",
+    "",
     {
-      black: "text-black   bg-black",
-      white: "text-white   bg-white",
-      primary: "text-brand-primary bg-brand-primary",
-      secondary: "text-brand-secondary bg-brand-secondary",
-      danger: "text-danger  bg-danger",
-      warning: "text-warning bg-warning",
+      black:
+        "text-black   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+      white:
+        "text-white   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+      primary:
+        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/10 enabled:active:bg-brand-primary/20",
+      secondary:
+        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/10 enabled:active:bg-brand-secondary/20",
+      danger:
+        "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
+      warning:
+        "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
     },
   ],
 };

@@ -13,7 +13,7 @@ export default function RequestEmailVerification() {
             Verify your email
           </h1>
 
-          <div className="mb-2 flex items-center gap-4 rounded-lg border bg-slate-50 p-4 text-sm">
+          <div className="mb-2 flex items-center gap-4 rounded-lg bg-slate-50 p-4 text-sm">
             <Icon icon="info" className="text-primary" />
             <div className="space-y-4">
               <p>

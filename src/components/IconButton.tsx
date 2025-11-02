@@ -38,7 +38,7 @@ export const IconButton = Object.assign(
       endLabel,
       ...htmlProps
     },
-    ref
+    ref,
   ) {
     return (
       <button
@@ -57,7 +57,7 @@ export const IconButton = Object.assign(
         {
           // Loading icon
           loading && (
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <LoadingSpinner variant="puff" />
             </div>
           )
@@ -94,7 +94,7 @@ export const IconButton = Object.assign(
         </Link>
       );
     },
-  }
+  },
 );
 
 /**
@@ -134,36 +134,54 @@ const variableButtonClassNames: Record<
   [string, Record<ColorVariant, string>]
 > = {
   filled: [
-    "enabled:hover:bg-opacity-85 enabled:active:bg-opacity-75",
+    "",
     {
-      black: "  bg-black   text-white",
-      white: "  bg-white   text-black",
-      primary: "bg-primary text-white",
-      secondary: "bg-secondary text-white",
-      danger: " bg-danger  text-white",
-      warning: "bg-warning text-white",
+      black:
+        "bg-black text-white enabled:hover:bg-black/85 enabled:active:bg-black/75",
+      white:
+        "bg-white text-black enabled:hover:bg-black/85 enabled:active:bg-black/75",
+      primary:
+        "bg-brand-primary text-white enabled:hover:bg-brand-primary/85 enabled:active:bg-brand-primary/75",
+      secondary:
+        "bg-brand-lime text-black enabled:hover:bg-brand-lime/85 enabled:active:bg-brand-lime/75",
+      danger:
+        "bg-danger text-white enabled:hover:bg-danger/85 enabled:active:bg-danger/75",
+      warning:
+        "bg-warning text-white enabled:hover:bg-warning/85 enabled:active:bg-warning/75",
     },
   ],
   bordered: [
-    "border bg-opacity-0 border-opacity-50 enabled:hover:bg-opacity-5 enabled:hover:border-opacity-60 enabled:active:bg-opacity-10 enabled:hover:border-opacity-70",
+    "border",
     {
-      black: "  text-black   bg-black   border-black",
-      white: "  text-white   bg-white   border-white",
-      primary: "text-primary bg-primary border-primary",
-      secondary: "text-secondary bg-secondary border-secondary",
-      danger: " text-danger  bg-danger  border-danger",
-      warning: "text-warning bg-warning border-warning",
+      black:
+        "text-black bg-black/0 enabled:hover:bg-black/5 enabled:active:bg-black/10 border-black/50 enabled:hover:border-black/75",
+      white:
+        "text-white bg-white/0 enabled:hover:bg-white/5 enabled:active:bg-white/10 border-white/50 enabled:hover:border-white/75",
+      primary:
+        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/5 enabled:active:bg-brand-primary/10 border-brand-primary/50 enabled:hover:border-brand-primary/75",
+      secondary:
+        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/5 enabled:active:bg-brand-secondary/10 border-brand-secondary/50 enabled:hover:border-brand-secondary/75",
+      danger:
+        "text-danger bg-danger/0 enabled:hover:bg-danger/5 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/75",
+      warning:
+        "text-warning bg-warning/0 enabled:hover:bg-warning/5 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/75",
     },
   ],
   icon: [
-    "bg-opacity-0 enabled:hover:bg-opacity-10 enabled:active:bg-opacity-20",
+    "",
     {
-      black: "  text-black   bg-black",
-      white: "  text-white   bg-white",
-      primary: "text-primary bg-primary",
-      secondary: "text-secondary bg-secondary",
-      danger: " text-danger  bg-danger",
-      warning: "text-warning bg-warning",
+      black:
+        "text-black   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+      white:
+        "text-white   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+      primary:
+        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/10 enabled:active:bg-brand-primary/20",
+      secondary:
+        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/10 enabled:active:bg-brand-secondary/20",
+      danger:
+        "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
+      warning:
+        "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
     },
   ],
 };

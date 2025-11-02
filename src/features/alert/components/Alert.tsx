@@ -13,7 +13,7 @@ export function Alert({ ...props }: AlertProps) {
   return (
     <div
       data-var={props.variant}
-      className="w-full rounded-lg border bg-white shadow-lg"
+      className="w-full rounded-lg bg-white shadow-lg"
     >
       <div className="relative flex items-center justify-between gap-4 text-lg">
         <div

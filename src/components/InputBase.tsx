@@ -43,17 +43,17 @@ export const InputBase = Object.assign(
 
           props.className,
 
-          props.baseClassName
+          props.baseClassName,
         )}
       >
         {/* Interactivity */}
         {!props.readOnly && !props.disabled && (
           <div
             className={c(
-              "duration-250 pointer-events-none absolute inset-0 transition-[clip-path]",
+              "pointer-events-none absolute inset-0 transition-[clip-path] duration-250",
               "[clip-path:circle(0)] group-focus-within:[clip-path:circle(100%)] group-hover:[clip-path:circle(100%)]",
               "rounded-lg border",
-              c.if(props.error)("border-danger").else("border-gray-300")
+              c.if(props.error)("border-danger").else("border-gray-300"),
             )}
           />
         )}
@@ -63,7 +63,7 @@ export const InputBase = Object.assign(
         )}
 
         {props.startLabel && (
-          <span className="whitespace-nowrap px-2 text-black">
+          <span className="px-2 whitespace-nowrap text-black">
             {props.startLabel}
           </span>
         )}
@@ -71,7 +71,7 @@ export const InputBase = Object.assign(
         {props.children}
 
         {props.endLabel && (
-          <span className="ml-auto whitespace-nowrap px-2 text-black">
+          <span className="ml-auto px-2 whitespace-nowrap text-black">
             {props.endLabel}
           </span>
         )}
@@ -111,7 +111,7 @@ export const InputBase = Object.assign(
       };
     },
     removeExtensionInputBaseProps<T extends ExtensionInputBaseProps>(
-      props: T
+      props: T,
     ): Omit<T, keyof ExtensionInputBaseProps> {
       const {
         fullWidth,
@@ -128,7 +128,7 @@ export const InputBase = Object.assign(
       return rest;
     },
     removeInputBaseProps<T extends InputBaseProps>(
-      props: T
+      props: T,
     ): Omit<T, keyof InputBaseProps> {
       const {
         children,
@@ -148,5 +148,5 @@ export const InputBase = Object.assign(
       /* eslint-enable */
       return rest;
     },
-  }
+  },
 );

@@ -65,7 +65,7 @@ export function EventCard({
   return (
     <Link href={`events/${event.id}`}>
       <div
-        className={`rounded-lg border shadow-xs transition-all duration-300 hover:shadow-md ${
+        className={`rounded-lg shadow-xs transition-all duration-300 hover:shadow-md ${
           event.draft
             ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20"
             : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
