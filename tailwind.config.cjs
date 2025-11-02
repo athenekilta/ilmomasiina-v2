@@ -21,6 +21,7 @@ module.exports = {
         secondary: ["Open Sans", "sans-serif"]
       },
       colors: {
+        ...colors,
         brand: {
           DEFAULT: BRAND_GREEN,
           primary: BRAND_GREEN,
@@ -58,7 +59,6 @@ module.exports = {
   plugins: [
     require("@tailwindcss/container-queries"),
     require("@tailwindcss/typography"),
-    require("@headlessui/tailwindcss"),
     require("tailwind-current-hue"),
     plugin(({ addVariant }) => {
       // Data-active states

@@ -18,7 +18,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
         <textarea
           ref={ref}
           {...htmlProps}
-          className="w-full bg-transparent px-2 py-2 text-black outline-none"
+          className="w-full bg-transparent px-2 py-2 text-black outline-hidden"
         />
         <InputHelperText error={props.error}>{helperText}</InputHelperText>
       </InputBase>

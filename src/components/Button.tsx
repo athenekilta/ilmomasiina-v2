@@ -145,7 +145,7 @@ function getClassName(props: {
     props.size === "small" ? "pr-2" : props.endIcon ? "pr-2" : "pr-4",
     props.size === "small"
       ? "gap-1 py-1 text-[0.8rem]"
-      : "py-2 text-[0.9rem] min-h-[2.25rem] gap-4",
+      : "py-2 text-[0.9rem] min-h-9 gap-4",
   ];
 
   if (props.loading) classNameList.push("opacity-60");

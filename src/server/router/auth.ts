@@ -38,36 +38,13 @@ export const authRouter = router({
       await sendNewEmailVerificationToken(
         ctx,
         { email: input.email },
-        { force: true }
+        { force: true },
       );
     }),
 });
 
 // Utilities
 
-function capitalize(str: string) {
+/*function capitalize(str: string) {
   return str.at(0)?.toUpperCase() + str.slice(1);
-}
-
-function getNameFromEmail(email: string) {
-  // Get `emailName` (part before split chars)
-  // "test.user+postfix@gmail.com" => "test.user"
-  const splitAtChars = ["+", "@"];
-  const emailName = email.substring(
-    0,
-    Math.min(
-      ...splitAtChars
-        .map((char) => email.indexOf(char))
-        .filter((index) => index > 0)
-    )
-  );
-  // Remove all numbers
-  const emailNameWithoutNumbers = emailName.replace(/\d/g, "");
-
-  // Capitalize each word and join with spaces
-  return emailNameWithoutNumbers
-    .split(".")
-    .filter(Boolean)
-    .map((str) => capitalize(str))
-    .join(" ");
-}
+}*/

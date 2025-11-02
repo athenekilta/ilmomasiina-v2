@@ -9,8 +9,7 @@ import type { ZodSafe } from "@/types/types";
 import { c } from "@/utils/classnames";
 
 export type TextInputFormProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit(value: string): any;
+  onSubmit(value: string): void;
   schema: ZodSafe<z.ZodString>;
   defaultValue: string;
 } & Omit<InputProps, "onSubmit">;
@@ -29,7 +28,7 @@ export function TextInputForm({
     formState: {
       errors: { value: error },
     },
-  } = useForm<z.TypeOf<typeof formSchema>>({
+  } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: { value: defaultValue },
     reValidateMode: "onBlur",

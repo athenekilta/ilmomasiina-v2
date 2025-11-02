@@ -36,7 +36,7 @@ function Registration({
   const alert = useAlert();
 
   // use zustand store for persisted signup user
-  const { user: storedUser, setUser, clearUser } = useUserStore();
+  const { user: storedUser, setUser } = useUserStore();
   const [isEditingUserData, setIsEditingUserData] = useState(false);
 
   const createSignupMutation = api.signups.createSignup.useMutation();
@@ -44,7 +44,7 @@ function Registration({
   // store these just locally to prefill email & name for the user
   const {
     register,
-    formState: { isSubmitting, errors, isValid },
+    formState: { isSubmitting, isValid },
     handleSubmit,
     reset,
   } = useForm({
@@ -157,7 +157,7 @@ function Registration({
                   <span className="text-gray-900">{storedUser?.email}</span>
                   <button
                     onClick={() => setIsEditingUserData(true)}
-                    className="ml-2 cursor-pointer border-none p-0 text-brand-primary hover:underline"
+                    className="text-brand-primary ml-2 cursor-pointer border-none p-0 hover:underline"
                   >
                     Vaihda
                   </button>
@@ -182,7 +182,7 @@ function Registration({
                       </p>
                     </div>
                     <Button
-                      className="rounded bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
+                      className="rounded-sm bg-blue-500 px-4 py-2 text-white transition duration-300 hover:bg-blue-600"
                       onClick={handleSubmit(getHandleSignup(quota.id))}
                       disabled={!isRegistrationOpen || !isValid || isSubmitting}
                       loading={
@@ -207,7 +207,6 @@ export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
 
-  
   const loginUser = useUser();
   const isAdmin = loginUser.data?.role === "admin";
 
@@ -220,7 +219,7 @@ export default function EventPage() {
     {
       enabled: !isNaN(eventId),
       staleTime: 0, // Always fetch fresh data
-      cacheTime: 0, // Don't cache the data
+      gcTime: 0, // Don't cache the data
     },
   );
 
@@ -250,175 +249,193 @@ export default function EventPage() {
       <Layout>
         <div className="m-4">
           <Link
-                    href="/"
-                    className="cursor-pointer border-none p-0 text-brand-primary hover:underline"
-                  >
-                    <span>&#8592; </span>
-                    Takaisin etusivulle
-                  </Link>
+            href="/"
+            className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+          >
+            <span>&#8592; </span>
+            Takaisin etusivulle
+          </Link>
         </div>
-        <div className="mx-auto max-w-4xl rounded-lg bg-white p-4 shadow-md mb-10">
-        {isLoading || !event ? (
-          <div>Loading...</div>
-        ) : (
-          <>
-          {isAdmin && 
-          <div className="mb-6 flex justify-start">
-            <Button.Link href={`/events/${event.id}/edit`} className="bg-brand-primary text-white">
-              Muokkaa tapahtumaa
-            </Button.Link>
-          </div>
-          }
-          <h1 className="mb-2 text-3xl font-bold text-gray-800">
-            {event.title}
-          </h1>
+        <div className="mx-auto mb-10 max-w-4xl rounded-lg bg-white p-4 shadow-md">
+          {isLoading || !event ? (
+            <div>Loading...</div>
+          ) : (
+            <>
+              {isAdmin && (
+                <div className="mb-6 flex justify-start">
+                  <Button.Link
+                    href={`/events/${event.id}/edit`}
+                    className="bg-brand-primary text-white"
+                  >
+                    Muokkaa tapahtumaa
+                  </Button.Link>
+                </div>
+              )}
+              <h1 className="mb-2 text-3xl font-bold text-gray-800">
+                {event.title}
+              </h1>
 
-          {/* Event Details */}
-          <div className="mb-8">
-            <p className="text-lg">
-              <strong>Ajankohta: </strong>
-              {event.date.toLocaleDateString()}
-            </p>
-            {event.location && <p className="text-lg">
-              <strong>Sijainti: </strong>
-              {event.location}
-            </p>}
-            <hr className="my-4" />
-            <p className="text-base leading-relaxed">{event.description}</p>
-          </div>
+              {/* Event Details */}
+              <div className="mb-8">
+                <p className="text-lg">
+                  <strong>Ajankohta: </strong>
+                  {event.date.toLocaleDateString()}
+                </p>
+                {event.location && (
+                  <p className="text-lg">
+                    <strong>Sijainti: </strong>
+                    {event.location}
+                  </p>
+                )}
+                <hr className="my-4" />
+                <p className="text-base leading-relaxed">{event.description}</p>
+              </div>
 
-          {/* Registration Section, render only on client-side after zustand load */}
-          <HydrationZustand>
-            {event && <Registration event={event} />}
-          </HydrationZustand>
+              {/* Registration Section, render only on client-side after zustand load */}
+              <HydrationZustand>
+                {event && <Registration event={event} />}
+              </HydrationZustand>
 
-          {/* Terms Section */}
-          <div className="mb-8 rounded-lg bg-gray-50 py-4">
-            <h2 className="mb-4 text-lg font-semibold text-gray-800">
-              Terms and Conditions
-            </h2>
-            <p className="mb-4 text-gray-700">
-              Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
-              jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
-              tai löytämään paikalleen toisen osallistujan. Osallistumalla
-              tapahtumaan sitoudut noudattamaan <a href="https://athene.fi/periaatteet/" target="_blank"> Athenen yhteisiä periaatteita.</a>
-            </p>
-            <p className="text-gray-700">
-              The sign up is binding when sign-up closes. After this, the person
-              who has signed up is obligated to pay the participation fee or
-              find another participant to attend in one&apos;s place.
-              <a href="https://athene.fi/en/principles/" target="_blank"> Athene&apos;s common principles</a> are to be followed in the event.
-            </p>
-          </div>
+              {/* Terms Section */}
+              <div className="mb-8 rounded-lg bg-gray-50 py-4">
+                <h2 className="mb-4 text-lg font-semibold text-gray-800">
+                  Terms and Conditions
+                </h2>
+                <p className="mb-4 text-gray-700">
+                  Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova.
+                  Tämän jälkeen ilmoittautunut on velvollinen maksamaan
+                  osallistumismaksun tai löytämään paikalleen toisen
+                  osallistujan. Osallistumalla tapahtumaan sitoudut noudattamaan{" "}
+                  <a href="https://athene.fi/periaatteet/" target="_blank">
+                    {" "}
+                    Athenen yhteisiä periaatteita.
+                  </a>
+                </p>
+                <p className="text-gray-700">
+                  The sign up is binding when sign-up closes. After this, the
+                  person who has signed up is obligated to pay the participation
+                  fee or find another participant to attend in one&apos;s place.
+                  <a href="https://athene.fi/en/principles/" target="_blank">
+                    {" "}
+                    Athene&apos;s common principles
+                  </a>{" "}
+                  are to be followed in the event.
+                </p>
+              </div>
 
-          {/* Participants List */}
-          {event.signupsPublic && (
-            <div className="space-y-8">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Registered Participants
-              </h2>
+              {/* Participants List */}
+              {event.signupsPublic && (
+                <div className="space-y-8">
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Registered Participants
+                  </h2>
 
-              {event.Quotas.map(
-                (quota) =>
-                  !(quota.id == "queue" && quota.Signups.length == 0) && (
-                    <div
-                      key={quota.id}
-                      className="rounded-lg border border-gray-200"
-                    >
-                      <div className="flex items-center border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
-                        <h3 className="w-30 text-wrap">{quota.title}</h3>
-                        {quota.id !== "queue" && (
-                          <>
-                            <span className="text-md mx-5 w-40 font-normal text-gray-700">
-                              {quota.Signups.length} / {quota.size ?? "∞"}
-                            </span>
-                            {quota.size && (
-                              <div className="ml-auto h-2 w-60 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div
-                                  className={`h-full ${
-                                    quota.Signups.length >= quota.size
-                                      ? "bg-red-500"
-                                      : quota.Signups.length / quota.size > 0.75
-                                        ? "bg-yellow-500"
-                                        : "bg-green-500"
-                                  }`}
-                                  style={{
-                                    width: `${Math.min((quota.Signups.length / quota.size) * 100, 100)}%`,
-                                  }}
-                                ></div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                        {quota.id === "queue" && (
-                          <span className="text-md ml-5 font-normal text-gray-700">
-                            {quota.Signups.length}
-                          </span>
-                        )}
-                      </div>
-                      <div className="overflow-x-auto p-4">
-                        {quota.Signups.length > 0 ? (
-                          <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead>
-                              <tr className="bg-gray-50">
-                                <th className="px-6 py-3 text-left font-medium text-gray-900">
-                                  Sija
-                                </th>
-                                <th className="px-6 py-3 text-left font-medium text-gray-900">
-                                  Nimi
-                                </th>
-                                <th className="py-3 text-left font-medium text-gray-900">
-                                  Ilmoittautumisaika
-                                </th>
-                                {quota.id === "queue" && (
-                                  <th className="px-6 py-3 text-left font-medium text-gray-900">
-                                    Quota
-                                  </th>
+                  {event.Quotas.map(
+                    (quota) =>
+                      !(quota.id == "queue" && quota.Signups.length == 0) && (
+                        <div
+                          key={quota.id}
+                          className="rounded-lg border border-gray-200"
+                        >
+                          <div className="flex items-center border-b border-gray-200 bg-gray-50 p-4 text-lg font-medium">
+                            <h3 className="w-30 text-wrap">{quota.title}</h3>
+                            {quota.id !== "queue" && (
+                              <>
+                                <span className="text-md mx-5 w-40 font-normal text-gray-700">
+                                  {quota.Signups.length} / {quota.size ?? "∞"}
+                                </span>
+                                {quota.size && (
+                                  <div className="ml-auto h-2 w-60 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                    <div
+                                      className={`h-full ${
+                                        quota.Signups.length >= quota.size
+                                          ? "bg-red-500"
+                                          : quota.Signups.length / quota.size >
+                                              0.75
+                                            ? "bg-yellow-500"
+                                            : "bg-green-500"
+                                      }`}
+                                      style={{
+                                        width: `${Math.min((quota.Signups.length / quota.size) * 100, 100)}%`,
+                                      }}
+                                    ></div>
+                                  </div>
                                 )}
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                              {quota.Signups.slice(
-                                0,
-                                quota.size || quota.Signups.length,
-                              ).map((signup, index) => {
-                                const rowStyle = signup.completedAt
-                                  ? "px-6 py-2"
-                                  : "px-6 py-2 text-gray-400";
-                                return (
-                                  <tr key={signup.id}>
-                                    <td className={rowStyle}>{index + 1}.</td>
-                                    <td className={rowStyle}>{signup.name}</td>
-                                    <SignupRow
-                                      signup={signup}
-                                      rowStyle={rowStyle}
-                                    />
+                              </>
+                            )}
+                            {quota.id === "queue" && (
+                              <span className="text-md ml-5 font-normal text-gray-700">
+                                {quota.Signups.length}
+                              </span>
+                            )}
+                          </div>
+                          <div className="overflow-x-auto p-4">
+                            {quota.Signups.length > 0 ? (
+                              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                <thead>
+                                  <tr className="bg-gray-50">
+                                    <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                      Sija
+                                    </th>
+                                    <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                      Nimi
+                                    </th>
+                                    <th className="py-3 text-left font-medium text-gray-900">
+                                      Ilmoittautumisaika
+                                    </th>
                                     {quota.id === "queue" && (
-                                      <td className={rowStyle}>
-                                        {OriginalQuotaTitle(
-                                          event.Quotas,
-                                          signup.quotaId,
-                                        )}
-                                      </td>
+                                      <th className="px-6 py-3 text-left font-medium text-gray-900">
+                                        Quota
+                                      </th>
                                     )}
                                   </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p className="px-6 py-4 text-gray-500">
-                            No participants yet
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ),
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                  {quota.Signups.slice(
+                                    0,
+                                    quota.size || quota.Signups.length,
+                                  ).map((signup, index) => {
+                                    const rowStyle = signup.completedAt
+                                      ? "px-6 py-2"
+                                      : "px-6 py-2 text-gray-400";
+                                    return (
+                                      <tr key={signup.id}>
+                                        <td className={rowStyle}>
+                                          {index + 1}.
+                                        </td>
+                                        <td className={rowStyle}>
+                                          {signup.name}
+                                        </td>
+                                        <SignupRow
+                                          signup={signup}
+                                          rowStyle={rowStyle}
+                                        />
+                                        {quota.id === "queue" && (
+                                          <td className={rowStyle}>
+                                            {OriginalQuotaTitle(
+                                              event.Quotas,
+                                              signup.quotaId,
+                                            )}
+                                          </td>
+                                        )}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            ) : (
+                              <p className="px-6 py-4 text-gray-500">
+                                No participants yet
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ),
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
-        </>
-        )}
         </div>
       </Layout>
     </>

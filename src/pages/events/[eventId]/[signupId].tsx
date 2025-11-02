@@ -42,15 +42,15 @@ export default function SignupPage() {
     // transform answers such that possible missing answers are filled
     values: signup
       ? {
-        ...signup,
-        answers: signup.questions.map((q) => {
-          const existing = signup.answers.find((a) => a.questionId === q.id);
-          return {
-            questionId: q.id,
-            answer: existing ? existing.answer : "",
-          };
-        }),
-      }
+          ...signup,
+          answers: signup.questions.map((q) => {
+            const existing = signup.answers.find((a) => a.questionId === q.id);
+            return {
+              questionId: q.id,
+              answer: existing ? existing.answer : "",
+            };
+          }),
+        }
       : undefined,
   });
 
@@ -143,25 +143,25 @@ export default function SignupPage() {
           <Button
             type="submit"
             color="primary"
-            disabled={updateMutation.isLoading}
+            disabled={updateMutation.isPending}
           >
-            {updateMutation.isLoading ? "Saving..." : "Save Changes"}
+            {updateMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
 
           <Button
             type="button"
             color="danger"
             onClick={() => setShowDeleteConfirm(true)}
-            disabled={deleteMutation.isLoading}
+            disabled={deleteMutation.isPending}
           >
-            {deleteMutation.isLoading ? "Deleting..." : "Delete Signup"}
+            {deleteMutation.isPending ? "Deleting..." : "Delete Signup"}
           </Button>
         </div>
       </form>
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="mb-4 text-lg font-semibold">Confirm Deletion</h3>
             <p className="mb-6 text-gray-600">
@@ -178,9 +178,9 @@ export default function SignupPage() {
               <Button
                 color="danger"
                 onClick={handleDelete}
-                disabled={deleteMutation.isLoading}
+                disabled={deleteMutation.isPending}
               >
-                {deleteMutation.isLoading ? "Deleting..." : "Delete"}
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </Button>
             </div>
           </div>

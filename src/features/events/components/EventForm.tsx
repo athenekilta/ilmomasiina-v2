@@ -1,7 +1,7 @@
 "use client";
 
 import { eventFormSchema } from "../utils/eventFormSchema";
-import type { FieldErrorsImpl} from "react-hook-form";
+import type { FieldErrorsImpl } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
@@ -38,15 +38,16 @@ export function EventForm({ editId }: EventFormProps) {
   const createMutation = api.events.createEvent.useMutation();
   const updateMutation = api.events.updateEvent.useMutation();
   const router = useRouter();
-  const {data: signups, isLoading: signUpsLoading} = api.signups.getSignupByEventIds.useQuery(
-    {
-      eventId: editId!,
-    },
-    {
-      enabled: !!editId,
-    },
-  );
-  
+  const { data: signups, isLoading: signUpsLoading } =
+    api.signups.getSignupByEventIds.useQuery(
+      {
+        eventId: editId!,
+      },
+      {
+        enabled: !!editId,
+      },
+    );
+
   const alert = useAlert();
 
   const { error: queryError } = useQueryParams();
@@ -54,7 +55,7 @@ export function EventForm({ editId }: EventFormProps) {
     alert.error("Error: " + queryError);
   }
 
-  const {data: editEvent, isLoading} = api.events.getEventEditId.useQuery(
+  const { data: editEvent, isLoading } = api.events.getEventEditId.useQuery(
     {
       eventId: editId ?? NaN,
     },
@@ -72,27 +73,48 @@ export function EventForm({ editId }: EventFormProps) {
     setValue,
   } = useForm({
     resolver: zodResolver(eventFormSchema),
-    values: {...(editEvent ? editEvent : {}),
-      date: editEvent?.date ? nativeDate.stringify(editEvent.date) as unknown as Date : nativeDate.stringify(addDays(new Date(), 7)) as unknown as Date,
-      time: editEvent?.date ? nativeTime.stringify(set(new Date(editEvent.date), {seconds:0, milliseconds:0})): nativeTime.stringify(
-        set(new Date(), { hours: 12, minutes: 0 }),
-      ),
-      registrationStartDate: editEvent?.registrationStartDate ? nativeDate.stringify(editEvent.registrationStartDate) as unknown as Date : nativeDate.stringify(
-        addDays(new Date(), 1),
-      ) as unknown as Date,
-      registrationEndDate: editEvent?.registrationEndDate ? nativeDate.stringify(editEvent.registrationEndDate) as unknown as Date : nativeDate.stringify(
-        addDays(new Date(), 5),
-      ) as unknown as Date,
-      registrationEndTime: editEvent?.registrationEndDate ? nativeTime.stringify(set(new Date(editEvent.registrationEndDate), {seconds:0, milliseconds:0})): nativeTime.stringify(
-        set(new Date(), { hours: 23, minutes: 59 }),
-      ),
-      registrationStartTime: editEvent?.registrationStartDate ? nativeTime.stringify(set(new Date(editEvent.registrationStartDate), {seconds:0, milliseconds:0})) : nativeTime.stringify(
-        set(new Date(), { hours: 12, minutes: 0 }),
-      ),
-      Quotas: editEvent?.Quotas.map((quota) => ({
-        ...quota,
-        signupCount: signups?.filter((s) => s.quotaId === quota.id).length || 0,
-      })) || [] ,
+    values: {
+      ...(editEvent ? editEvent : {}),
+      date: editEvent?.date
+        ? (nativeDate.stringify(editEvent.date) as unknown as Date)
+        : (nativeDate.stringify(addDays(new Date(), 7)) as unknown as Date),
+      time: editEvent?.date
+        ? nativeTime.stringify(
+            set(new Date(editEvent.date), { seconds: 0, milliseconds: 0 }),
+          )
+        : nativeTime.stringify(set(new Date(), { hours: 12, minutes: 0 })),
+      registrationStartDate: editEvent?.registrationStartDate
+        ? (nativeDate.stringify(
+            editEvent.registrationStartDate,
+          ) as unknown as Date)
+        : (nativeDate.stringify(addDays(new Date(), 1)) as unknown as Date),
+      registrationEndDate: editEvent?.registrationEndDate
+        ? (nativeDate.stringify(
+            editEvent.registrationEndDate,
+          ) as unknown as Date)
+        : (nativeDate.stringify(addDays(new Date(), 5)) as unknown as Date),
+      registrationEndTime: editEvent?.registrationEndDate
+        ? nativeTime.stringify(
+            set(new Date(editEvent.registrationEndDate), {
+              seconds: 0,
+              milliseconds: 0,
+            }),
+          )
+        : nativeTime.stringify(set(new Date(), { hours: 23, minutes: 59 })),
+      registrationStartTime: editEvent?.registrationStartDate
+        ? nativeTime.stringify(
+            set(new Date(editEvent.registrationStartDate), {
+              seconds: 0,
+              milliseconds: 0,
+            }),
+          )
+        : nativeTime.stringify(set(new Date(), { hours: 12, minutes: 0 })),
+      Quotas:
+        editEvent?.Quotas.map((quota) => ({
+          ...quota,
+          signupCount:
+            signups?.filter((s) => s.quotaId === quota.id).length || 0,
+        })) || [],
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
       price: editEvent?.price || "",
@@ -166,7 +188,7 @@ export function EventForm({ editId }: EventFormProps) {
     setValue("Quotas", [
       ...quotas,
       {
-        id: editEvent?.id ? ("public-quota-" + editEvent?.id) : "public-quota",
+        id: editEvent?.id ? "public-quota-" + editEvent?.id : "public-quota",
         title: "Avoin kiintiö",
         size: null,
         sortId,
@@ -176,7 +198,7 @@ export function EventForm({ editId }: EventFormProps) {
     ]);
   };
 
-  console.log(editId)
+  console.log(editId);
 
   useEffect(() => {
     if (watch("Quotas").length === 0 && editId === undefined) {
@@ -195,13 +217,10 @@ export function EventForm({ editId }: EventFormProps) {
   const onSubmit = handleSubmit(async (data) => {
     console.log("handleSubmit", data);
     console.log(getValues("time"));
-    if(!data.date)return;
+    if (!data.date) return;
     const formData = {
       ...data,
-      date: combineDates(
-        new Date(data.date),
-        getValues("time"),
-      ),
+      date: combineDates(new Date(data.date), getValues("time")),
       registrationStartDate: combineDates(
         new Date(data.registrationStartDate),
         getValues("registrationStartTime"),
@@ -212,10 +231,19 @@ export function EventForm({ editId }: EventFormProps) {
       ),
     };
     if (editId) {
-      await updateMutation.mutateAsync({ ...formData, id: editId, quotas: data.Quotas, questions: data.Questions });
+      await updateMutation.mutateAsync({
+        ...formData,
+        id: editId,
+        quotas: data.Quotas,
+        questions: data.Questions,
+      });
       alert.success("Event updated successfully");
     } else {
-      const event = await createMutation.mutateAsync({ ...formData, quotas: data.Quotas, questions: data.Questions });
+      const event = await createMutation.mutateAsync({
+        ...formData,
+        quotas: data.Quotas,
+        questions: data.Questions,
+      });
       alert.success("Event created successfully");
       router.push(`/events/${event.id}/edit`);
     }
@@ -281,7 +309,11 @@ export function EventForm({ editId }: EventFormProps) {
                 >
                   {watch("draft") ? "Julkaise" : "Muuta luonnokseksi"}
                 </Button>
-                <Button.Link type="button" variant="text" href={`/events/${editId}`}>
+                <Button.Link
+                  type="button"
+                  variant="text"
+                  href={`/events/${editId}`}
+                >
                   Siirry ilmosivulle
                 </Button.Link>
               </>
@@ -296,7 +328,7 @@ export function EventForm({ editId }: EventFormProps) {
           />
         </FieldSet>
         <FieldSet title="Aika">
-          <div className="max-w-3/4 flex flex-row gap-6">
+          <div className="flex max-w-3/4 flex-row gap-6">
             <Input
               {...register("date")}
               type="date"
@@ -314,7 +346,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration start time">
-          <div className="max-w-3/4 flex flex-row gap-6">
+          <div className="flex max-w-3/4 flex-row gap-6">
             <Input
               {...register("registrationStartDate")}
               type="date"
@@ -332,7 +364,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration end time">
-          <div className="max-w-3/4 flex flex-row gap-6">
+          <div className="flex max-w-3/4 flex-row gap-6">
             <Input
               {...register("registrationEndDate")}
               type="date"
@@ -378,12 +410,12 @@ export function EventForm({ editId }: EventFormProps) {
         </FieldSet>
         <FieldSet title="Kuvaus">
           <RichTextEditor
-            value={watch("description")}
+            value={watch("description") || ""}
             onChange={(value) => setValue("description", value)}
           />
         </FieldSet>
         <FieldSet title="Kiintiöt">
-          <div className="mb-5 mt-2 flex flex-row gap-4">
+          <div className="mt-2 mb-5 flex flex-row gap-4">
             <Button onClick={() => createQuota()} type="button">
               Lisää kiintiö
             </Button>
@@ -391,30 +423,42 @@ export function EventForm({ editId }: EventFormProps) {
               type="button"
               onClick={() => createPublicQueue()}
               disabled={
-                !!watch("Quotas").find((quota) => quota.id.includes("public-quota"))
+                !!watch("Quotas").find((quota) =>
+                  quota.id.includes("public-quota"),
+                )
               }
             >
               Lisää avoin kiintiö
             </Button>
           </div>
-          
+
           {errors.Quotas && (
             <div className="mb-4 rounded-md bg-red-50 p-3">
               <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <div className="shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-red-700">
-                    {typeof errors.Quotas.message === 'string' ? errors.Quotas.message : "Please add at least one valid quota"}
+                    {typeof errors.Quotas.message === "string"
+                      ? errors.Quotas.message
+                      : "Please add at least one valid quota"}
                   </p>
                 </div>
               </div>
             </div>
           )}
-          
+
           <DragDropContext onDragEnd={onDragEndQuota}>
             <Droppable droppableId="Quotas">
               {(droppableProvided) => (
@@ -445,7 +489,7 @@ export function EventForm({ editId }: EventFormProps) {
                               setValue("Quotas", quotas);
                             }}
                             deleteQuota={deleteQuota}
-                            errors={errors.Quotas && (errors.Quotas[index])}
+                            errors={errors.Quotas && errors.Quotas[index]}
                           />
                         </div>
                       )}
@@ -459,7 +503,7 @@ export function EventForm({ editId }: EventFormProps) {
         </FieldSet>
 
         <FieldSet title="Kysymykset">
-          <div className="mb-5 mt-2 flex flex-row gap-4">
+          <div className="mt-2 mb-5 flex flex-row gap-4">
             <Button onClick={() => createQuestion()} type="button">
               Lisää Kysymys
             </Button>
@@ -494,7 +538,12 @@ export function EventForm({ editId }: EventFormProps) {
                             }}
                             deleteQuestion={deleteQuestion}
                             signupCount={signups ? signups.length : 0}
-                            errors={errors.Questions && (errors.Questions[index] as FieldErrorsImpl<Question>)}
+                            errors={
+                              errors.Questions &&
+                              (errors.Questions[
+                                index
+                              ] as FieldErrorsImpl<Question>)
+                            }
                           />
                         </div>
                       )}
@@ -510,33 +559,6 @@ export function EventForm({ editId }: EventFormProps) {
         <FieldSet title="Vahvistusviesti sähköpostiin">
           <TextArea {...register("verificationEmail")} rows={5} />
         </FieldSet>
-
-        <FieldSet title="Raffle Mode">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Switch
-                value={watch("raffleEnabled")}
-                disabled
-                onChange={(value) => setValue("raffleEnabled", value)}
-              />
-              <span className="text-sm text-gray-600">
-                Enable 30-second raffle registration window. Feature currently disabled.
-              </span>
-            </div>
-            {watch("raffleEnabled") && (
-              <div className="rounded-lg bg-blue-50 p-4">
-                <p className="text-sm text-blue-800">
-                  When enabled, registration will open a 30-second window where
-                  everyone can register interest. After the window closes,
-                  positions will be randomly assigned to all registrants. This
-                  helps prevent server load from everyone clicking at the same
-                  time.
-                </p>
-              </div>
-            )}
-          </div>
-        </FieldSet>
-
         <FieldSet title="Ilmoittautuneet">
           {signups ? (
             <SignupsTable signups={signups} />

@@ -50,8 +50,8 @@ export const eventsRouter = router({
       const dateFilter = input.includeOlderEvents
         ? {}
         : {
-          gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-        };
+            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+          };
 
       const events = await ctx.prisma.event.findMany({
         orderBy: { date: "asc" },
@@ -208,7 +208,8 @@ export const eventsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const openQuotaSize = input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
+      const openQuotaSize =
+        input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
       const event = await ctx.prisma.event.create({
         data: {
@@ -231,7 +232,9 @@ export const eventsRouter = router({
       const quotas = input.quotas.map((quota) => ({
         ...quota,
         eventId: event.id,
-        id: quota.id.includes("public-quota") ? "public-quota-" + event.id : quota.id,
+        id: quota.id.includes("public-quota")
+          ? "public-quota-" + event.id
+          : quota.id,
       }));
 
       const questions = input.questions.map((question) => ({
@@ -277,7 +280,9 @@ export const eventsRouter = router({
         },
       });
       const quotasToDelete = existingQuotas.filter(
-        (eq) => !input.quotas.some((iq) => iq.id === eq.id) && eq.Signups.length === 0,
+        (eq) =>
+          !input.quotas.some((iq) => iq.id === eq.id) &&
+          eq.Signups.length === 0,
       );
       // Create quotas that are new
       const newQuotas = input.quotas.filter((q) => !q.id);
@@ -295,7 +300,8 @@ export const eventsRouter = router({
       const questionsToUpdate = input.questions.filter((q) => q.id);
       const newQuestions = input.questions.filter((q) => !q.id);
 
-      const openQuotaSize = input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
+      const openQuotaSize =
+        input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
       // Then update event with new data
       return ctx.prisma.event.update({
@@ -315,11 +321,11 @@ export const eventsRouter = router({
           signupsPublic: input.signupsPublic,
           verificationEmail: input.verificationEmail,
           openQuotaSize: openQuotaSize,
-          Quotas: {    
+          Quotas: {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             create: newQuotas.map(({ eventId, ...quota }) => quota),
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            update: existingQuotasToUpdate.map(({eventId, ...quota}) => ({
+            update: existingQuotasToUpdate.map(({ eventId, ...quota }) => ({
               where: { id: quota.id },
               data: quota,
             })),
@@ -329,11 +335,11 @@ export const eventsRouter = router({
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             create: newQuestions.map(({ eventId, ...question }) => question),
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            update: questionsToUpdate.map(({eventId, ...question}) => ({
+            update: questionsToUpdate.map(({ eventId, ...question }) => ({
               where: { id: question.id },
               data: question,
             })),
-            delete: questionsToDelete.map((question) => ({ id: question.id }) ),
+            delete: questionsToDelete.map((question) => ({ id: question.id })),
           },
         },
       });

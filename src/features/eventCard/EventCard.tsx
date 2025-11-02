@@ -65,7 +65,7 @@ export function EventCard({
   return (
     <Link href={`events/${event.id}`}>
       <div
-        className={`rounded-lg border shadow-sm transition-all duration-300 hover:shadow-md ${
+        className={`rounded-lg border shadow-xs transition-all duration-300 hover:shadow-md ${
           event.draft
             ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20"
             : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
@@ -116,7 +116,7 @@ export function EventCard({
             <div className="flex items-center">
               <Icon
                 icon="calendar_today"
-                className="mr-2 h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400"
+                className="mr-2 h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400"
               />
               <span>
                 {new Date(event.date).toLocaleString("fi-FI", {
@@ -129,7 +129,7 @@ export function EventCard({
             <div className="flex items-start">
               <Icon
                 icon="event_available"
-                className="mr-2 h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400"
+                className="mr-2 h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400"
               />
               <span>
                 {formatRegistration(
@@ -143,7 +143,7 @@ export function EventCard({
               <div className="flex items-center">
                 <Icon
                   icon="location_on"
-                  className="mr-2 h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400"
+                  className="mr-2 h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400"
                 />
                 <span>{event.location}</span>
               </div>

@@ -39,14 +39,14 @@ export function EmailVerifier() {
     <div className="flex flex-col gap-6">
       <p
         data-status={tokenMutation.status}
-        className="py-8 text-center text-black/70 data-[status=error]:text-danger"
+        className="data-[status=error]:text-danger py-8 text-center text-black/70"
       >
         {tokenMutation.error?.message}
       </p>
       <Button.Link
         color="primary"
         href={routes.auth.login}
-        loading={tokenMutation.isLoading}
+        loading={tokenMutation.isPending}
       >
         Login
       </Button.Link>
@@ -54,7 +54,7 @@ export function EmailVerifier() {
       <Button
         color="black"
         variant="bordered"
-        loading={requestMutation.isLoading || tokenMutation.isLoading}
+        loading={requestMutation.isPending || tokenMutation.isPending}
         onClick={() => {
           requestMutation.mutate({ email });
         }}

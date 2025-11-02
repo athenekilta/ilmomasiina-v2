@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "target": "ESNext",
     "baseUrl": ".",
@@ -15,6 +15,6 @@
     "experimentalSpecifierResolution": "node",
     "require": ["tsconfig-paths/register"]
   },
-  "include": ["src/scripts/**/*", "src/server/**/*", "src/features/**/*", "src/emails/**/*"],
+  "include": ["src/types/**/*", "src/scripts/**/*", "src/server/**/*", "src/features/**/*", "src/emails/**/*"],
   "exclude": ["node_modules"]
 }

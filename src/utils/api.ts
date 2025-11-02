@@ -17,9 +17,9 @@ const getBaseUrl = () => {
 };
 
 export const api = createTRPCNext<AppRouter>({
+  transformer: superjson,
   config() {
     return {
-      transformer: superjson,
       links: [
         loggerLink({
           enabled: (opts) => {
@@ -42,6 +42,7 @@ export const api = createTRPCNext<AppRouter>({
         }),
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
+          transformer: superjson,
         }),
       ],
     };
@@ -61,7 +62,7 @@ export const api = createTRPCNext<AppRouter>({
    *
    * https://trpc.io/docs/useContext#invalidating-across-whole-routers
    */
-  unstable_overrides: {
+  overrides: {
     useMutation: {
       async onSuccess(opts) {
         await opts.originalFn();

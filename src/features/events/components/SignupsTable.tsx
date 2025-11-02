@@ -12,7 +12,7 @@ export function SignupsTable({ signups }: { signups: Signup[] }) {
       </h2>
     </div>
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 bg-white rounded shadow my-6">
+      <table className="min-w-full divide-y divide-gray-200 bg-white rounded-sm shadow-sm my-6">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Järjestys</th>

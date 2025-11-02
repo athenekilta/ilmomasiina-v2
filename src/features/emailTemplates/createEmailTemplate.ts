@@ -2,17 +2,21 @@ import { render } from "@react-email/components";
 import { createElement } from "react";
 import { EmailClient } from "@azure/communication-email";
 import { env } from "@/env/server.mjs";
+import React from "react";
 
 const connectionString = `endpoint=https://ilmomasiina.europe.communication.azure.com/;accesskey=${env.MAIL_API_KEY}`;
 const client = new EmailClient(connectionString);
 
 export function createEmailTemplate<Props extends object>(
-  EmailComponent: ((props: Props) => JSX.Element) & {
+  EmailComponent: ((props: Props) => React.JSX.Element) & {
     getSubject(props: Props): string;
-  }
+  },
 ) {
   return async function instantiateEmail(props: Props) {
-    const element = createElement(EmailComponent, props) as unknown as JSX.Element;
+    const element = createElement(
+      EmailComponent,
+      props,
+    ) as unknown as React.JSX.Element;
     const html = await render(element, { pretty: true });
     const text = await render(element, { plainText: true });
     const subject = EmailComponent.getSubject(props);
@@ -27,25 +31,25 @@ export function createEmailTemplate<Props extends object>(
     }) {
       return Array.isArray(options.to)
         ? client.beginSend({
-          senderAddress: options.from,
-          content: {
-            subject,
-            plainText: text,
-            html,
-          },
-          recipients: {
-            to: options.to,
-          },
-        })
+            senderAddress: options.from,
+            content: {
+              subject,
+              plainText: text,
+              html,
+            },
+            recipients: {
+              to: options.to,
+            },
+          })
         : client.beginSend({
-          senderAddress: options.from,
-          content: {
-            subject,
-            plainText: text,
-            html,
-          },
-          recipients: { to: [options.to] },
-        });
+            senderAddress: options.from,
+            content: {
+              subject,
+              plainText: text,
+              html,
+            },
+            recipients: { to: [options.to] },
+          });
     }
     return { html, text, subject, send };
   };

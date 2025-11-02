@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { simulateRaffle } from '@/server/features/raffle/simulateRaffle';
-import { useCallback } from 'react';
-import type { SimulationFrame } from '@/types/raffle';
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { simulateRaffle } from "@/server/features/raffle/simulateRaffle";
+import { useCallback } from "react";
+import type { SimulationFrame } from "@/types/raffle";
 
 export interface Participant {
   id: string;
@@ -16,11 +16,15 @@ interface RaffleAnimationProps {
   onComplete?: () => void;
 }
 
-export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimationProps) {
+export function RaffleAnimation({
+  participants,
+  seed,
+  onComplete,
+}: RaffleAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   console.log("Seed:", seed);
-  const animationRef = useRef<number>();
-  const startTimeRef = useRef<number>();
+  const animationRef = useRef<number>(null);
+  const startTimeRef = useRef<number | undefined>(undefined);
   const [countdown, setCountdown] = useState<number>(3);
   const [isAnimating, setIsAnimating] = useState(false);
   const [winners, setWinners] = useState<Set<string>>(new Set());
@@ -29,11 +33,13 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
   const canvasWidth = Math.min(2400, Math.max(1200, participants.length * 40));
 
   // Store simulation result
-  const simulationRef = useRef(simulateRaffle(
-    participants.map(p => ({ id: p.id, name: p.name })),
-    seed,
-    canvasWidth
-  ));
+  const simulationRef = useRef(
+    simulateRaffle(
+      participants.map((p) => ({ id: p.id, name: p.name })),
+      seed,
+      canvasWidth,
+    ),
+  );
 
   // Handle countdown
   useEffect(() => {
@@ -50,46 +56,59 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
     }
   }, [countdown]);
 
-  const drawFrame = useCallback((frame: SimulationFrame) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const drawFrame = useCallback(
+    (frame: SimulationFrame) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawBoundaries(ctx, canvas.width);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBoundaries(ctx, canvas.width);
 
-    frame.positions.forEach((pos, i) => {
-      const participant = participants[i];
-      if (!participant) return;
-      const isWinner = winners.has(participant.id);
-      drawBall(ctx, pos.x, pos.y, participant.name, participant.color, isWinner);
-    });
-  }, [participants, winners]);
+      frame.positions.forEach((pos, i) => {
+        const participant = participants[i];
+        if (!participant) return;
+        const isWinner = winners.has(participant.id);
+        drawBall(
+          ctx,
+          pos.x,
+          pos.y,
+          participant.name,
+          participant.color,
+          isWinner,
+        );
+      });
+    },
+    [participants, winners],
+  );
 
   // Draw static state or current frame
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Initial static state
     if (!isAnimating) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawBoundaries(ctx, canvas.width);
-      
+
       // Arrange participants in multiple rows if needed
       const maxPerRow = Math.floor((canvas.width - 100) / 60);
       const rows = Math.ceil(participants.length / maxPerRow);
       const verticalSpacing = Math.min(50, 200 / rows);
-      
+
       participants.forEach((participant, i) => {
         const row = Math.floor(i / maxPerRow);
         const col = i % maxPerRow;
-        const x = 50 + ((canvas.width - 100) / Math.min(participants.length, maxPerRow)) * col;
-        const y = 30 + (row * verticalSpacing);
+        const x =
+          50 +
+          ((canvas.width - 100) / Math.min(participants.length, maxPerRow)) *
+            col;
+        const y = 30 + row * verticalSpacing;
         drawBall(ctx, x, y, participant.name, participant.color, false);
       });
     }
@@ -100,25 +119,27 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
     if (!isAnimating) return;
     const simulation = simulationRef.current;
     if (!simulation?.frames?.length) {
-      console.error('No simulation frames available');
+      console.error("No simulation frames available");
       return;
     }
 
     const animate = (timestamp: number) => {
       if (!simulation?.frames?.length) return;
-    
+
       if (!startTimeRef.current) {
         startTimeRef.current = timestamp;
       }
-    
+
       const elapsed = timestamp - startTimeRef.current;
       const currentTime = elapsed * 0.5;
-    
+
       const lastFrame = simulation.frames[simulation.frames.length - 1];
-      if(!lastFrame) return;
-      
-      const frameIndex = simulation.frames.findIndex(f => f.time >= currentTime);
-    
+      if (!lastFrame) return;
+
+      const frameIndex = simulation.frames.findIndex(
+        (f) => f.time >= currentTime,
+      );
+
       // If we've passed the last frame time
       if (frameIndex === -1) {
         drawFrame(lastFrame);
@@ -126,13 +147,13 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
         const newWinners = new Set(
           simulation.finalPositions
             .slice(0, Math.min(10, participants.length))
-            .map(p => p.id)
-            .filter((id): id is string => id !== undefined)
+            .map((p) => p.id)
+            .filter((id): id is string => id !== undefined),
         );
-        console.log('🏆 Winners determined:', {
+        console.log("🏆 Winners determined:", {
           winners: Array.from(newWinners),
           finalPositions: simulation.finalPositions,
-          totalParticipants: participants.length
+          totalParticipants: participants.length,
         });
         setWinners(newWinners);
         if (onComplete) {
@@ -140,12 +161,12 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
         }
         return;
       }
-    
+
       const frame = simulation.frames[frameIndex];
       if (!frame) return;
-    
+
       drawFrame(frame);
-    
+
       if (currentTime < lastFrame.time) {
         animationRef.current = requestAnimationFrame(animate);
       }
@@ -161,18 +182,18 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
   }, [isAnimating, participants, drawFrame, onComplete]);
 
   return (
-    <div className="w-full relative overflow-x-auto">
+    <div className="relative w-full overflow-x-auto">
       <canvas
         ref={canvasRef}
         width={canvasWidth}
         height={800}
-        className="w-full h-auto rounded-lg shadow-lg"
+        className="h-auto w-full rounded-lg shadow-lg"
       />
-      
+
       {/* Countdown Overlay */}
       <AnimatePresence>
         {countdown >= 0 && (
-          <motion.div 
+          <motion.div
             className="absolute inset-0 flex items-center justify-center bg-black/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -196,12 +217,12 @@ export function RaffleAnimation({ participants, seed, onComplete }: RaffleAnimat
 }
 
 function drawBall(
-  ctx: CanvasRenderingContext2D, 
-  x: number, 
-  y: number, 
-  name: string, 
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  name: string,
   color: string,
-  isWinner: boolean
+  isWinner: boolean,
 ) {
   // Draw ball
   ctx.beginPath();
@@ -210,7 +231,7 @@ function drawBall(
     // Add glow effect for winners
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, 16);
     gradient.addColorStop(0, color);
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0.8)");
     ctx.fillStyle = gradient;
   }
   ctx.arc(x, y, 8, 0, Math.PI * 2);
@@ -218,26 +239,26 @@ function drawBall(
 
   // Add shine effect
   ctx.beginPath();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
   ctx.arc(x - 3, y - 3, 3, 0, Math.PI * 2);
   ctx.fill();
 
   // Draw name
-  ctx.fillStyle = 'black';
-  ctx.font = '14px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(name.split(' ')[0] ?? '', x, y - 15);
+  ctx.fillStyle = "black";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(name.split(" ")[0] ?? "", x, y - 15);
 }
 
 function drawBoundaries(ctx: CanvasRenderingContext2D, width: number) {
   // Draw borders
-  ctx.fillStyle = '#1e3a8a';
-  ctx.fillRect(0, 780, width, 20);  // Bottom
-  ctx.fillRect(0, 0, 20, 800);     // Left
-  ctx.fillRect(width - 20, 0, 20, 800);  // Right
+  ctx.fillStyle = "#1e3a8a";
+  ctx.fillRect(0, 780, width, 20); // Bottom
+  ctx.fillRect(0, 0, 20, 800); // Left
+  ctx.fillRect(width - 20, 0, 20, 800); // Right
 
   // Draw pegs
-  ctx.fillStyle = '#3b82f6';
+  ctx.fillStyle = "#3b82f6";
   const pegRows = 12;
   const pegCols = Math.min(50, Math.max(15, Math.floor(width / 80))); // Limit maximum number of pegs
   const pegSpacingX = width / pegCols;
@@ -252,7 +273,7 @@ function drawBoundaries(ctx: CanvasRenderingContext2D, width: number) {
         100 + row * pegSpacingY,
         5,
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
       ctx.fill();
     }

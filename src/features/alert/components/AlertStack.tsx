@@ -10,7 +10,7 @@ export function AlertStack(props: AlertStackProps) {
   return (
     <motion.div
       data-active={props.alerts.length > 0}
-      className="fixed bottom-0 left-0 z-[400] flex max-w-[60vw] flex-col items-start justify-start gap-4 p-8 d-inactive:pointer-events-none sm:max-w-sm sm:justify-end"
+      className="d-inactive:pointer-events-none fixed bottom-0 left-0 z-400 flex max-w-[60vw] flex-col items-start justify-start gap-4 p-8 sm:max-w-sm sm:justify-end"
     >
       <AnimatePresence>
         {props.alerts.map((alert) => {
@@ -21,7 +21,8 @@ export function AlertStack(props: AlertStackProps) {
               key={alert.id}
               initial={{ opacity: 0, y: -40 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: 50, type: "tween" }}
+              transition={{ type: "tween" }}
+              exit={{ opacity: 0, x: 50 }}
             >
               <Alert
                 title={alert.title}

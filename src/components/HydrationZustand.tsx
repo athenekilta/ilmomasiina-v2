@@ -1,4 +1,5 @@
-import { PropsWithChildren, useEffect, useState } from "react";
+import type { PropsWithChildren} from "react";
+import { useEffect, useState } from "react";
 
 const HydrationZustand = ({ children }: PropsWithChildren) => {
   const [isHydrated, setIsHydrated] = useState(false);

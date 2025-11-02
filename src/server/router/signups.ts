@@ -343,7 +343,7 @@ export const signupsRouter = router({
         });
       };
 
-      await ctx.prisma.$transaction(async (tx) => {
+      await ctx.prisma.$transaction(async () => {
         // 1. First check if there are people in the same quota's queue
         const quotaSignup = await ctx.prisma.signup.findFirst({
           where: {

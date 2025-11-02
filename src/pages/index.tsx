@@ -4,7 +4,6 @@ import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
 import Link from "next/link";
 import { useUser } from "@/features/auth/hooks/useUser";
-import { routes } from "@/utils/routes";
 import { useState } from "react";
 import { EventCard } from "@/features/eventCard/EventCard";
 
@@ -35,16 +34,16 @@ export default function DesktopPage() {
       <Layout>
         {!isLoading && eventsData ? (
           <div>
-            <div className="flex flex-col justify-between gap-4 p-6 font-primary sm:flex-row">
+            <div className="font-primary flex flex-col justify-between gap-4 p-6 sm:flex-row">
               <h1 className="text-2xl font-bold">Tapahtumat</h1>
 
               {isAdmin && (
                 <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
-                    className={`inline-flex items-center rounded-md px-3 py-1 font-secondary text-sm font-medium ${
+                    className={`font-secondary inline-flex items-center rounded-md px-3 py-1 text-sm font-medium ${
                       includeOlderEvents
-                        ? "bg-gray-700 text-blue-800 text-brand-darkbeige"
+                        ? "text-brand-darkbeige bg-gray-700 text-blue-800"
                         : "bg-brand-darkbeige text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                     }`}
                   >
@@ -60,9 +59,9 @@ export default function DesktopPage() {
                   </button>
                   <button
                     onClick={() => setIncludeDrafts(!includeDrafts)}
-                    className={`inline-flex items-center rounded-md px-3 py-1 font-secondary text-sm font-medium ${
+                    className={`font-secondary inline-flex items-center rounded-md px-3 py-1 text-sm font-medium ${
                       includeDrafts
-                        ? "bg-gray-700 text-blue-800 text-brand-darkbeige"
+                        ? "text-brand-darkbeige bg-gray-700 text-blue-800"
                         : "bg-brand-darkbeige text-gray-800 dark:bg-gray-700 dark:text-gray-300"
                     }`}
                   >
