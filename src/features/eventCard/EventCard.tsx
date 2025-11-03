@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
 import type { Event, Quota, Signup } from "@prisma/client";
+import { formatRegistration } from "@/utils/format";
 
 // Define a simpler type that matches the manual enrichment in the events router
 type EnrichedQuota = Quota & {
@@ -11,32 +12,6 @@ type EnrichedQuota = Quota & {
 
 type EnrichedEvent = Event & {
   Quotas: EnrichedQuota[];
-};
-
-const formatRegistration = (start: Date, end: Date) => {
-  const now = new Date();
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const isOpen = startDate <= now && endDate >= now;
-
-  if (isOpen === false && endDate < now) {
-    return "Ilmo on päättynyt.";
-  } else if (isOpen === true && startDate <= now && endDate >= now) {
-    return `Auki ${endDate.toLocaleDateString(
-      "fi-FI",
-    )} klo ${endDate.toLocaleTimeString("fi-FI", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} asti`;
-  } else if (startDate > now) {
-    return `Ilmo aukeaa ${startDate.toLocaleDateString(
-      "fi-FI",
-    )} klo ${startDate.toLocaleTimeString("fi-FI", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
-  }
-  return "";
 };
 
 export function EventCard({

@@ -20,11 +20,11 @@ export function Alert({ ...props }: AlertProps) {
           className={c(
             "h-fill rounded-lg p-3",
             c.variant(props.variant ?? "default")({
-              primary: "bg-green",
-              secondary: "bg-lime",
-              error: "bg-red-400",
-              default: "bg-gray-400",
-              warning: "bg-yellow-400",
+              primary: "bg-brand-green text-white",
+              secondary: "bg-brand-lime",
+              error: "bg-red-300",
+              default: "bg-gray-300",
+              warning: "bg-warning-300",
             }),
           )}
         >

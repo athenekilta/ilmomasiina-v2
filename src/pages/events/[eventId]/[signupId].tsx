@@ -8,14 +8,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { useState } from "react";
+import { useAlert } from "@/features/alert/hooks/useAlert";
+import { Layout } from "@/features/layout/Layout";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-export default function SignupPage() {
+function EditSignup() {
   const router = useRouter();
   const { eventId, signupId } = useQueryParams();
   const { existing } = router.query;
   const updateMutation = api.signups.updateSignup.useMutation();
   const deleteMutation = api.signups.deleteSignup.useMutation();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const alerts = useAlert();
 
   const isExistingSignup = existing === "true";
 
@@ -63,10 +68,14 @@ export default function SignupPage() {
           answer: ans.answer,
         })),
       });
+      alerts.success("Ilmoittautuminen onnistui");
+      router.push(`/events/${eventId}`);
     } catch (error) {
+      if (error instanceof Error) {
+        alerts.error(error.toString());
+      }
       console.error(error);
     }
-    router.push(`/events/${eventId}`);
   });
 
   const handleDelete = async () => {
@@ -74,34 +83,41 @@ export default function SignupPage() {
       await deleteMutation.mutateAsync({
         signupId: signupId!,
       });
+      alerts.success("Ilmoittautuminen onnistui");
       router.push(`/events/${eventId}`);
     } catch (error) {
       console.error(error);
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading)
+    return (
+      <div>
+        <LoadingSpinner />
+      </div>
+    );
+
   if (isError || !signup) {
     return <div>Error loading signup details or not found.</div>;
   }
 
   return (
-    <div className="rounded-lg bg-white p-5 shadow-lg">
-      <h2 className="mb-4 text-xl font-bold">Signup Form</h2>
+    <div className="bg-brand-light rounded-lg p-5 shadow-lg">
+      <h2 className="mb-4 text-xl font-bold">Muokkaa ilmoa</h2>
       {isExistingSignup && (
-        <p className="text-md mb-4 text-orange-600">
-          You already have an existing unconfirmed signup. A new signup was not
-          created. Edit and confirm the existing signup below.
+        <p className="text-md text-brand-danger mb-4">
+          Sinulla on jo <b>vahvistamaton</b> ilmoittautuminen, muokkaat nyt tätä
+          ilmoittautumista.
         </p>
       )}
-      <p>Quota: {signup.Quota.title}</p>
+      <p>Kiintiö: {signup.Quota.title}</p>
       <p>
-        Place: {signup.indexOfSignupInQuota} / {signup.Quota.size}
+        Sija: {signup.indexOfSignupInQuota + 1} / {signup.Quota.size}
       </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <fieldset className="flex flex-1 flex-col gap-2">
           <label htmlFor="name" className="flex items-center">
-            Nimi / Name:
+            Nimi:
           </label>
           <Input
             {...register("name")}
@@ -112,7 +128,7 @@ export default function SignupPage() {
         </fieldset>
         <fieldset className="flex flex-1 flex-col gap-2">
           <label htmlFor="email" className="flex items-center">
-            Email:
+            Sähköposti:
           </label>
           <Input
             {...register("email")}
@@ -139,6 +155,24 @@ export default function SignupPage() {
           </fieldset>
         ))}
 
+        <div className="my-4">
+          <h2 className="mb-2 text-lg font-semibold">Ehdot</h2>
+          <p>
+            Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
+            jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
+            tai löytämään paikalleen toisen osallistujan. Osallistumalla
+            tapahtumaan sitoudut noudattamaan{" "}
+            <a
+              href="https://athene.fi/periaatteet/"
+              target="_blank"
+              className="text-brand-darkgreen"
+            >
+              {" "}
+              Athenen yhteisiä periaatteita.
+            </a>
+          </p>
+        </div>
+
         <div className="flex justify-between pt-4">
           <Button
             type="submit"
@@ -162,7 +196,7 @@ export default function SignupPage() {
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <div className="bg-brand-light w-full max-w-md rounded-lg p-6 shadow-xl">
             <h3 className="mb-4 text-lg font-semibold">Confirm Deletion</h3>
             <p className="mb-6 text-gray-600">
               Are you sure you want to delete your signup? This action cannot be
@@ -187,5 +221,15 @@ export default function SignupPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Layout>
+      <div className="m-4">
+        <EditSignup />
+      </div>
+    </Layout>
   );
 }

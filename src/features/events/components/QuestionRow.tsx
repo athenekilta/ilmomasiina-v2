@@ -67,10 +67,10 @@ export function QuestionRow({
             onChange({ ...question, type: value as Question["type"] });
           }}
         >
-          <SelectTrigger className="w-[280px] bg-white">
+          <SelectTrigger className="w-[280px]">
             <SelectValue placeholder="Teksti (lyhyt)" />
           </SelectTrigger>
-          <SelectContent className="bg-white">
+          <SelectContent className="">
             <SelectItem value={questionSchema.shape.type.enum.text}>
               Teksti (lyhyt)
             </SelectItem>

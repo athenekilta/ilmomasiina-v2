@@ -6,7 +6,7 @@ import {
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
-import { RaffleStatus } from "@prisma/client";
+import { RaffleStatus, SignupStatus } from "@prisma/client";
 
 export const eventsRouter = router({
   getEvents: publicProcedure.query(async ({ ctx }) => {
@@ -130,18 +130,18 @@ export const eventsRouter = router({
         throw new Error("Event not found");
       }
 
-      // Hide the identities of unconfirmed signups
-      event.Quotas.forEach((quota) => {
-        quota.Signups = quota.Signups.map((signup) => ({
-          ...signup,
-          email: signup.completedAt ? signup.email : "",
-          name: signup.completedAt
-            ? signup.name
-            : "Vahvistamatta / Unconfirmed singup",
-        }));
-      });
+      // Hide unnecessary fields from signups
+      event.Quotas.forEach((quota) => ({
+        ...quota,
+        Signups: quota.Signups.map((signup) => ({
+          // if unconfirmed, remove name
+          name: signup.completedAt ? signup.name : "",
+          completedAt: signup.completedAt,
+          createdAt: signup.createdAt,
+        })),
+      }));
 
-      // Create queue quota
+      // Create queue quota. NOTE! This is only a presentation and does not actually exist on the DB level.
       event.Quotas.push({
         id: "queue",
         title: "Queue",
@@ -159,10 +159,33 @@ export const eventsRouter = router({
           if (!queueQuota) {
             throw new Error("Queue quota not found"); // This should never happen
           }
-          const quotaSingupsOvertheSize = quota.Signups.slice(quota.size);
 
-          queueQuota.Signups.push(...quotaSingupsOvertheSize);
-          quota.Signups = quota.Signups.slice(0, quota.size);
+          // only put unconfirmed signups into queue - existing confirmed signups aren't cancelled even if they result in the quota overflowing
+          const unconfirmedSignups = quota.Signups.filter(
+            (s) => s.status !== SignupStatus.CONFIRMED,
+          );
+
+          // move possible overflowing unconfirmed signups away
+          const allowedUnconfirmedSignupsInQuota = Math.max(
+            quota.size - quota.Signups.length + unconfirmedSignups.length,
+            0,
+          );
+
+          // if all are allowed, just skip
+          if (allowedUnconfirmedSignupsInQuota >= unconfirmedSignups.length)
+            return;
+
+          const overflowingUnconfirmedSignups = unconfirmedSignups.slice(
+            allowedUnconfirmedSignupsInQuota,
+          );
+
+          // add overflowing to queue Quota
+          queueQuota.Signups.push(...overflowingUnconfirmedSignups);
+          // filter away the moved signups from current quota
+          quota.Signups = quota.Signups.filter(
+            (s) =>
+              !overflowingUnconfirmedSignups.some((other) => s.id === other.id),
+          );
         }
       });
 

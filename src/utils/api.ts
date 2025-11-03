@@ -1,5 +1,6 @@
 import { httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
+import { ssrPrepass } from "@trpc/next/ssrPrepass";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
 
@@ -18,36 +19,59 @@ const getBaseUrl = () => {
 
 export const api = createTRPCNext<AppRouter>({
   transformer: superjson,
-  config() {
+  config(opts) {
+    const { ctx } = opts;
+    if (typeof window !== "undefined")
+      return {
+        links: [
+          loggerLink({
+            enabled: (opts) => {
+              const isErrorResponse =
+                opts.direction === "down" && opts.result instanceof Error;
+              // Respect NEXT_PUBLIC_DEV_TRPC_LOG
+              switch (env.NEXT_PUBLIC_DEV_TRPC_LOG) {
+                case "true":
+                  return true;
+                case "false":
+                  return false;
+                case "down":
+                  return opts.direction === "down";
+                case "up":
+                  return opts.direction === "up";
+                case "error":
+                  return isErrorResponse;
+              }
+            },
+          }),
+          httpBatchLink({
+            url: `${getBaseUrl()}/api/trpc`,
+            transformer: superjson,
+          }),
+        ],
+      };
+
+    // SSR
     return {
       links: [
-        loggerLink({
-          enabled: (opts) => {
-            const isErrorResponse =
-              opts.direction === "down" && opts.result instanceof Error;
-            // Respect NEXT_PUBLIC_DEV_TRPC_LOG
-            switch (env.NEXT_PUBLIC_DEV_TRPC_LOG) {
-              case "true":
-                return true;
-              case "false":
-                return false;
-              case "down":
-                return opts.direction === "down";
-              case "up":
-                return opts.direction === "up";
-              case "error":
-                return isErrorResponse;
-            }
-          },
-        }),
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
           transformer: superjson,
+          headers() {
+            if (!ctx?.req?.headers) {
+              return {};
+            }
+            // To use SSR properly, you need to forward client headers to the server
+            // This is so you can pass through things like cookies when we're server-side rendering
+            return {
+              cookie: ctx.req.headers.cookie,
+            };
+          },
         }),
       ],
     };
   },
-  ssr: false,
+  ssr: true,
+  ssrPrepass,
   /**
    * In order to not have to worry about invalidating queries initially,
    * we invalidate all queries on every mutation. This should solve some

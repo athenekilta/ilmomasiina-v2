@@ -150,15 +150,14 @@ export const signupsRouter = router({
         if (!existingSignup.completedAt)
           return { signup: existingSignup, isExistingSignup: true };
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "A completed signup already exists with this email. Edit your existing signup via the confirmation email.",
+          code: "CONFLICT",
         });
       }
 
       const signup = await ctx.prisma.signup.create({
         data: {
           quotaId: input.quotaId,
+          originalQuotaId: input.quotaId,
           name: input.name,
           email: input.email,
         },
@@ -230,6 +229,8 @@ export const signupsRouter = router({
         const isWithinQuota =
           !currentSignup.Quota.size ||
           firstIds.some((s) => s.id === input.signupId);
+
+        console.log("is within quota?", isWithinQuota);
 
         // Update signup
         const signup = await ctx.prisma.signup.update({
@@ -492,6 +493,7 @@ export const signupsRouter = router({
       const signup = await ctx.prisma.signup.create({
         data: {
           quotaId: input.quotaId,
+          originalQuotaId: input.quotaId,
           name: input.name,
           email: input.email,
           registrationIntent: now,

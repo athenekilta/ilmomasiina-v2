@@ -53,7 +53,7 @@ export function SignupsTable({
         </h2>
       </div>
       <div className="overflow-x-auto">
-        <table className="my-6 min-w-full divide-y divide-gray-200 rounded bg-white shadow">
+        <table className="bg-brand-light my-6 min-w-full divide-y divide-gray-200 rounded shadow">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
@@ -99,12 +99,12 @@ export function SignupsTable({
                       </span>
                     ) : (
                       <span className="rounded-full bg-gray-100 px-2 py-2 text-xs font-semibold text-gray-800">
-                        Vahvistamatta (tietojen täyttö kesken)
+                        Keskeneräinen
                       </span>
                     ))}
                 </td>
                 <td className="px-4 py-2 text-sm text-gray-700">
-                  {signup.quotaId}
+                  {signup.originalQuotaId}
                 </td>
                 <SignupRow
                   signup={signup}

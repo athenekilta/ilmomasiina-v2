@@ -8,7 +8,7 @@ export default function ChangePassword() {
     <ProtectedRoute>
       <PageHead title="Change password" />
       <Layout>
-        <div className="-mx-6 mt-16 flex max-w-2xl flex-col items-center gap-16 rounded-xl bg-white p-12 sm:mx-auto">
+        <div className="bg-brand-light -mx-6 mt-16 flex max-w-2xl flex-col items-center gap-16 rounded-xl p-12 sm:mx-auto">
           <h1 className="text-primary-950 text-center text-4xl font-semibold tracking-tight">
             Change password
           </h1>

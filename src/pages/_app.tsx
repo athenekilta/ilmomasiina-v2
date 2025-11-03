@@ -5,7 +5,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { Alerts } from "@/features/alert/components/Alerts";
 import { UserInitializer } from "@/features/auth/components/UserInitializer";
-import { trpc } from "../utils/trpc";
+import { api } from "../utils/api";
 import { useEffect } from "react";
 
 const MyApp: AppType<{ session: Session | null }> = ({
@@ -14,8 +14,8 @@ const MyApp: AppType<{ session: Session | null }> = ({
 }) => {
   // Initialize worker in development mode
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      void fetch('/api/cron/init');
+    if (process.env.NODE_ENV === "development") {
+      void fetch("/api/cron/init");
     }
   }, []);
 
@@ -31,4 +31,4 @@ const MyApp: AppType<{ session: Session | null }> = ({
   );
 };
 
-export default trpc.withTRPC(MyApp);
+export default api.withTRPC(MyApp);
