@@ -1,5 +1,5 @@
-import type { PrismaClient} from "@prisma/client";
-import { RaffleStatus } from "@prisma/client";
+import type { PrismaClient} from "@/generated/prisma/client";
+import { RaffleStatus } from "@/generated/prisma/client";
 import { addMilliseconds } from "date-fns";
 import Pusher from "pusher";
 

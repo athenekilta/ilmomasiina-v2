@@ -2,7 +2,7 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { Layout } from "@/features/layout/Layout";
 import { PageHead } from "@/features/layout/PageHead";
 import { UsersTable } from "@/features/users/components/UsersTable";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/prisma";
 
 import { api } from "@/utils/api";
 

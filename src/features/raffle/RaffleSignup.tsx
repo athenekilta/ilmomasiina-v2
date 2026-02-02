@@ -4,7 +4,7 @@ import { api } from "@/utils/api";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { RaffleAnimation } from "./RaffleAnimation";
 import type { RaffleResult } from "@/types/raffle";
-import { RaffleStatus } from "@prisma/client";
+import { RaffleStatus } from "@/generated/prisma";
 import { pusherClient } from "@/utils/pusher";
 
 interface RaffleSignupProps {

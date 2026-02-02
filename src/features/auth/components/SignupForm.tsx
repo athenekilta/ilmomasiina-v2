@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { signIn } from "next-auth/react";
+import { signIn, signUp } from "@/server/auth/auth-client";
 import { userSignUpSchema } from "../utils/userSignUpSchema";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
@@ -29,19 +29,17 @@ export function SignupForm() {
     },
   });
 
-  const mutation = api.auth.singUp.useMutation();
-
   const handleSubmit = createHandleSubmit(async (values) => {
-    await mutation.mutateAsync(values);
-    await signIn("credentials", values);
+    const result = await signUp.email(values);
+    await signIn.email(values);
   });
 
-  const errorMessage = queryError || mutation.error?.message;
+  const errorMessage = queryError;
 
   return (
     <form className="felx relative flex-col gap-12" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-6">
-      <Input
+        <Input
           {...register("name")}
           fullWidth
           placeholder="Name"

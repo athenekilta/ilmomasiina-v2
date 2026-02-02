@@ -4,7 +4,7 @@ import { z } from "zod";
 import { generateRaffleSeed } from "@/utils/raffleUtils";
 import { pusher } from "../external/pusher";
 import type { RaffleResult } from '@/types/raffle';
-import { RaffleStatus } from "@prisma/client";
+import { RaffleStatus } from "@/generated/prisma/client";
 
 export const raffleRouter = router({
   getRaffleStatus: publicProcedure

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/server/auth/auth-client";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { Icon } from "@/components/Icon";
 import { Input } from "@/components/Input";
@@ -33,7 +33,7 @@ export function LoginForm() {
   });
 
   const handleSubmit = createHandleSubmit(async (values) => {
-    await signIn("credentials", values);
+    await signIn.email(values);
   });
 
   const errorMessages = queryError;

@@ -8,12 +8,12 @@ export interface PhysicsState {
   time: number;
 }
 
-export type { RaffleStatus } from '@prisma/client';
+export type { RaffleStatus } from "@/generated/prisma/client";
 
 export interface RaffleResult {
   id: string;
   name: string;
-  status: 'CONFIRMED' | 'REJECTED';
+  status: "CONFIRMED" | "REJECTED";
 }
 
 export interface RaffleParticipant {

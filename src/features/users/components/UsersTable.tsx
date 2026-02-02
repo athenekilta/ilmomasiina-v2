@@ -1,7 +1,7 @@
 "use client";
 
-import type { User } from "@prisma/client";
-import { useSession } from "next-auth/react";
+import type { User } from "@/generated/prisma";
+import { useSession } from "@/server/auth/auth-client";
 
 export type UsersTableProps = {
   users: Array<Omit<User, "password" | "image">>;

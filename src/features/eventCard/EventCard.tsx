@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
-import type { Event, Quota, Signup } from "@prisma/client";
+import type { Event, Quota, Signup } from "@/generated/prisma/client";
 import { formatRegistration } from "@/utils/format";
 
 // Define a simpler type that matches the manual enrichment in the events router

@@ -1,4 +1,4 @@
-import type { Signup } from "@prisma/client";
+import type { Signup } from "@/generated/prisma";
 import { SignupRow } from "./SingupRow";
 import { Button } from "@/components/Button";
 import { api } from "@/utils/api";

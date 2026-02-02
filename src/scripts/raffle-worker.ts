@@ -1,4 +1,4 @@
-import { PrismaClient, RaffleStatus } from "@prisma/client";
+import { PrismaClient, RaffleStatus } from "@/generated/prisma/client";
 import { drawRaffle } from "../server/jobs/drawRaffle";
 import cron from "node-cron";
 

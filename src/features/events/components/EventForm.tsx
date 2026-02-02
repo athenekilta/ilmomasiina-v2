@@ -8,7 +8,7 @@ import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
 import { useCallback, useEffect } from "react";
 import { addDays, set } from "date-fns";
-import type { Quota, Question } from "@prisma/client";
+import type { Quota, Question } from "@/generated/prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { FieldSet } from "@/components/FieldSet";
 import { Input } from "@/components/Input";

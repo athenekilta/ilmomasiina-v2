@@ -1,4 +1,4 @@
-import { PrismaClient, RaffleStatus } from "@prisma/client";
+import { PrismaClient, RaffleStatus } from "@/generated/prisma/client";
 import { faker } from "@faker-js/faker";
 import dotenv from "dotenv";
 

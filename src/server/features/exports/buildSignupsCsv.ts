@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { stringify } from "csv-stringify/sync";
 
 export async function createSignupsCsv(

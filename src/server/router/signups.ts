@@ -4,7 +4,7 @@ import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import { TRPCError } from "@trpc/server";
-import { SignupStatus } from "@prisma/client";
+import { SignupStatus } from "@/generated/prisma/client";
 import { createSignupsCsv } from "../features/exports/buildSignupsCsv";
 
 export const signupsRouter = router({

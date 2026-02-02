@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import type { Signup } from '@prisma/client';
+import type { Signup } from '@/generated/prisma/client';
 
 export function generateRaffleSeed(signups: Array<Pick<Signup, 'email' | 'registrationIntent'>>) {
   // Sort signups by registrationIntent to ensure consistent ordering

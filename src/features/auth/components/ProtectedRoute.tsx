@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/server/auth/auth-client";
 import { useUser } from "../hooks/useUser";
 import { useWrapRef } from "@/hooks/useWrapRef";
 import type { RouteOutput } from "@/types/types";
@@ -25,7 +25,7 @@ export function ProtectedRoute(props: ProtectedRouteProps) {
 
   const [redirect, setRedirect] = useState(
     getRedirectIfAccessBlocked({
-      isLoading: session.status === "loading" || user.isLoading,
+      isLoading: session.isPending || user.isLoading,
       user: user.data,
       options: propsRef.current,
     })
@@ -33,7 +33,7 @@ export function ProtectedRoute(props: ProtectedRouteProps) {
   useEffect(() => {
     setRedirect(
       getRedirectIfAccessBlocked({
-        isLoading: session.status === "loading" || user.isLoading,
+        isLoading: session.isPending || user.isLoading,
         user: user.data,
         options: propsRef.current,
       })

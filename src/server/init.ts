@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import {prisma} from "@/server/external/prisma"
 import { checkRaffles } from "../scripts/raffle-worker";
 import cron from "node-cron";
 
@@ -7,8 +7,6 @@ let initialized = false;
 export function initializeServer() {
   if (initialized) return;
   initialized = true;
-
-  const prisma = new PrismaClient();
 
   // Set up the raffle worker cron job
   const job = cron.schedule("* * * * *", async () => {

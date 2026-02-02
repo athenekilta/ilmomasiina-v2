@@ -1,7 +1,13 @@
 import React, { useState } from "react";
-import type { Signup } from "@prisma/client";
+import type { Signup } from "@/generated/prisma";
 
-export function SignupRow({ signup, rowStyle }: { signup: Signup, rowStyle: string }) {
+export function SignupRow({
+  signup,
+  rowStyle,
+}: {
+  signup: Signup;
+  rowStyle: string;
+}) {
   const [showMilliseconds, setShowMilliseconds] = useState(false);
 
   const handleMouseEnter = () => {
@@ -21,7 +27,11 @@ export function SignupRow({ signup, rowStyle }: { signup: Signup, rowStyle: stri
 
   return (
     <td
-      className={"whitespace inline-block w-52 overflow-hidden text-ellipsis py-2" + " " + rowStyle}
+      className={
+        "whitespace inline-block w-52 overflow-hidden py-2 text-ellipsis" +
+        " " +
+        rowStyle
+      }
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// #############################################################################
+// DATA SCHEMAS
+// #############################################################################
+
+// An example data schema
+
+model Example {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// #############################################################################
+// NEXT AUTH SCHEMAS
+// #############################################################################
+
+// When extending user data, extend this model
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          UserRole  @default(user)
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("user")
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  email     String
+}
+
+model PasswordChangeToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  email     String
+}
+
+enum RaffleStatus {
+  NOT_STARTED
+  REGISTRATION_OPEN
+  SIMULATING
+  COMPLETED
+}
+
+model Event {
+  id                    Int                @id @default(autoincrement())
+  title                 String
+  date                  DateTime
+  registrationStartDate DateTime
+  registrationEndDate   DateTime
+  openQuotaSize         Int                @default(0) // Assuming validation is handled at application level
+  description           String?
+  price                 String?
+  location              String?
+  webpageUrl            String?
+  draft                 Boolean            @default(true)
+  signupsPublic         Boolean            @default(false)
+  verificationEmail     String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  deletedAt             DateTime?          @map("deletedAt") // Paranoid deletion setup
+  raffleEnabled         Boolean            @default(false)
+  raffleStartTime       DateTime?
+  raffleEndTime         DateTime?
+  raffleStatus          RaffleStatus       @default(NOT_STARTED)
+  Questions             Question[]
+  Quotas                Quota[]
+  raffleSimulations     RaffleSimulation[]
+}
+
+enum QuestionType {
+  text
+  textarea
+  radio
+  checkbox
+}
+
+model Question {
+  id       String       @id @default(cuid())
+  question String
+  type     QuestionType @default(text) // MULTIPLE_CHOICE | TEXT
+  sortId   Int
+  options  String[]     @default([])
+  required Boolean      @default(true)
+  public   Boolean      @default(false)
+  eventId  Int
+  Event    Event        @relation(fields: [eventId], references: [id])
+  Answers  Answer[]
+
+  @@index([eventId])
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  answer     String
+  questionId String
+  signupId   String
+  Question   Question @relation(fields: [questionId], references: [id])
+  Signup     Signup   @relation(fields: [signupId], references: [id])
+
+  @@unique([signupId, questionId], name: "signup_and_question")
+}
+
+model Signup {
+  id                 String       @id @default(cuid())
+  name               String
+  email              String
+  completedAt        DateTime? // when signup process is completed
+  createdAt          DateTime     @default(now())
+  quotaId            String
+  originalQuotaId    String
+  registrationIntent DateTime?
+  status             SignupStatus @default(PENDING)
+  Quota              Quota        @relation("Quota", fields: [quotaId], references: [id])
+  OriginalQuota      Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
+  Answers            Answer[]
+
+  @@index([quotaId])
+}
+
+enum SignupStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+model RaffleSimulation {
+  id           String   @id @default(cuid())
+  eventId      Int
+  seed         String
+  startTime    DateTime
+  endTime      DateTime
+  physicsState Json // Stores initial positions and final order
+  event        Event    @relation(fields: [eventId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Quota {
+  id              String   @id @default(cuid())
+  title           String
+  size            Int?
+  sortId          Int
+  eventId         Int
+  Event           Event    @relation(fields: [eventId], references: [id])
+  Signups         Signup[] @relation("Quota")
+  OriginalSignups Signup[] @relation("OriginalQuota")
+
+  @@index([eventId])
+}

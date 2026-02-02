@@ -2,7 +2,7 @@ import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import { TRPCError } from "@trpc/server";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/generated/prisma/client";
 
 export const usersRouter = router({
   getUsers: adminProcedure.query(async ({ ctx }) => {
@@ -27,7 +27,10 @@ export const usersRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      if (input.userId === ctx.session.user.id && input.role !== UserRole.admin) {
+      if (
+        input.userId === ctx.session.user.id &&
+        input.role !== UserRole.admin
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You can't demote yourself from admin role",

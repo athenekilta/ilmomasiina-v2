@@ -1,4 +1,4 @@
-import type { Question } from "@prisma/client";
+import type { Question } from "@/generated/prisma";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Switch } from "@/components/Switch";

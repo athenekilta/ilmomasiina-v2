@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useUser } from "../auth/hooks/useUser";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/server/auth/auth-client";
 import { routes } from "@/utils/routes";
 export const Header = () => {
   const user = useUser();

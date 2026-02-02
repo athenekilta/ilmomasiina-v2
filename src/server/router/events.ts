@@ -6,7 +6,7 @@ import {
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
-import { RaffleStatus, SignupStatus } from "@prisma/client";
+import { RaffleStatus, SignupStatus } from "@/generated/prisma/client";
 
 export const eventsRouter = router({
   getEvents: publicProcedure.query(async ({ ctx }) => {

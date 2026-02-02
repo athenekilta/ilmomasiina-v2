@@ -1,4 +1,4 @@
-import type { Quota, Event } from "@prisma/client";
+import type { Quota, Event } from "@/generated/prisma/client";
 import { isPast, isFuture } from "date-fns";
 
 export function OriginalQuotaTitle(quotas: Quota[], quotaId: string) {
