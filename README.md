@@ -13,7 +13,7 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 ## Postgres
 If you have docker installed, postgres can be easily run with the following command:
 ```
-docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5433:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18
+docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18
 ```
 
 After the container has been created, you can start/stop the container with the following docker commands.
