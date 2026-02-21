@@ -4,16 +4,19 @@ import { Switch } from "@/components/Switch";
 import { eventFormSchema } from "../utils/eventFormSchema";
 import { RichTextEditor } from "./RichTextEditor";
 import type {
+  Control,
   FieldErrors,
   UseFormRegister,
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
 import type { z } from "zod";
+import { TimeInput } from "@/components/TimeInput";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
 
 type BasicInfoFieldsProps = {
+  control: Control<EventFormValues>;
   register: UseFormRegister<EventFormValues>;
   watch: UseFormWatch<EventFormValues>;
   setValue: UseFormSetValue<EventFormValues>;
@@ -21,6 +24,7 @@ type BasicInfoFieldsProps = {
 };
 
 export function BasicInfoFields({
+  control,
   register,
   watch,
   setValue,
@@ -59,11 +63,10 @@ export function BasicInfoFields({
             error={!!errors.registrationStartDate}
             helperText={errors.registrationStartDate?.message}
           />
-          <Input
-            {...register("registrationStartTime")}
-            type="time"
+          <TimeInput
+            control={control}
+            name="registrationStartTime"
             error={!!errors.registrationStartTime}
-            helperText={errors.registrationStartTime?.message}
           />
         </div>
       </FieldSet>
@@ -75,11 +78,10 @@ export function BasicInfoFields({
             error={!!errors.registrationEndDate}
             helperText={errors.registrationEndDate?.message}
           />
-          <Input
-            {...register("registrationEndTime")}
-            type="time"
+          <TimeInput
+            control={control}
+            name="registrationEndTime"
             error={!!errors.registrationEndTime}
-            helperText={errors.registrationEndTime?.message}
           />
         </div>
       </FieldSet>

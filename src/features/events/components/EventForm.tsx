@@ -63,6 +63,7 @@ export function EventForm({ editId }: EventFormProps) {
     formState: { isSubmitting, errors },
     getValues,
     setValue,
+    control
   } = useForm({
     resolver: zodResolver(eventFormSchema),
     values: {
@@ -212,6 +213,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </div>
         <BasicInfoFields
+          control={control}
           register={register}
           watch={watch}
           setValue={setValue}
