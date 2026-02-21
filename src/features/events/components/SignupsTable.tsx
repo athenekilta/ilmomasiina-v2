@@ -52,7 +52,7 @@ export function SignupsTable({
           </Button>
         </h2>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-scroll">
         <table className="bg-brand-light my-6 min-w-full divide-y divide-gray-200 rounded shadow">
           <thead className="bg-gray-50">
             <tr>

@@ -328,7 +328,7 @@ export function EventForm({ editId }: EventFormProps) {
           />
         </FieldSet>
         <FieldSet title="Aika">
-          <div className="grid w-full grid-cols-1 gap-6 ">
+          <div className="grid w-full grid-cols-1 gap-6">
             <Input
               {...register("date")}
               type="date"
@@ -344,7 +344,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration start time">
-          <div className="grid w-full grid-cols-1 gap-6 ">
+          <div className="grid w-full grid-cols-1 gap-6">
             <Input
               {...register("registrationStartDate")}
               type="date"
@@ -360,7 +360,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration end time">
-          <div className="grid w-full grid-cols-1 gap-6 ">
+          <div className="grid w-full grid-cols-1 gap-6">
             <Input
               {...register("registrationEndDate")}
               type="date"
@@ -553,7 +553,7 @@ export function EventForm({ editId }: EventFormProps) {
         <FieldSet title="Vahvistusviesti sähköpostiin">
           <TextArea {...register("verificationEmail")} rows={5} />
         </FieldSet>
-        <FieldSet title="Ilmoittautuneet">
+        <div title="Ilmoittautuneet">
           {signups && editId ? (
             <SignupsTable
               signups={signups}
@@ -563,7 +563,7 @@ export function EventForm({ editId }: EventFormProps) {
           ) : (
             <p> Ei Ilmoittautuneita</p>
           )}
-        </FieldSet>
+        </div>
       </div>
     </form>
   );
