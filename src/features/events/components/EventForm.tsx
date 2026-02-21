@@ -1,14 +1,13 @@
-"use client";
+﻿"use client";
 
 import { eventFormSchema } from "../utils/eventFormSchema";
-import type { FieldErrorsImpl } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
 import { useCallback, useEffect } from "react";
 import { addDays, set } from "date-fns";
-import type { Quota, Question } from "@/generated/prisma/client";
+import type { Quota } from "@/generated/prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { FieldSet } from "@/components/FieldSet";
 import { Button } from "@/components/Button";
@@ -16,7 +15,6 @@ import { QuotaRow } from "./QuotaRow";
 import cuid from "cuid";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
-import { QuestionRow } from "./QuestionRow";
 import { TextArea } from "@/components/TextArea";
 import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
@@ -24,6 +22,7 @@ import { useRouter } from "next/router";
 import { ValidationSummary } from "./ValidationSummary";
 import { SignupsTable } from "./SignupsTable";
 import { BasicInfoFields } from "./BasicInfoFields";
+import { Questions } from "./Questions";
 
 export type EventFormProps = {
   /**
@@ -153,33 +152,6 @@ export function EventForm({ editId }: EventFormProps) {
     ]);
   }, [getValues, setValue, editEvent]);
 
-  const createQuestion = () => {
-    const questions = getValues("Questions");
-    const id = cuid();
-    const sortId = questions.length + 1;
-    setValue("Questions", [
-      ...questions,
-      {
-        id,
-        question: "",
-        type: "text",
-        required: false,
-        sortId,
-        options: [],
-        public: false,
-        eventId: editEvent?.id ?? NaN,
-      },
-    ]);
-  };
-
-  const deleteQuestion = (id: string) => {
-    const questions = getValues("Questions");
-    setValue(
-      "Questions",
-      questions.filter((question: Question) => question.id !== id),
-    );
-  };
-
   const createPublicQueue = () => {
     const quotas = getValues("Quotas");
     const sortId = quotas.length + 1;
@@ -263,11 +235,6 @@ export function EventForm({ editId }: EventFormProps) {
     });
 
     setValue("Quotas", quotas);
-  };
-
-  const onDragEndQuestions = (result: DragUpdate) => {
-    if (!result.destination) return;
-    console.log(result);
   };
 
   if (editId && (signUpsLoading || isLoading)) {
@@ -410,59 +377,14 @@ export function EventForm({ editId }: EventFormProps) {
           </DragDropContext>
         </FieldSet>
 
-        <FieldSet title="Kysymykset">
-          <div className="mt-2 mb-5 flex flex-row gap-4">
-            <Button onClick={() => createQuestion()} type="button">
-              Lisää Kysymys
-            </Button>
-          </div>
-          <DragDropContext onDragEnd={onDragEndQuestions}>
-            <Droppable droppableId="Quotas">
-              {(droppableProvided) => (
-                <div
-                  ref={droppableProvided.innerRef}
-                  {...droppableProvided.droppableProps}
-                  className="space-y-4"
-                >
-                  {watch("Questions").map((question, index) => (
-                    <Draggable
-                      key={question.id}
-                      draggableId={question.id}
-                      index={index}
-                    >
-                      {(draggableProvided) => (
-                        <div
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                        >
-                          <QuestionRow
-                            key={question.id}
-                            question={question}
-                            onChange={(value) => {
-                              const questions = getValues("Questions");
-                              questions[index] = value;
-                              setValue("Questions", questions);
-                            }}
-                            deleteQuestion={deleteQuestion}
-                            signupCount={signups ? signups.length : 0}
-                            errors={
-                              errors.Questions &&
-                              (errors.Questions[
-                                index
-                              ] as FieldErrorsImpl<Question>)
-                            }
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {droppableProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </FieldSet>
+        <Questions
+          getValues={getValues}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          eventId={editEvent?.id}
+          signupCount={signups ? signups.length : 0}
+        />
 
         <FieldSet title="Vahvistusviesti sähköpostiin">
           <TextArea {...register("verificationEmail")} rows={5} />

@@ -67,7 +67,7 @@ export function QuestionRow({
             onChange({ ...question, type: value as Question["type"] });
           }}
         >
-          <SelectTrigger className="w-[280px]">
+          <SelectTrigger className="w-70">
             <SelectValue placeholder="Teksti (lyhyt)" />
           </SelectTrigger>
           <SelectContent className="">
