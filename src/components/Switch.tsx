@@ -33,7 +33,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
           <motion.div
             layout="position"
             transition={{ duration: 0.1 }}
-            className="group-aria-selected:bg-primary-500 group-aria-selected:group-aria-disabled:bg-primary-300 h-5 w-5 rounded-full bg-slate-500 transition-colors"
+            className="group-aria-selected:bg-brand-secondary group-aria-selected:group-aria-disabled:bg-primary-300 h-5 w-5 rounded-full bg-slate-500 transition-colors"
           />
         </div>
       </button>
