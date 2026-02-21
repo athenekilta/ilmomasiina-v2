@@ -328,56 +328,50 @@ export function EventForm({ editId }: EventFormProps) {
           />
         </FieldSet>
         <FieldSet title="Aika">
-          <div className="flex max-w-3/4 flex-row gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
             <Input
               {...register("date")}
               type="date"
               error={!!errors.date}
               helperText={errors.date?.message}
-              className="w-1/2"
             />
             <Input
               {...register("time")}
               type="time"
               error={!!errors.time}
               helperText={errors.time?.message}
-              className="w-1/2"
             />
           </div>
         </FieldSet>
         <FieldSet title="Registration start time">
-          <div className="flex max-w-3/4 flex-row gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
             <Input
               {...register("registrationStartDate")}
               type="date"
               error={!!errors.registrationStartDate}
               helperText={errors.registrationStartDate?.message}
-              className="w-1/2"
             />
             <Input
               {...register("registrationStartTime")}
               type="time"
               error={!!errors.registrationStartTime}
               helperText={errors.registrationStartTime?.message}
-              className="w-1/2"
             />
           </div>
         </FieldSet>
         <FieldSet title="Registration end time">
-          <div className="flex max-w-3/4 flex-row gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
             <Input
               {...register("registrationEndDate")}
               type="date"
               error={!!errors.registrationEndDate}
               helperText={errors.registrationEndDate?.message}
-              className="w-1/2"
             />
             <Input
               {...register("registrationEndTime")}
               type="time"
               error={!!errors.registrationEndTime}
               helperText={errors.registrationEndTime?.message}
-              className="w-1/2"
             />
           </div>
         </FieldSet>

@@ -8,7 +8,7 @@ export function Layout(props: Layoutprops) {
   return (
     <div className="bg-brand-beige flex min-h-screen flex-col">
       <Header />
-      <main className="mx-auto w-full max-w-3xl grow">{props.children}</main>
+      <main className="mx-auto w-full max-w-4xl grow">{props.children}</main>
       <Footer />
     </div>
   );
