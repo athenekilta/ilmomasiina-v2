@@ -110,7 +110,7 @@ export function EventCard({
             <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-700">
               <Link
                 href={routes.app.events.edit(event.id)}
-                className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
               >
                 <Icon icon="edit" className="mr-1.5 h-4 w-4" />
                 Muokkaa
