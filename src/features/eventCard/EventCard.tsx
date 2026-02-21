@@ -3,6 +3,8 @@ import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
 import type { Event, Quota, Signup } from "@/generated/prisma/client";
 import { formatRegistration } from "@/utils/format";
+import { Button } from "@/components/Button";
+import { Divider } from "@/components/Divider";
 
 // Define a simpler type that matches the manual enrichment in the events router
 type EnrichedQuota = Quota & {
@@ -108,15 +110,19 @@ export function EventCard({
 
           {/* Admin Actions */}
           {isAdmin && (
-            <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-700">
-              <Link
+            <>
+              <Divider />
+              <Button.Link
                 href={routes.app.events.edit(event.id)}
-                className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                variant="filled"
+                color="neutral"
+                size="small"
+                startIcon={<Icon icon="edit" className="h-4 w-4" />}
+                className="w-36"
               >
-                <Icon icon="edit" className="mr-1.5 h-4 w-4" />
                 Muokkaa
-              </Link>
-            </div>
+              </Button.Link>
+            </>
           )}
         </div>
       </div>

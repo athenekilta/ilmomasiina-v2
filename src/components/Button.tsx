@@ -20,7 +20,6 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 export type ButtonLinkProps = LinkProps &
   React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    loading?: boolean;
     startIcon?: React.ReactNode;
     endIcon?: React.ReactNode;
     variant?: ButtonVariant;
@@ -67,14 +66,11 @@ export const Button = Object.assign(
           endIcon: !!endIcon,
         })}
       >
-        {
-          // Loading icon
-          loading && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <LoadingSpinner />
-            </div>
-          )
-        }
+        {loading && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <LoadingSpinner />
+          </div>
+        )}
 
         {startIcon}
         {children}
@@ -90,7 +86,6 @@ export const Button = Object.assign(
       color,
       className,
       children,
-      loading,
       size,
       onClick,
       stopPropagation,
@@ -104,7 +99,6 @@ export const Button = Object.assign(
             onClick?.(e);
           }}
           className={getClassName({
-            loading,
             variant,
             color,
             className,
@@ -122,9 +116,6 @@ export const Button = Object.assign(
   },
 );
 
-/**
- * Large custom tailwind styles are extracted into this function.
- */
 function getClassName(props: {
   loading?: boolean;
   disabled?: boolean;
@@ -145,7 +136,7 @@ function getClassName(props: {
     props.size === "small" ? "pr-2" : props.endIcon ? "pr-2" : "pr-4",
     props.size === "small"
       ? "gap-1 py-1 text-[0.8rem]"
-      : "py-2 text-[0.9rem] min-h-9 gap-4",
+      : "py-2 text-[0.9rem] min-h-9 gap-2",
   ];
 
   if (props.loading) classNameList.push("opacity-60");
@@ -165,15 +156,17 @@ const variableButtonClassNames: Record<
       black:
         "bg-black text-white enabled:hover:bg-black/75 enabled:active:bg-black/70",
       white:
-        "bg-white text-black enabled:hover:bg-black/75 enabled:active:bg-black/70",
+        "bg-white text-black enabled:hover:bg-white/75 enabled:active:bg-white/70",
       primary:
         "bg-brand-primary text-white enabled:hover:bg-brand-primary/75 enabled:active:bg-brand-primary/70",
       secondary:
-        "bg-brand-lime text-black enabled:hover:bg-brand-lime/75 enabled:active:bg-brand-lime/70",
+        "bg-brand-secondary text-white enabled:hover:bg-brand-secondary/75 enabled:active:bg-brand-secondary/70",
       danger:
         "bg-danger text-white enabled:hover:bg-danger/75 enabled:active:bg-danger/70",
       warning:
         "bg-warning text-white enabled:hover:bg-warning/75 enabled:active:bg-warning/70",
+      neutral:
+        "bg-gray-200 text-gray-800 enabled:hover:bg-gray-300 enabled:active:bg-gray-400",
     },
   ],
   bordered: [
@@ -191,15 +184,17 @@ const variableButtonClassNames: Record<
         "text-danger bg-danger/0 enabled:hover:bg-danger/15 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/70",
       warning:
         "text-warning bg-warning/0 enabled:hover:bg-warning/15 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/70",
+      neutral:
+        "text-gray-700 bg-gray-500/0 enabled:hover:bg-gray-500/15 enabled:active:bg-gray-500/10 border-gray-500/50 enabled:hover:border-gray-500/70",
     },
   ],
   text: [
     "",
     {
       black:
-        "text-black   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+        "text-black bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
       white:
-        "text-white   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+        "text-white bg-white/0 enabled:hover:bg-white/10 enabled:active:bg-white/20",
       primary:
         "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/10 enabled:active:bg-brand-primary/20",
       secondary:
@@ -208,6 +203,8 @@ const variableButtonClassNames: Record<
         "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
       warning:
         "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
+      neutral:
+        "text-gray-700 bg-gray-500/0 enabled:hover:bg-gray-500/10 enabled:active:bg-gray-500/20",
     },
   ],
 };

@@ -12,7 +12,8 @@ export type ColorVariant =
   | "primary"
   | "secondary"
   | "warning"
-  | "danger";
+  | "danger"
+  | "neutral";
 
 export type BaseVariant =
   | "default"
@@ -47,8 +48,5 @@ export type RequiredProp<T, RequiredKey extends keyof T> = Omit<
  * Utility type to extract the resolved value T
  * from a promise of type Promise<T> or an array of type Array<T>
  */
-export type Unwrap<T> = T extends PromiseLike<infer U>
-  ? U
-  : T extends Array<infer U>
-  ? U
-  : T;
+export type Unwrap<T> =
+  T extends PromiseLike<infer U> ? U : T extends Array<infer U> ? U : T;
