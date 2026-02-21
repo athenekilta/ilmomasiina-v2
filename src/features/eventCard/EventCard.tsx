@@ -38,7 +38,6 @@ export function EventCard({
     );
 
   return (
-    <Link href={`events/${event.id}`}>
       <div
         className={`rounded-xl shadow-xs transition-all duration-300 hover:shadow-md ${
           event.draft
@@ -47,63 +46,65 @@ export function EventCard({
         }`}
       >
         <div className="flex flex-col p-4">
-          <div className="flex-row justify-between sm:flex">
-            <div>
-              <h2 className="text-brand-primary upper text-xl font-bold">
-                {event.title}
-              </h2>
-              <span className="text-brand-dark text-xs">
-                {new Date(event.date).toLocaleString("fi-FI", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-                {event.location && <span> - {event.location}</span>}
-              </span>
+          <Link href={`events/${event.id}`}>
+            <div className="flex-row justify-between sm:flex">
+              <div>
+                <h2 className="text-brand-primary upper text-xl font-bold">
+                  {event.title}
+                </h2>
+                <span className="text-brand-dark text-xs">
+                  {new Date(event.date).toLocaleString("fi-FI", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                  {event.location && <span> - {event.location}</span>}
+                </span>
+              </div>
+              <div className="self-start">
+                {isRegistrationClosed && (
+                  <span className="text-brand-danger text-xs sm:text-sm">
+                    Ilmoittautuminen sulkeutunut
+                  </span>
+                )}
+                {!isRegistrationClosed && (
+                  <span className="text-brand-primary mt-2 text-xs sm:text-sm">
+                    {formatRegistration(
+                      event.registrationStartDate,
+                      event.registrationEndDate,
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="self-start">
-              {isRegistrationClosed && (
-                <span className="text-brand-danger text-xs sm:text-sm">
-                  Ilmoittautuminen sulkeutunut
+
+            <div className="flex flex-wrap gap-2">
+              {event.draft && (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">
+                  <Icon icon="draft" className="mr-1 h-3 w-3" />
+                  Luonnos
                 </span>
               )}
-              {!isRegistrationClosed && (
-                <span className="text-brand-primary mt-2 text-xs sm:text-sm">
-                  {formatRegistration(
-                    event.registrationStartDate,
-                    event.registrationEndDate,
-                  )}
-                </span>
-              )}
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            {event.draft && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">
-                <Icon icon="draft" className="mr-1 h-3 w-3" />
-                Luonnos
-              </span>
-            )}
-          </div>
-
-          {/* Quotas */}
-          {event.Quotas.length > 0 && (
-            <div className="mt-1 flex flex-col gap-1">
-              {event.Quotas.map((quota) => (
-                <div
-                  key={quota.id}
-                  className="text-brand-dark flex items-center justify-between text-sm"
-                >
-                  <span className="text-sm font-semibold">{quota.title}</span>
-                  <div className="ml-2 flex items-center">
-                    <span className="text-sm font-normal">
-                      {quota.signupCount} / {quota.size ?? "∞"}
-                    </span>
+            {/* Quotas */}
+            {event.Quotas.length > 0 && (
+              <div className="mt-1 flex flex-col gap-1">
+                {event.Quotas.map((quota) => (
+                  <div
+                    key={quota.id}
+                    className="text-brand-dark flex items-center justify-between text-sm"
+                  >
+                    <span className="text-sm font-semibold">{quota.title}</span>
+                    <div className="ml-2 flex items-center">
+                      <span className="text-sm font-normal">
+                        {quota.signupCount} / {quota.size ?? "∞"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </Link>
 
           {/* Admin Actions */}
           {isAdmin && (
@@ -119,6 +120,5 @@ export function EventCard({
           )}
         </div>
       </div>
-    </Link>
   );
 }
