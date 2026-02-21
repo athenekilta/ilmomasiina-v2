@@ -28,10 +28,10 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         <div
           aria-disabled={props.disabled}
           aria-selected={props.value}
-          className="bg-active-overlay group aria-selected:bg-primary-50 flex h-7 w-12 items-center justify-start rounded-full border border-gray-400 p-1 transition-colors aria-selected:justify-end dark:border-gray-300"
+          className="bg-active-overlay group aria-selected:bg-primary-50 flex h-7 w-12 items-center rounded-full border border-gray-400 p-1 transition-colors dark:border-gray-300"
         >
           <motion.div
-            layout="position"
+            animate={{ x: props.value ? 20 : 0 }}
             transition={{ duration: 0.1 }}
             className="group-aria-selected:bg-brand-secondary group-aria-selected:group-aria-disabled:bg-primary-300 h-5 w-5 rounded-full bg-slate-500 transition-colors"
           />
