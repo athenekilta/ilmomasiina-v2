@@ -26,6 +26,8 @@ import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { ValidationSummary } from "./ValidationSummary";
 import { SignupsTable } from "./SignupsTable";
+import { DateInput } from "@/components/DateInput";
+import { TimeInput } from "@/components/TimeInput";
 
 export type EventFormProps = {
   /**
@@ -71,6 +73,7 @@ export function EventForm({ editId }: EventFormProps) {
     formState: { isSubmitting, errors },
     getValues,
     setValue,
+    control,
   } = useForm({
     resolver: zodResolver(eventFormSchema),
     values: {
@@ -328,7 +331,7 @@ export function EventForm({ editId }: EventFormProps) {
           />
         </FieldSet>
         <FieldSet title="Aika">
-          <div className="grid w-full grid-cols-1 gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("date")}
               type="date"
@@ -344,34 +347,30 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration start time">
-          <div className="grid w-full grid-cols-1 gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("registrationStartDate")}
               type="date"
               error={!!errors.registrationStartDate}
-              helperText={errors.registrationStartDate?.message}
             />
-            <Input
-              {...register("registrationStartTime")}
-              type="time"
+            <TimeInput
+              control={control}
+              name="registrationStartTime"
               error={!!errors.registrationStartTime}
-              helperText={errors.registrationStartTime?.message}
             />
           </div>
         </FieldSet>
         <FieldSet title="Registration end time">
-          <div className="grid w-full grid-cols-1 gap-6">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("registrationEndDate")}
               type="date"
               error={!!errors.registrationEndDate}
-              helperText={errors.registrationEndDate?.message}
             />
-            <Input
-              {...register("registrationEndTime")}
-              type="time"
+            <TimeInput
+              control={control}
+              name="registrationEndTime"
               error={!!errors.registrationEndTime}
-              helperText={errors.registrationEndTime?.message}
             />
           </div>
         </FieldSet>
