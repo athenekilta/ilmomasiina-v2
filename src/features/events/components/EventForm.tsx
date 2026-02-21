@@ -1,33 +1,23 @@
-"use client";
+﻿"use client";
 
 import { eventFormSchema } from "../utils/eventFormSchema";
-import type { FieldErrorsImpl } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { useCallback, useEffect } from "react";
 import { addDays, set } from "date-fns";
-import type { Quota, Question } from "@/generated/prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { FieldSet } from "@/components/FieldSet";
-import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
-import { Switch } from "@/components/Switch";
-import { QuotaRow } from "./QuotaRow";
-import cuid from "cuid";
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
-import type { DragUpdate } from "@hello-pangea/dnd";
-import { RichTextEditor } from "./RichTextEditor";
-import { QuestionRow } from "./QuestionRow";
 import { TextArea } from "@/components/TextArea";
 import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { ValidationSummary } from "./ValidationSummary";
 import { SignupsTable } from "./SignupsTable";
-import { DateInput } from "@/components/DateInput";
-import { TimeInput } from "@/components/TimeInput";
+import { BasicInfoFields } from "./BasicInfoFields";
+import { Questions } from "./Questions";
+import { Quotas } from "./Quotas";
 
 export type EventFormProps = {
   /**
@@ -73,7 +63,7 @@ export function EventForm({ editId }: EventFormProps) {
     formState: { isSubmitting, errors },
     getValues,
     setValue,
-    control,
+    control
   } = useForm({
     resolver: zodResolver(eventFormSchema),
     values: {
@@ -141,82 +131,6 @@ export function EventForm({ editId }: EventFormProps) {
     return combined;
   };
 
-  const createQuota = useCallback(() => {
-    const quotas = getValues("Quotas");
-    const id = cuid();
-    const sortId = quotas.length + 1;
-    setValue("Quotas", [
-      ...quotas,
-      {
-        id,
-        title: "",
-        size: null,
-        sortId,
-        eventId: editEvent?.id ?? NaN,
-        signupCount: 0,
-      },
-    ]);
-  }, [getValues, setValue, editEvent]);
-
-  const createQuestion = () => {
-    const questions = getValues("Questions");
-    const id = cuid();
-    const sortId = questions.length + 1;
-    setValue("Questions", [
-      ...questions,
-      {
-        id,
-        question: "",
-        type: "text",
-        required: false,
-        sortId,
-        options: [],
-        public: false,
-        eventId: editEvent?.id ?? NaN,
-      },
-    ]);
-  };
-
-  const deleteQuestion = (id: string) => {
-    const questions = getValues("Questions");
-    setValue(
-      "Questions",
-      questions.filter((question: Question) => question.id !== id),
-    );
-  };
-
-  const createPublicQueue = () => {
-    const quotas = getValues("Quotas");
-    const sortId = quotas.length + 1;
-    setValue("Quotas", [
-      ...quotas,
-      {
-        id: editEvent?.id ? "public-quota-" + editEvent?.id : "public-quota",
-        title: "Avoin kiintiö",
-        size: null,
-        sortId,
-        eventId: editEvent?.id ?? NaN,
-        signupCount: 0,
-      },
-    ]);
-  };
-
-  console.log(editId);
-
-  useEffect(() => {
-    if (watch("Quotas").length === 0 && editId === undefined) {
-      createQuota();
-    }
-  }, [watch("Quotas"), createQuota, watch, editId]);
-
-  const deleteQuota = (id: string) => {
-    const quotas = getValues("Quotas");
-    setValue(
-      "Quotas",
-      quotas.filter((quota: Quota) => quota.id !== id),
-    );
-  };
-
   const onSubmit = handleSubmit(async (data) => {
     console.log("handleSubmit", data);
     console.log(getValues("time"));
@@ -251,31 +165,6 @@ export function EventForm({ editId }: EventFormProps) {
       router.push(`/events/${event.id}/edit`);
     }
   });
-
-  const onDragEndQuota = (result: DragUpdate) => {
-    if (!result.destination) return;
-
-    const quotas = getValues("Quotas");
-
-    const [removed] = quotas.splice(result.source.index, 1);
-    if (!removed) {
-      console.error("Could not find quota to remove");
-      return;
-    }
-
-    quotas.splice(result.destination.index, 0, removed);
-    // Update sortId
-    quotas.forEach((quota, index) => {
-      quota.sortId = index + 1;
-    });
-
-    setValue("Quotas", quotas);
-  };
-
-  const onDragEndQuestions = (result: DragUpdate) => {
-    if (!result.destination) return;
-    console.log(result);
-  };
 
   if (editId && (signUpsLoading || isLoading)) {
     return (
@@ -323,220 +212,30 @@ export function EventForm({ editId }: EventFormProps) {
             )}
           </div>
         </div>
-        <FieldSet title="Nimi">
-          <Input
-            {...register("title")}
-            error={!!errors.title}
-            helperText={errors.title?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Aika">
-          <div className="grid w-full grid-cols-1 gap-6 ">
-            <Input
-              {...register("date")}
-              type="date"
-              error={!!errors.date}
-              helperText={errors.date?.message}
-            />
-            <Input
-              {...register("time")}
-              type="time"
-              error={!!errors.time}
-              helperText={errors.time?.message}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Registration start time">
-          <div className="grid w-full grid-cols-1 gap-6 ">
-            <Input
-              {...register("registrationStartDate")}
-              type="date"
-              error={!!errors.registrationStartDate}
-            />
-            <TimeInput
-              control={control}
-              name="registrationStartTime"
-              error={!!errors.registrationStartTime}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Registration end time">
-          <div className="grid w-full grid-cols-1 gap-6 ">
-            <Input
-              {...register("registrationEndDate")}
-              type="date"
-              error={!!errors.registrationEndDate}
-            />
-            <TimeInput
-              control={control}
-              name="registrationEndTime"
-              error={!!errors.registrationEndTime}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Ilmoittautumiset julkisia">
-          <Switch
-            value={watch("signupsPublic")}
-            onChange={(value) => setValue("signupsPublic", value)}
-          />
-        </FieldSet>
-        <FieldSet title="Paikka">
-          <Input
-            {...register("location")}
-            error={!!errors.location}
-            helperText={errors.location?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Hinta">
-          <Input
-            {...register("price")}
-            error={!!errors.price}
-            helperText={errors.price?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Webbisivu">
-          <Input
-            {...register("webpageUrl")}
-            error={!!errors.webpageUrl}
-            helperText={errors.webpageUrl?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Kuvaus">
-          <RichTextEditor
-            value={watch("description") || ""}
-            onChange={(value) => setValue("description", value)}
-          />
-        </FieldSet>
-        <FieldSet title="Kiintiöt">
-          <div className="mt-2 mb-5 flex flex-row gap-4">
-            <Button onClick={() => createQuota()} type="button">
-              Lisää kiintiö
-            </Button>
-          </div>
+        <BasicInfoFields
+          control={control}
+          register={register}
+          watch={watch}
+          setValue={setValue}
+          errors={errors}
+        />
+        <Quotas
+          getValues={getValues}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          eventId={editEvent?.id}
+          editId={editId}
+        />
 
-          {errors.Quotas && (
-            <div className="mb-4 rounded-md bg-red-50 p-3">
-              <div className="flex">
-                <div className="shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">
-                    {typeof errors.Quotas.message === "string"
-                      ? errors.Quotas.message
-                      : "Please add at least one valid quota"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DragDropContext onDragEnd={onDragEndQuota}>
-            <Droppable droppableId="Quotas">
-              {(droppableProvided) => (
-                <div
-                  ref={droppableProvided.innerRef}
-                  {...droppableProvided.droppableProps}
-                  className="space-y-4"
-                >
-                  {watch("Quotas").map((quota, index) => (
-                    <Draggable
-                      key={quota.id}
-                      draggableId={quota.id}
-                      index={index}
-                    >
-                      {(draggableProvided) => (
-                        <div
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                        >
-                          <QuotaRow
-                            key={quota.id}
-                            quota={quota}
-                            quotasLength={watch("Quotas").length}
-                            onChange={(value) => {
-                              const quotas = getValues("Quotas");
-                              quotas[index] = value;
-                              setValue("Quotas", quotas);
-                            }}
-                            deleteQuota={deleteQuota}
-                            errors={errors.Quotas && errors.Quotas[index]}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {droppableProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </FieldSet>
-
-        <FieldSet title="Kysymykset">
-          <div className="mt-2 mb-5 flex flex-row gap-4">
-            <Button onClick={() => createQuestion()} type="button">
-              Lisää Kysymys
-            </Button>
-          </div>
-          <DragDropContext onDragEnd={onDragEndQuestions}>
-            <Droppable droppableId="Quotas">
-              {(droppableProvided) => (
-                <div
-                  ref={droppableProvided.innerRef}
-                  {...droppableProvided.droppableProps}
-                  className="space-y-4"
-                >
-                  {watch("Questions").map((question, index) => (
-                    <Draggable
-                      key={question.id}
-                      draggableId={question.id}
-                      index={index}
-                    >
-                      {(draggableProvided) => (
-                        <div
-                          ref={draggableProvided.innerRef}
-                          {...draggableProvided.draggableProps}
-                          {...draggableProvided.dragHandleProps}
-                        >
-                          <QuestionRow
-                            key={question.id}
-                            question={question}
-                            onChange={(value) => {
-                              const questions = getValues("Questions");
-                              questions[index] = value;
-                              setValue("Questions", questions);
-                            }}
-                            deleteQuestion={deleteQuestion}
-                            signupCount={signups ? signups.length : 0}
-                            errors={
-                              errors.Questions &&
-                              (errors.Questions[
-                                index
-                              ] as FieldErrorsImpl<Question>)
-                            }
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {droppableProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </FieldSet>
+        <Questions
+          getValues={getValues}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          eventId={editEvent?.id}
+          signupCount={signups ? signups.length : 0}
+        />
 
         <FieldSet title="Vahvistusviesti sähköpostiin">
           <TextArea {...register("verificationEmail")} rows={5} />

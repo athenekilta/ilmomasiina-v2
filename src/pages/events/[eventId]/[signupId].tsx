@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { Layout } from "@/features/layout/Layout";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 
 function EditSignup() {
   const router = useRouter();
@@ -193,32 +194,13 @@ function EditSignup() {
         </div>
       </form>
 
-      {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-brand-light w-full max-w-md rounded-lg p-6 shadow-xl">
-            <h3 className="mb-4 text-lg font-semibold">Confirm Deletion</h3>
-            <p className="mb-6 text-gray-600">
-              Are you sure you want to delete your signup? This action cannot be
-              undone.
-            </p>
-            <div className="flex justify-end space-x-4">
-              <Button
-                color="secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                color="danger"
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ConfirmationDialog
+          message="Are you sure you want to delete your signup? This action cannot be undone."
+          onConfirmAction={handleDelete}
+          onCancelAction={() => setShowDeleteConfirm(false)}
+          pending={deleteMutation.isPending}
+        />
       )}
     </div>
   );
