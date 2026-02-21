@@ -31,17 +31,10 @@ export function QuotaRow({
                 onChange({ ...quota, title: value.target.value })
               }
               className="w-1/2"
-              disabled={quota.id.includes("public-quota")}
               error={!!errors?.title}
               helperText={errors?.title ? errors.title.message : undefined}
             />
           </div>
-          <p className="text-slate-500">
-            <></>
-            {quota.id.includes("public-quota")
-              ? "Avoimen kiintiön nimeä ei voi muuttaa. Avoin kiintiö on kaikille osallistujille yhteinen kiintiö, johon siirretään muita kiintiöitä jonottavat osallistujat, mikäli avoimessa kiintiössä on tilaa."
-              : "Jos kiintiöitä on vain yksi, voit antaa sen nimeksi esim. tapahtuman nimen. Voit järjestellä kiintiöitä raahaamalla niitä."}
-          </p>
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-row items-center gap-2">

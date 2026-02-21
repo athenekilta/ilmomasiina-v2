@@ -402,17 +402,6 @@ export function EventForm({ editId }: EventFormProps) {
             <Button onClick={() => createQuota()} type="button">
               Lisää kiintiö
             </Button>
-            <Button
-              type="button"
-              onClick={() => createPublicQueue()}
-              disabled={
-                !!watch("Quotas").find((quota) =>
-                  quota.id.includes("public-quota"),
-                )
-              }
-            >
-              Lisää avoin kiintiö
-            </Button>
           </div>
 
           {errors.Quotas && (
