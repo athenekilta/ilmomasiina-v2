@@ -22,6 +22,20 @@ export function RichTextEditor({
       onChange={(value) => onChange(value)}
       language="en-US"
       placeholder="Kirjoita kuvaus"
+      toolbarsExclude={[
+        "github",
+        "htmlPreview",
+        "save",
+        "image",
+        "mermaid",
+        "pageFullscreen",
+        "catalog",
+        "codeRow",
+        "code",
+        "fullscreen",
+        "sub",
+        "sup",
+      ]}
     />
   );
 }
