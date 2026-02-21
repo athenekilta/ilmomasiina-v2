@@ -11,14 +11,11 @@ import { addDays, set } from "date-fns";
 import type { Quota, Question } from "@/generated/prisma/client";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { FieldSet } from "@/components/FieldSet";
-import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
-import { Switch } from "@/components/Switch";
 import { QuotaRow } from "./QuotaRow";
 import cuid from "cuid";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
-import { RichTextEditor } from "./RichTextEditor";
 import { QuestionRow } from "./QuestionRow";
 import { TextArea } from "@/components/TextArea";
 import { nativeDate } from "@/utils/nativeDate";
@@ -26,6 +23,7 @@ import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { ValidationSummary } from "./ValidationSummary";
 import { SignupsTable } from "./SignupsTable";
+import { BasicInfoFields } from "./BasicInfoFields";
 
 export type EventFormProps = {
   /**
@@ -198,8 +196,6 @@ export function EventForm({ editId }: EventFormProps) {
     ]);
   };
 
-  console.log(editId);
-
   useEffect(() => {
     if (watch("Quotas").length === 0 && editId === undefined) {
       createQuota();
@@ -320,94 +316,12 @@ export function EventForm({ editId }: EventFormProps) {
             )}
           </div>
         </div>
-        <FieldSet title="Nimi">
-          <Input
-            {...register("title")}
-            error={!!errors.title}
-            helperText={errors.title?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Aika">
-          <div className="grid w-full grid-cols-1 gap-6">
-            <Input
-              {...register("date")}
-              type="date"
-              error={!!errors.date}
-              helperText={errors.date?.message}
-            />
-            <Input
-              {...register("time")}
-              type="time"
-              error={!!errors.time}
-              helperText={errors.time?.message}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Registration start time">
-          <div className="grid w-full grid-cols-1 gap-6">
-            <Input
-              {...register("registrationStartDate")}
-              type="date"
-              error={!!errors.registrationStartDate}
-              helperText={errors.registrationStartDate?.message}
-            />
-            <Input
-              {...register("registrationStartTime")}
-              type="time"
-              error={!!errors.registrationStartTime}
-              helperText={errors.registrationStartTime?.message}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Registration end time">
-          <div className="grid w-full grid-cols-1 gap-6">
-            <Input
-              {...register("registrationEndDate")}
-              type="date"
-              error={!!errors.registrationEndDate}
-              helperText={errors.registrationEndDate?.message}
-            />
-            <Input
-              {...register("registrationEndTime")}
-              type="time"
-              error={!!errors.registrationEndTime}
-              helperText={errors.registrationEndTime?.message}
-            />
-          </div>
-        </FieldSet>
-        <FieldSet title="Ilmoittautumiset julkisia">
-          <Switch
-            value={watch("signupsPublic")}
-            onChange={(value) => setValue("signupsPublic", value)}
-          />
-        </FieldSet>
-        <FieldSet title="Paikka">
-          <Input
-            {...register("location")}
-            error={!!errors.location}
-            helperText={errors.location?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Hinta">
-          <Input
-            {...register("price")}
-            error={!!errors.price}
-            helperText={errors.price?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Webbisivu">
-          <Input
-            {...register("webpageUrl")}
-            error={!!errors.webpageUrl}
-            helperText={errors.webpageUrl?.message}
-          />
-        </FieldSet>
-        <FieldSet title="Kuvaus">
-          <RichTextEditor
-            value={watch("description") || ""}
-            onChange={(value) => setValue("description", value)}
-          />
-        </FieldSet>
+        <BasicInfoFields
+          register={register}
+          watch={watch}
+          setValue={setValue}
+          errors={errors}
+        />
         <FieldSet title="Kiintiöt">
           <div className="mt-2 mb-5 flex flex-row gap-4">
             <Button onClick={() => createQuota()} type="button">
