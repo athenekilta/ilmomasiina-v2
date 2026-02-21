@@ -13,8 +13,18 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 ## Postgres
 If you have docker installed, postgres can be easily run with the following command:
 ```
-docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql/data postgres
+docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18
 ```
+
+After the container has been created, you can start/stop the container with the following docker commands.
+```bash
+# Start
+docker start ilmomasiina-v2-dev-db
+
+# Stop 
+docker stop ilmomasiina-v2-dev-db
+```
+
 Otherwise, run a postgres instance manually.
 
 Update DATABASE_URL in your .env to match the password & user.
@@ -33,11 +43,19 @@ Update DATABASE_URL in your .env to match the password & user.
 4. Set up the database:
    ```bash
    npx prisma generate
-   npx prisma migrate deploy
+   npx prisma db push 
    ```
 5. Run the development server:
    ```bash
    npm run dev
+   ```
+
+After this you can go and create yourself an account in the ui at [http://localhost:3000]. If you want to test admin features, set your role to admin in prisma studio. More info about prisma studio at the end of the README.md.
+
+If you have modified the schema, you can update the database tables with
+   ```bash
+   npx prisma generate
+   npx prisma migrate deploy 
    ```
 
 ## Raffle Worker
