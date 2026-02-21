@@ -328,7 +328,7 @@ export function EventForm({ editId }: EventFormProps) {
           />
         </FieldSet>
         <FieldSet title="Aika">
-          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("date")}
               type="date"
@@ -344,7 +344,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration start time">
-          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("registrationStartDate")}
               type="date"
@@ -360,7 +360,7 @@ export function EventForm({ editId }: EventFormProps) {
           </div>
         </FieldSet>
         <FieldSet title="Registration end time">
-          <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid w-full grid-cols-1 gap-6 ">
             <Input
               {...register("registrationEndDate")}
               type="date"
