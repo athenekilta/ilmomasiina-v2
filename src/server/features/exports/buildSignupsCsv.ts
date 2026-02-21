@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { stringify } from "csv-stringify/sync";
+import { nativeDate } from "@/utils/nativeDate";
 
 export async function createSignupsCsv(
   prisma: PrismaClient,
@@ -42,7 +43,7 @@ export async function createSignupsCsv(
         return answer?.answer ?? "";
       });
 
-      const date = new Date(signup.createdAt).toLocaleString("fi-FI");
+      const date = nativeDate.stringify(new Date(signup.createdAt));
 
       return [
         index + 1,

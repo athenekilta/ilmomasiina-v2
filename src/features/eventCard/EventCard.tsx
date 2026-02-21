@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { nativeTime } from "@/utils/nativeTime";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
 import type { Event, Quota, Signup } from "@/generated/prisma/client";
@@ -55,10 +56,7 @@ export function EventCard({
                   {event.title}
                 </h2>
                 <span className="text-brand-dark text-xs">
-                  {new Date(event.date).toLocaleString("fi-FI", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
+                  {nativeTime.stringify(new Date(event.date))}
                   {event.location && <span> - {event.location}</span>}
                 </span>
               </div>

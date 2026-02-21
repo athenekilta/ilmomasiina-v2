@@ -1,5 +1,9 @@
-import { startOfDay, format } from "date-fns";
+import { startOfDay, format, getMilliseconds } from "date-fns";
+import { formatInTimeZone } from 'date-fns-tz';
 import { z } from "zod";
+
+// Time zone set to helsinki so there is no mismatch between the server and client that could cause a hydration error.
+const TIMEZONE = 'Europe/Helsinki';
 
 const timeSchema = z
   .string()
@@ -19,7 +23,10 @@ const formSchema = z.preprocess(
 
 export const nativeTime = {
   stringify(d: Date) {
-    return format(d, `HH:mm`);
+    return formatInTimeZone(d, TIMEZONE, `HH:mm`);
+  },
+  stringifyAccurate(d: Date) {
+    return formatInTimeZone(d, TIMEZONE, `HH:mm`) + "." + getMilliseconds(d);
   },
   parse(s: string | undefined) {
     if (!s) return undefined;

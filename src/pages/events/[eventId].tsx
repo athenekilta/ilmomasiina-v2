@@ -22,6 +22,7 @@ import Link from "next/link";
 import { formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
+import { nativeDate } from "@/utils/nativeDate";
 
 const formschema = z.object({
   email: z.string().email(),
@@ -279,7 +280,7 @@ export default function EventPage() {
                 <div className="mb-8">
                   <p className="text-lg">
                     <strong>Ajankohta: </strong>
-                    {event.date.toLocaleDateString()}
+                    {nativeDate.stringify(event.date)}
                   </p>
                   {event.location && (
                     <p className="text-lg">

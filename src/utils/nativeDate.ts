@@ -19,7 +19,7 @@ const formSchema = z.preprocess(
 
 export const nativeDate = {
   stringify(d: Date) {
-    return format(d, `yyyy-MM-dd`);
+    return format(d, `dd.MM.yyyy`);
   },
   parse(s: string | undefined) {
     if (!s) return undefined;

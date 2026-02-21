@@ -1,3 +1,6 @@
+import { nativeTime } from "@/utils/nativeTime"
+import { nativeDate } from "@/utils/nativeDate"
+
 export const formatRegistration = (start: Date, end: Date) => {
   const now = new Date();
   const startDate = new Date(start);
@@ -7,19 +10,10 @@ export const formatRegistration = (start: Date, end: Date) => {
   if (isOpen === false && endDate < now) {
     return "Ilmo on päättynyt.";
   } else if (isOpen === true && startDate <= now && endDate >= now) {
-    return `Auki ${endDate.toLocaleDateString(
-      "fi-FI",
-    )} klo ${endDate.toLocaleTimeString("fi-FI", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} asti`;
+    return `Auki ${nativeDate.stringify(startDate)} klo ${nativeTime.stringify(endDate)} asti`;
   } else if (startDate > now) {
-    return `Ilmo aukeaa ${startDate.toLocaleDateString(
-      "fi-FI",
-    )} klo ${startDate.toLocaleTimeString("fi-FI", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+    return `Ilmo aukeaa ${nativeDate.stringify(startDate)} klo ${nativeTime.stringify(startDate)}`;
   }
+
   return "";
 };
