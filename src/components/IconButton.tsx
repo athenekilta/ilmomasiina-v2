@@ -148,6 +148,7 @@ const variableButtonClassNames: Record<
         "bg-danger text-white enabled:hover:bg-danger/85 enabled:active:bg-danger/75",
       warning:
         "bg-warning text-white enabled:hover:bg-warning/85 enabled:active:bg-warning/75",
+      neutral: "",
     },
   ],
   bordered: [
@@ -165,6 +166,7 @@ const variableButtonClassNames: Record<
         "text-danger bg-danger/0 enabled:hover:bg-danger/5 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/75",
       warning:
         "text-warning bg-warning/0 enabled:hover:bg-warning/5 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/75",
+      neutral: "",
     },
   ],
   icon: [
@@ -182,6 +184,7 @@ const variableButtonClassNames: Record<
         "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
       warning:
         "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
+      neutral: "",
     },
   ],
 };
