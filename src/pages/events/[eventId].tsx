@@ -5,7 +5,6 @@ import { Button } from "@/components/Button";
 import { ParticipantsTable } from "@/features/events/components/ParticipantsTable";
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
-import { pusherClient } from "@/utils/pusher";
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/stores/userStore";
 import { useUser } from "@/features/auth/hooks/useUser";
@@ -297,7 +296,6 @@ export default function EventPage() {
                   {event && <Registration event={event} />}
                 </HydrationZustand>
 
-                {/* Participants List */}
                 {event.signupsPublic && (
                   <ParticipantsTable event={event} />
                 )}
