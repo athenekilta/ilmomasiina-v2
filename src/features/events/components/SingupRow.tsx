@@ -27,11 +27,7 @@ export function SignupRow({
 
   return (
     <td
-      className={
-        "whitespace inline-block w-52 overflow-hidden py-2 text-ellipsis" +
-        " " +
-        rowStyle
-      }
+      className={rowStyle}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
