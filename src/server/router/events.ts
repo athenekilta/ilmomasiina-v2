@@ -302,26 +302,35 @@ export const eventsRouter = router({
           Signups: true,
         },
       });
+      const existingQuotaIds = new Set(existingQuotas.map((quota) => quota.id));
       const quotasToDelete = existingQuotas.filter(
         (eq) =>
           !input.quotas.some((iq) => iq.id === eq.id) &&
           eq.Signups.length === 0,
       );
-      // Create quotas that are new
-      const newQuotas = input.quotas.filter((q) => !q.id);
-      // Update existing quotas
-      const existingQuotasToUpdate = input.quotas.filter((q) => q.id);
+      const newQuotas = input.quotas.filter((quota) => {
+        return !existingQuotaIds.has(quota.id);
+      });
+      const existingQuotasToUpdate = input.quotas.filter((quota) => {
+        return existingQuotaIds.has(quota.id);
+      });
 
       // Delete questions that are not in the input anymore
       const existingQuestions = await ctx.prisma.question.findMany({
         where: { eventId: input.id },
       });
+      const existingQuestionIds = new Set(
+        existingQuestions.map((question) => question.id),
+      );
       const questionsToDelete = existingQuestions.filter(
         (eq) => !input.questions.some((iq) => iq.id === eq.id),
       );
-      // Update existing questions and create new ones
-      const questionsToUpdate = input.questions.filter((q) => q.id);
-      const newQuestions = input.questions.filter((q) => !q.id);
+      const questionsToUpdate = input.questions.filter((question) => {
+        return existingQuestionIds.has(question.id);
+      });
+      const newQuestions = input.questions.filter((question) => {
+        return !existingQuestionIds.has(question.id);
+      });
 
       const openQuotaSize =
         input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
@@ -345,22 +354,42 @@ export const eventsRouter = router({
           verificationEmail: input.verificationEmail,
           openQuotaSize: openQuotaSize,
           Quotas: {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            create: newQuotas.map(({ eventId, ...quota }) => quota),
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            update: existingQuotasToUpdate.map(({ eventId, ...quota }) => ({
+            create: newQuotas.map((quota) => ({
+              id: quota.id,
+              title: quota.title,
+              size: quota.size,
+              sortId: quota.sortId,
+            })),
+            update: existingQuotasToUpdate.map((quota) => ({
               where: { id: quota.id },
-              data: quota,
+              data: {
+                title: quota.title,
+                size: quota.size,
+                sortId: quota.sortId,
+              },
             })),
             delete: quotasToDelete.map((quota) => ({ id: quota.id })),
           },
           Questions: {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            create: newQuestions.map(({ eventId, ...question }) => question),
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            update: questionsToUpdate.map(({ eventId, ...question }) => ({
+            create: newQuestions.map((question) => ({
+              id: question.id,
+              question: question.question,
+              type: question.type,
+              options: question.options,
+              sortId: question.sortId,
+              required: question.required,
+              public: question.public,
+            })),
+            update: questionsToUpdate.map((question) => ({
               where: { id: question.id },
-              data: question,
+              data: {
+                question: question.question,
+                type: question.type,
+                options: question.options,
+                sortId: question.sortId,
+                required: question.required,
+                public: question.public,
+              },
             })),
             delete: questionsToDelete.map((question) => ({ id: question.id })),
           },
