@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nativeDate } from "@/utils/nativeDate";
 
 export const AnswerSchema = z.object({
   answer: z.string(),
@@ -34,15 +35,9 @@ export const questionSchema = z.object({
 
 export const eventFormSchema = z.object({
   title: z.string().min(1),
-  date: z.preprocess((arg) => {
-    if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
-  }, z.date()),
-  registrationStartDate: z.preprocess((arg) => {
-    if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
-  }, z.date()),
-  registrationEndDate: z.preprocess((arg) => {
-    if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
-  }, z.date()),
+  date: nativeDate.form.schema,
+  registrationStartDate: nativeDate.form.schema,
+  registrationEndDate: nativeDate.form.schema,
   time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
   registrationStartTime: z
     .string()

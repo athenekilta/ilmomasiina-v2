@@ -1,23 +1,24 @@
-﻿"use client";
+"use client";
 
-import { eventFormSchema } from "../utils/eventFormSchema";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { addDays, set } from "date-fns";
+import { useForm, useWatch } from "react-hook-form";
+import type { z } from "zod";
+import { Button } from "@/components/Button";
+import { FieldSet } from "@/components/FieldSet";
+import { TextArea } from "@/components/TextArea";
+import { useAlert } from "@/features/alert/hooks/useAlert";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { addDays, set } from "date-fns";
-import { useAlert } from "@/features/alert/hooks/useAlert";
-import { FieldSet } from "@/components/FieldSet";
-import { Button } from "@/components/Button";
-import { TextArea } from "@/components/TextArea";
 import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
-import { ValidationSummary } from "./ValidationSummary";
-import { SignupsTable } from "./SignupsTable";
 import { BasicInfoFields } from "./BasicInfoFields";
 import { Questions } from "./Questions";
 import { Quotas } from "./Quotas";
+import { SignupsTable } from "./SignupsTable";
+import { ValidationSummary } from "./ValidationSummary";
+import { eventFormSchema } from "../utils/eventFormSchema";
 
 export type EventFormProps = {
   /**
@@ -25,6 +26,8 @@ export type EventFormProps = {
    */
   editId?: number;
 };
+
+type EventFormValues = z.input<typeof eventFormSchema>;
 
 export function EventForm({ editId }: EventFormProps) {
   const createMutation = api.events.createEvent.useMutation();
@@ -63,29 +66,25 @@ export function EventForm({ editId }: EventFormProps) {
     formState: { isSubmitting, errors },
     getValues,
     setValue,
-    control
-  } = useForm({
+    control,
+  } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     values: {
       ...(editEvent ? editEvent : {}),
       date: editEvent?.date
-        ? (nativeDate.stringify(editEvent.date) as unknown as Date)
-        : (nativeDate.stringify(addDays(new Date(), 7)) as unknown as Date),
+        ? nativeDate.form.stringify(editEvent.date)
+        : nativeDate.form.stringify(addDays(new Date(), 7)),
       time: editEvent?.date
         ? nativeTime.stringify(
             set(new Date(editEvent.date), { seconds: 0, milliseconds: 0 }),
           )
         : nativeTime.stringify(set(new Date(), { hours: 12, minutes: 0 })),
       registrationStartDate: editEvent?.registrationStartDate
-        ? (nativeDate.stringify(
-            editEvent.registrationStartDate,
-          ) as unknown as Date)
-        : (nativeDate.stringify(addDays(new Date(), 1)) as unknown as Date),
+        ? nativeDate.form.stringify(editEvent.registrationStartDate)
+        : nativeDate.form.stringify(addDays(new Date(), 1)),
       registrationEndDate: editEvent?.registrationEndDate
-        ? (nativeDate.stringify(
-            editEvent.registrationEndDate,
-          ) as unknown as Date)
-        : (nativeDate.stringify(addDays(new Date(), 5)) as unknown as Date),
+        ? nativeDate.form.stringify(editEvent.registrationEndDate)
+        : nativeDate.form.stringify(addDays(new Date(), 5)),
       registrationEndTime: editEvent?.registrationEndDate
         ? nativeTime.stringify(
             set(new Date(editEvent.registrationEndDate), {
@@ -106,7 +105,7 @@ export function EventForm({ editId }: EventFormProps) {
         editEvent?.Quotas.map((quota) => ({
           ...quota,
           signupCount:
-            signups?.filter((s) => s.quotaId === quota.id).length || 0,
+            signups?.filter((signup) => signup.quotaId === quota.id).length || 0,
         })) || [],
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
@@ -121,32 +120,39 @@ export function EventForm({ editId }: EventFormProps) {
     },
   });
 
-  const combineDates = (date: Date, time: string) => {
-    const combined = new Date(date);
-    // time is in format HH:mm
-    const [hours, minutes] = time.split(":").map(Number);
+  const combineDateAndTime = (dateValue: string, time: string) => {
+    const date = nativeDate.form.parse(dateValue);
+    if (!date) return undefined;
 
-    combined.setHours(hours ?? 0);
-    combined.setMinutes(minutes ?? 0);
-    return combined;
+    const [hours, minutes] = time.split(":").map(Number);
+    return set(date, {
+      hours: hours ?? 0,
+      minutes: minutes ?? 0,
+      seconds: 0,
+      milliseconds: 0,
+    });
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log("handleSubmit", data);
-    console.log(getValues("time"));
-    if (!data.date) return;
+    const date = combineDateAndTime(data.date, data.time);
+    const registrationStartDate = combineDateAndTime(
+      data.registrationStartDate,
+      data.registrationStartTime,
+    );
+    const registrationEndDate = combineDateAndTime(
+      data.registrationEndDate,
+      data.registrationEndTime,
+    );
+
+    if (!date || !registrationStartDate || !registrationEndDate) return;
+
     const formData = {
       ...data,
-      date: combineDates(new Date(data.date), getValues("time")),
-      registrationStartDate: combineDates(
-        new Date(data.registrationStartDate),
-        getValues("registrationStartTime"),
-      ),
-      registrationEndDate: combineDates(
-        new Date(data.registrationEndDate),
-        getValues("registrationEndTime"),
-      ),
+      date,
+      registrationStartDate,
+      registrationEndDate,
     };
+
     if (editId) {
       await updateMutation.mutateAsync({
         ...formData,
@@ -165,6 +171,8 @@ export function EventForm({ editId }: EventFormProps) {
       router.push(`/events/${event.id}/edit`);
     }
   });
+
+  const isDraft = useWatch({ control, name: "draft" });
 
   if (editId && (signUpsLoading || isLoading)) {
     return (
@@ -195,11 +203,11 @@ export function EventForm({ editId }: EventFormProps) {
                 </Button>
                 <Button
                   type="submit"
-                  onClick={() => setValue("draft", !watch("draft"))}
+                  onClick={() => setValue("draft", !isDraft)}
                   loading={isSubmitting}
                   variant="bordered"
                 >
-                  {watch("draft") ? "Julkaise" : "Muuta luonnokseksi"}
+                  {isDraft ? "Julkaise" : "Muuta luonnokseksi"}
                 </Button>
                 <Button.Link
                   type="button"

@@ -12,6 +12,7 @@ import type {
 } from "react-hook-form";
 import type { z } from "zod";
 import { TimeInput } from "@/components/TimeInput";
+import { DateInput } from "@/components/DateInput";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
 
@@ -41,9 +42,9 @@ export function BasicInfoFields({
       </FieldSet>
       <FieldSet title="Aika">
         <div className="grid w-full grid-cols-1 gap-6">
-          <Input
-            {...register("date")}
-            type="date"
+          <DateInput
+            control={control}
+            name="date"
             error={!!errors.date}
             helperText={errors.date?.message}
           />
@@ -57,9 +58,9 @@ export function BasicInfoFields({
       </FieldSet>
       <FieldSet title="Registration start time">
         <div className="grid w-full grid-cols-1 gap-6">
-          <Input
-            {...register("registrationStartDate")}
-            type="date"
+          <DateInput
+            control={control}
+            name="registrationStartDate"
             error={!!errors.registrationStartDate}
             helperText={errors.registrationStartDate?.message}
           />
@@ -72,9 +73,9 @@ export function BasicInfoFields({
       </FieldSet>
       <FieldSet title="Registration end time">
         <div className="grid w-full grid-cols-1 gap-6">
-          <Input
-            {...register("registrationEndDate")}
-            type="date"
+          <DateInput
+            control={control}
+            name="registrationEndDate"
             error={!!errors.registrationEndDate}
             helperText={errors.registrationEndDate?.message}
           />
