@@ -20,11 +20,10 @@ import Link from "next/link";
 import { formatDate, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
-import { nativeDate } from "@/utils/nativeDate";
 
 const formschema = z.object({
-  email: z.string().email(),
-  name: z.string().min(3),
+  email: z.string().email("Anna kelvollinen sähköpostiosoite"),
+  name: z.string().min(3, "Nimen on oltava vähintään 3 merkkiä"),
 });
 
 function Registration({
@@ -46,7 +45,7 @@ function Registration({
   // store these just locally to prefill email & name for the user
   const {
     register,
-    formState: { isSubmitting, isValid },
+    formState: { isSubmitting, isValid, errors },
     handleSubmit,
     reset,
   } = useForm({
@@ -128,7 +127,12 @@ function Registration({
             </h3>
             <div className="text-sm">
               <FieldSet title="Nimi">
-                <Input {...register("name")} placeholder="Your name" />
+                <Input
+                  {...register("name")}
+                  placeholder="Your name"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                />
                 <span className="text-xs text-gray-600">
                   {event.signupsPublic ? "Nimi on julkinen tieto." : ""} Voit
                   halutessasi ilmoittautua salanimellä tapahtumaan.
@@ -137,12 +141,22 @@ function Registration({
             </div>
             <div className="text-sm">
               <FieldSet title="Sähköposti">
-                <Input {...register("email")} placeholder="you@example.com" />
+                <Input
+                  {...register("email")}
+                  type="email"
+                  placeholder="you@example.com"
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
               </FieldSet>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="submit" className="bg-secondary">
+            <div className="mt-6 flex gap-2">
+              <Button
+                type="submit"
+                className="bg-secondary"
+                disabled={!isValid || isSubmitting}
+              >
                 Tallenna
               </Button>
               <Button
@@ -202,7 +216,7 @@ function Registration({
                     <Button
                       className="ml-2 rounded-sm bg-blue-500 px-4 py-2 text-white transition duration-300"
                       onClick={handleSubmit(getHandleSignup(quota.id))}
-                      disabled={!isRegistrationOpen || isSubmitting}
+                      disabled={!isRegistrationOpen || !isValid || isSubmitting}
                       loading={
                         isSubmitting &&
                         createSignupMutation.variables?.quotaId === quota.id
@@ -228,11 +242,7 @@ export default function EventPage() {
   const loginUser = useUser();
   const isAdmin = loginUser.data?.role === "admin";
 
-  const {
-    data: event,
-    isLoading,
-    refetch,
-  } = api.events.getEventByID.useQuery(
+  const { data: event, isLoading } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
     {
       enabled: !isNaN(eventId),
@@ -297,9 +307,7 @@ export default function EventPage() {
                   {event && <Registration event={event} />}
                 </HydrationZustand>
 
-                {event.signupsPublic && (
-                  <ParticipantsTable event={event} />
-                )}
+                {event.signupsPublic && <ParticipantsTable event={event} />}
               </>
             )}
           </div>
@@ -308,4 +316,3 @@ export default function EventPage() {
     </>
   );
 }
-
