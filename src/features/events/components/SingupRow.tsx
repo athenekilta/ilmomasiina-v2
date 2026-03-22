@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import type { Signup } from "@/generated/prisma";
-import { nativeTime } from "@/utils/nativeTime";
-
-const TIMEZONE = 'Europe/Helsinki';
+import { formatDateTime } from "@/utils/format";
 
 export function SignupRow({
   signup,
@@ -21,7 +19,15 @@ export function SignupRow({
     setShowMilliseconds(false);
   };
 
-  const formattedDate = showMilliseconds ? nativeTime.stringify(signup.createdAt) : nativeTime.stringifyAccurate(signup.createdAt);
+  const formattedDate = formatDateTime(signup.createdAt, {
+    dateStyle: "short",
+    timeStyle: "medium",
+  });
+  const milliseconds = signup.createdAt
+    .getMilliseconds()
+    .toString()
+    .padStart(3, "0");
+  const dateWithMilliseconds = `${formattedDate}.${milliseconds}`;
 
   return (
     <td

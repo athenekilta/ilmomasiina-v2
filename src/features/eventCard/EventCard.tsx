@@ -3,7 +3,7 @@ import { nativeTime } from "@/utils/nativeTime";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
 import type { Event, Quota, Signup } from "@/generated/prisma/client";
-import { formatRegistration } from "@/utils/format";
+import { formatDateTime, formatRegistration } from "@/utils/format";
 import { Button } from "@/components/Button";
 import { Divider } from "@/components/Divider";
 
@@ -49,15 +49,23 @@ export function EventCard({
         }`}
       >
         <div className="flex flex-col p-4">
-          <Link href={`events/${event.id}`}>
-            <div className="flex-row justify-between sm:flex">
-              <div>
-                <h2 className="text-brand-primary upper text-xl font-bold">
-                  {event.title}
-                </h2>
-                <span className="text-brand-dark text-xs">
-                  {nativeTime.stringify(new Date(event.date))}
-                  {event.location && <span> - {event.location}</span>}
+          <div className="flex-row justify-between sm:flex">
+            <div>
+              <h2 className="text-brand-primary upper text-xl font-bold">
+                {event.title}
+              </h2>
+              <span className="text-brand-dark text-xs">
+                {formatDateTime(event.date, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+                {event.location && <span> - {event.location}</span>}
+              </span>
+            </div>
+            <div className="self-start">
+              {isRegistrationClosed && (
+                <span className="text-brand-danger text-xs sm:text-sm">
+                  Ilmoittautuminen sulkeutunut
                 </span>
               </div>
               <div className="self-start">
