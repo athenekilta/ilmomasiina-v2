@@ -48,9 +48,9 @@ export function BasicInfoFields({
             error={!!errors.date}
             helperText={errors.date?.message}
           />
-          <Input
-            {...register("time")}
-            type="time"
+          <TimeInput
+            control={control}
+            name="time"
             error={!!errors.time}
             helperText={errors.time?.message}
           />
@@ -68,6 +68,7 @@ export function BasicInfoFields({
             control={control}
             name="registrationStartTime"
             error={!!errors.registrationStartTime}
+            helperText={errors.registrationStartTime?.message}
           />
         </div>
       </FieldSet>
@@ -83,6 +84,7 @@ export function BasicInfoFields({
             control={control}
             name="registrationEndTime"
             error={!!errors.registrationEndTime}
+            helperText={errors.registrationEndTime?.message}
           />
         </div>
       </FieldSet>
