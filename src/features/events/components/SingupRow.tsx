@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Signup } from "@/generated/prisma";
+import { formatDateTime } from "@/utils/format";
 
 export function SignupRow({
   signup,
@@ -18,7 +19,10 @@ export function SignupRow({
     setShowMilliseconds(false);
   };
 
-  const formattedDate = new Date(signup.createdAt).toLocaleString();
+  const formattedDate = formatDateTime(signup.createdAt, {
+    dateStyle: "short",
+    timeStyle: "medium",
+  });
   const milliseconds = signup.createdAt
     .getMilliseconds()
     .toString()

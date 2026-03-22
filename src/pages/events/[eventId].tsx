@@ -17,7 +17,7 @@ import HydrationZustand from "@/components/HydrationZustand";
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import Link from "next/link";
-import { formatRegistration } from "@/utils/format";
+import { formatDate, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
 
@@ -277,7 +277,7 @@ export default function EventPage() {
                 <div className="mb-8">
                   <p className="text-lg">
                     <strong>Ajankohta: </strong>
-                    {event.date.toLocaleDateString()}
+                    {formatDate(event.date)}
                   </p>
                   {event.location && (
                     <p className="text-lg">

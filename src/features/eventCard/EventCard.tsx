@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { routes } from "@/utils/routes";
 import type { Event, Quota, Signup } from "@/generated/prisma/client";
-import { formatRegistration } from "@/utils/format";
+import { formatDateTime, formatRegistration } from "@/utils/format";
 import { Button } from "@/components/Button";
 import { Divider } from "@/components/Divider";
 
@@ -55,7 +55,7 @@ export function EventCard({
                 {event.title}
               </h2>
               <span className="text-brand-dark text-xs">
-                {new Date(event.date).toLocaleString("fi-FI", {
+                {formatDateTime(event.date, {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
