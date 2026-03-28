@@ -1,6 +1,7 @@
 /* Refaktoroitu erilleen [eventId].tsx:stä. Tätä komponenttia käytetään siellä.
 Tämän ja SignupsTablen voisi varmaan yhdistää*/
 
+import { useMemo } from "react";
 import { SignupRow } from "@/features/events/components/SingupRow";
 import { OriginalQuotaTitle } from "@/features/events/utils/utils";
 import type { RouteOutput } from "@/types/types";
@@ -10,10 +11,17 @@ export function ParticipantsTable({
 }: {
   event: RouteOutput["events"]["getEventByID"];
 }) {
+  const publicQuestions = useMemo(
+    () =>
+      [...event.Questions]
+        .filter((q) => q.public)
+        .sort((a, b) => a.sortId - b.sortId),
+    [event.Questions],
+  );
+
   return (
     <div className="space-y-5">
       <h2 className="text-lg font-semibold text-brand-dark">Ilmonneet</h2>
-
       {event.Quotas.map(
         (quota) =>
           !(quota.id == "queue" && quota.Signups.length == 0) && (
@@ -63,6 +71,17 @@ export function ParticipantsTable({
                         <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                           Nimi
                         </th>
+                        {publicQuestions.map((q) => (
+                          <th
+                            key={q.id}
+                            className="max-w-44 px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase"
+                            title={q.question}
+                          >
+                            <span className="line-clamp-3 whitespace-normal">
+                              {q.question}
+                            </span>
+                          </th>
+                        ))}
                         <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                           Ilmoittautumisaika
                         </th>
@@ -82,6 +101,23 @@ export function ParticipantsTable({
                           <tr key={signup.id}>
                             <td className={rowStyle}>{index + 1}.</td>
                             <td className={rowStyle}>{signup.name}</td>
+                            {publicQuestions.map((q) => {
+                              const raw = q.Answers.find(
+                                (a) => a.signupId === signup.id,
+                              )?.answer;
+                              const text = raw?.trim() ?? "";
+                              return (
+                                <td
+                                  key={q.id}
+                                  className={`${rowStyle} max-w-44`}
+                                  title={text || undefined}
+                                >
+                                  <span className="line-clamp-3 wrap-break-word whitespace-pre-wrap">
+                                    {text || "—"}
+                                  </span>
+                                </td>
+                              );
+                            })}
                             <SignupRow signup={signup} rowStyle={rowStyle} />
                             {quota.id === "queue" && (
                               <td className={rowStyle}>
