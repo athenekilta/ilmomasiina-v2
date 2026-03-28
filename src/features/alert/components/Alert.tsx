@@ -31,7 +31,9 @@ export function Alert({ ...props }: AlertProps) {
       />
       <div className="flex min-w-0 flex-1 flex-col gap-1 p-3 pl-4">
         <p className="text-sm font-semibold text-brand-dark">{props.title}</p>
-        <p className="text-sm leading-snug text-gray-600">{props.description}</p>
+        {props.description ? (
+          <p className="text-sm leading-snug text-gray-600">{props.description}</p>
+        ) : null}
       </div>
     </div>
   );
