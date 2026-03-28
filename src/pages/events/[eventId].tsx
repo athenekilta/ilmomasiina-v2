@@ -328,14 +328,14 @@ export default function EventPage() {
                     <HydrationZustand>
                       {event && <Registration event={event} />}
                     </HydrationZustand>
-
-                    {event.signupsPublic && (
-                      <div className="mt-10">
-                        <ParticipantsTable event={event} />
-                      </div>
-                    )}
                   </div>
                 </div>
+                                    {event.signupsPublic && (
+                                      <>
+                    <hr className="my-10 border-stone-200" />
+                        <ParticipantsTable event={event} />
+                      </>
+                    )}
               </>
             )}
           </div>

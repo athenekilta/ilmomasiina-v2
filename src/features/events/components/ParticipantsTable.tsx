@@ -21,11 +21,11 @@ export function ParticipantsTable({
               key={quota.id}
               className="surface-panel"
             >
-              <div className="flex items-center border-b border-stone-200 p-3 text-base font-medium text-brand-dark">
-                <h3 className="w-30 text-wrap">{quota.title}</h3>
+              <div className="flex justify-between items-center border-b border-stone-200 p-3 text-base font-medium text-brand-dark">
+                <h3 className="w-full text-wrap">{quota.title}</h3>
                 {quota.id !== "queue" && (
                   <>
-                    <span className="text-md mx-5 w-40 font-normal text-gray-700">
+                    <span className="text-md mx-5 text-nowrap font-normal text-gray-700">
                       {quota.Signups.length} / {quota.size ?? "∞"}
                     </span>
                     {quota.size && (
