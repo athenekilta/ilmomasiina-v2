@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { signOut } from "@/server/auth/auth-client";
@@ -8,7 +15,7 @@ import { routes } from "@/utils/routes";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
-import useUserStore from "@/stores/userStore";
+import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 
 function AccountDropdownPanel({
   open,
@@ -60,7 +67,7 @@ function AccountDropdownPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
-      className="border-stone-200 bg-brand-light text-brand-dark absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto rounded-control border shadow-card ring-1 ring-stone-900/10"
+      className="bg-brand-light text-brand-dark rounded-control shadow-card absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto border border-stone-200 ring-1 ring-stone-900/10"
     >
       <div className="bg-brand-light sticky top-0 flex items-start justify-between gap-2 border-b border-stone-200 px-4 py-3">
         <h2
@@ -72,7 +79,7 @@ function AccountDropdownPanel({
         <button
           type="button"
           onClick={onClose}
-          className="text-brand-dark shrink-0 rounded-control p-1 transition-colors hover:bg-stone-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary"
+          className="text-brand-dark rounded-control focus-visible:ring-brand-secondary shrink-0 p-1 transition-colors hover:bg-stone-200 focus-visible:ring-2 focus-visible:outline-hidden"
           aria-label="Sulje"
         >
           <Icon icon="close" className="block text-xl!" size={22} />
@@ -92,42 +99,27 @@ export function HeaderAccountMenu() {
   const sessionUser = userQuery.data;
   const sessionLoading = userQuery.isLoading;
 
-  const storedUser = useUserStore((s) => s.user);
-  const setStoredUser = useUserStore((s) => s.setUser);
-  const clearStoredUser = useUserStore((s) => s.clearUser);
+  const {
+    register,
+    formState: { errors },
+    handleSubmit,
+    reset,
+    storedUser,
+    setUser,
+    clearUser,
+  } = useGuestIdentityForm();
 
   const [open, setOpen] = useState(false);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-
-  const openPanel = useCallback(() => {
-    if (!sessionUser) {
-      setGuestName(storedUser?.name ?? "");
-      setGuestEmail(storedUser?.email ?? "");
-    }
-    setOpen(true);
-  }, [sessionUser, storedUser]);
-
   const closePanel = useCallback(() => setOpen(false), []);
 
-  const saveGuest = () => {
-    const n = guestName.trim();
-    const e = guestEmail.trim();
-    if (!n && !e) {
-      clearStoredUser();
-    } else {
-      setStoredUser({
-        name: n || undefined,
-        email: e || undefined,
-      });
-    }
+  const saveGuest = handleSubmit((data) => {
+    setUser({ name: data.name, email: data.email });
     closePanel();
-  };
+  });
 
   const clearGuest = () => {
-    clearStoredUser();
-    setGuestName("");
-    setGuestEmail("");
+    clearUser();
+    reset({ name: "", email: "" });
     closePanel();
   };
 
@@ -153,7 +145,7 @@ export function HeaderAccountMenu() {
   if (sessionLoading) {
     return (
       <div
-        className="bg-white/20 h-9 w-28 shrink-0 rounded-control sm:w-36"
+        className="rounded-control h-9 w-28 shrink-0 bg-white/20 sm:w-36"
         aria-hidden
       />
     );
@@ -164,10 +156,10 @@ export function HeaderAccountMenu() {
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => (open ? closePanel() : openPanel())}
+        onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="text-white flex max-w-[min(14rem,46vw)] items-center gap-1 rounded-control py-1.5 pr-1.5 pl-2 transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary sm:max-w-xs sm:gap-1.5 sm:pl-2.5"
+        className="rounded-control focus-visible:ring-offset-brand-primary flex max-w-[min(14rem,46vw)] items-center gap-1 py-1.5 pr-1.5 pl-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:pl-2.5"
       >
         <span className="min-w-0 flex-1 text-left">
           <span className="block truncate text-xs font-semibold sm:text-sm">
@@ -197,7 +189,8 @@ export function HeaderAccountMenu() {
             <div className="text-brand-dark space-y-3 text-sm">
               {sessionUser.name ? (
                 <p>
-                  <span className="font-semibold">Nimi:</span> {sessionUser.name}
+                  <span className="font-semibold">Nimi:</span>{" "}
+                  {sessionUser.name}
                 </p>
               ) : null}
               <p>
@@ -230,43 +223,38 @@ export function HeaderAccountMenu() {
             </div>
           </>
         ) : (
-          <>
-            <p className="mb-4 text-xs leading-relaxed text-gray-600 sm:text-sm">
-              Näitä tietoja käytetään tapahtumaan ilmoittautuessasi ilman täyttä
-              kirjautumista.
-            </p>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-brand-dark mb-1 block text-xs font-semibold">
-                  Nimi
-                </label>
-                <Input
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  placeholder="Nimi"
-                  fullWidth
-                />
-              </div>
-              <div>
-                <label className="text-brand-dark mb-1 block text-xs font-semibold">
-                  Sähköposti
-                </label>
-                <Input
-                  type="email"
-                  value={guestEmail}
-                  onChange={(e) => setGuestEmail(e.target.value)}
-                  placeholder="sinä@example.com"
-                  fullWidth
-                />
-              </div>
+          <form onSubmit={saveGuest} className="flex flex-col gap-3">
+            <div>
+              <label className="text-brand-dark mb-1 block text-xs font-semibold">
+                Nimi
+              </label>
+              <Input
+                {...register("name")}
+                placeholder="Nimi"
+                fullWidth
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
             </div>
-            <div className="mt-5 flex flex-col gap-2">
+            <div>
+              <label className="text-brand-dark mb-1 block text-xs font-semibold">
+                Sähköposti
+              </label>
+              <Input
+                {...register("email")}
+                type="email"
+                placeholder="sinä@example.com"
+                fullWidth
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+            </div>
+            <div className="mt-2 flex flex-col gap-2">
               <Button
-                type="button"
+                type="submit"
                 variant="filled"
                 color="primary"
                 className="w-full justify-center"
-                onClick={saveGuest}
               >
                 Tallenna
               </Button>
@@ -279,20 +267,17 @@ export function HeaderAccountMenu() {
               >
                 Tyhjennä tiedot
               </Button>
-              <p className="border-stone-200 text-stone-500 mt-4 border-t pt-3 text-center text-[0.65rem] leading-snug sm:text-xs">
-                <span className="text-stone-400 block font-medium">
-                  Ylläpito
-                </span>
+              <p className="mt-2 border-t border-stone-200 pt-3 text-center text-[0.65rem] text-stone-500 sm:text-xs">
                 <Link
                   href={routes.auth.login}
                   onClick={closePanel}
-                  className="text-brand-secondary mt-0.5 inline-block font-medium underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary"
+                  className="text-brand-secondary focus-visible:ring-brand-secondary font-medium underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:outline-hidden"
                 >
                   Kirjaudu sisään
                 </Link>
               </p>
             </div>
-          </>
+          </form>
         )}
       </AccountDropdownPanel>
     </div>

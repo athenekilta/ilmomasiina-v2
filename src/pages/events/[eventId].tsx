@@ -6,25 +6,17 @@ import { ParticipantsTable } from "@/features/events/components/ParticipantsTabl
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
-import { useUserStore } from "@/stores/userStore";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { Input } from "@/components/Input";
 import { FieldSet } from "@/components/FieldSet";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import HydrationZustand from "@/components/HydrationZustand";
+import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import Link from "next/link";
 import { formatDate, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
-
-const formschema = z.object({
-  email: z.string().email("Anna kelvollinen sähköpostiosoite"),
-  name: z.string().min(3, "Nimen on oltava vähintään 3 merkkiä"),
-});
 
 function Registration({
   event,
@@ -36,26 +28,17 @@ function Registration({
 
   const alert = useAlert();
 
-  // use zustand store for persisted signup user
-  const { user: storedUser, setUser } = useUserStore();
-  const [isEditingUserData, setIsEditingUserData] = useState(false);
-
-  const createSignupMutation = api.signups.createSignup.useMutation();
-
-  // store these just locally to prefill email & name for the user
   const {
     register,
     formState: { isSubmitting, isValid, errors },
     handleSubmit,
     reset,
-  } = useForm({
-    resolver: zodResolver(formschema),
-    values: {
-      name: storedUser?.name ?? "",
-      email: storedUser?.email ?? "",
-    },
-    mode: "all",
-  });
+    storedUser,
+    setUser,
+  } = useGuestIdentityForm();
+  const [isEditingUserData, setIsEditingUserData] = useState(false);
+
+  const createSignupMutation = api.signups.createSignup.useMutation();
 
   // if no stored user, start in editing mode
   useEffect(() => {
@@ -64,17 +47,17 @@ function Registration({
     }
   }, [storedUser]);
 
-  const saveUserData = async (data: z.infer<typeof formschema>) => {
+  const saveUserData = handleSubmit(async (data) => {
     try {
       setUser({ name: data.name, email: data.email });
       setIsEditingUserData(false);
     } catch (e) {
       console.error("Failed to save user data to store", e);
     }
-  };
+  });
 
   const getHandleSignup = (quotaId: string) => {
-    return async (data: z.infer<typeof formschema>) => {
+    return async (data: { name: string; email: string }) => {
       try {
         const result = await createSignupMutation.mutateAsync({
           quotaId,
@@ -115,12 +98,7 @@ function Registration({
           )}
         </p>
         {isEditingUserData ? (
-          <form
-            className="space-y-2"
-            onSubmit={handleSubmit(async (data) => {
-              await saveUserData(data);
-            })}
-          >
+          <form className="space-y-2" onSubmit={saveUserData}>
             <h3 className="text-md">
               Aseta nimi ja sähköposti ennen ilmoittautumista. Huomaa, että voit
               ilmoittautua tapahtumaan vain kerran.
