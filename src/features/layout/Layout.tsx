@@ -6,9 +6,11 @@ export type Layoutprops = {
 
 export function Layout(props: Layoutprops) {
   return (
-    <div className="bg-brand-beige flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-brand-beige">
       <Header />
-      <main className="mx-auto w-full max-w-4xl grow">{props.children}</main>
+      <main className="mx-auto w-full max-w-6xl grow px-3 py-5 sm:px-4 sm:py-6">
+        {props.children}
+      </main>
       <Footer />
     </div>
   );

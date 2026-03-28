@@ -176,7 +176,7 @@ export function EventForm({ editId }: EventFormProps) {
 
   if (editId && (signUpsLoading || isLoading)) {
     return (
-      <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center bg-white/70 p-6">
+      <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center bg-brand-beige p-4 text-sm font-medium text-brand-dark">
         Loading...
       </div>
     );
@@ -185,13 +185,13 @@ export function EventForm({ editId }: EventFormProps) {
   return (
     <form onSubmit={onSubmit} className="relative">
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
-      <div className="flex flex-col gap-6 px-11">
-        <div className="flex flex-row justify-between">
-          <h1 className="text-4xl font-semibold text-black">
+      <div className="flex flex-col gap-4 px-0 sm:px-1">
+        <div className="flex flex-row flex-wrap items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-brand-dark sm:text-3xl">
             {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
           </h1>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2">
             {!editId ? (
               <Button type="submit" loading={isSubmitting}>
                 Tallenna luonnoksena

@@ -11,7 +11,12 @@ export function InputHelperText(props: InputHelperTextProps) {
   return (
     <span
       data-error={props.error}
-      className={"absolute top-full pt-1 text-sm " + (props.error ? "text-danger data-[error=true]:text-danger" : "text-slate-500")}
+      className={
+        "absolute top-full pt-1 text-xs leading-snug " +
+        (props.error
+          ? "font-medium text-danger"
+          : "text-gray-600")
+      }
     >
       {props.children}
     </span>

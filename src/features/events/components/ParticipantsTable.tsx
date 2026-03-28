@@ -1,4 +1,4 @@
-﻿/* Refaktoroitu erilleen [eventId].tsx:stä. Tätä komponenttia käytetään siellä.
+/* Refaktoroitu erilleen [eventId].tsx:stä. Tätä komponenttia käytetään siellä.
 Tämän ja SignupsTablen voisi varmaan yhdistää*/
 
 import { SignupRow } from "@/features/events/components/SingupRow";
@@ -11,17 +11,17 @@ export function ParticipantsTable({
   event: RouteOutput["events"]["getEventByID"];
 }) {
   return (
-    <div className="space-y-8">
-      <h2 className="text-xl font-semibold text-gray-800">Ilmonneet</h2>
+    <div className="space-y-5">
+      <h2 className="text-lg font-semibold text-brand-dark">Ilmonneet</h2>
 
       {event.Quotas.map(
         (quota) =>
           !(quota.id == "queue" && quota.Signups.length == 0) && (
             <div
               key={quota.id}
-              className="rounded-lg border border-gray-200 bg-white"
+              className="surface-panel"
             >
-              <div className="flex items-center border-b border-gray-200 p-4 text-lg font-medium">
+              <div className="flex items-center border-b border-stone-200 p-3 text-base font-medium text-brand-dark">
                 <h3 className="w-30 text-wrap">{quota.title}</h3>
                 {quota.id !== "queue" && (
                   <>
@@ -29,9 +29,9 @@ export function ParticipantsTable({
                       {quota.Signups.length} / {quota.size ?? "∞"}
                     </span>
                     {quota.size && (
-                      <div className="bg-brand-beige ml-auto h-2 w-60 overflow-hidden rounded-full">
+                      <div className="bg-brand-beige ml-auto h-1.5 w-60 overflow-hidden rounded-sm">
                         <div
-                          className={`h-full ${
+                          className={`h-full rounded-sm ${
                             quota.Signups.length >= quota.size
                               ? "bg-red-500"
                               : quota.Signups.length / quota.size > 0.75
@@ -56,28 +56,28 @@ export function ParticipantsTable({
                 {quota.Signups.length > 0 ? (
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-6 py-3 text-left font-medium text-gray-900">
+                      <tr className="border-b border-stone-200">
+                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                           Sija
                         </th>
-                        <th className="px-6 py-3 text-left font-medium text-gray-900">
+                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                           Nimi
                         </th>
-                        <th className="px-6 py-3 text-left font-medium text-gray-900">
+                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                           Ilmoittautumisaika
                         </th>
                         {quota.id === "queue" && (
-                          <th className="px-6 py-3 text-left font-medium text-gray-900">
+                          <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
                             Kiintiö
                           </th>
                         )}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+                    <tbody className="divide-y divide-stone-200">
                       {quota.Signups.map((signup, index) => {
                         const rowStyle = signup.completedAt
-                          ? "px-6 py-2"
-                          : "px-6 py-2 text-gray-400";
+                          ? "px-3 py-1.5"
+                          : "px-3 py-1.5 text-gray-500";
                         return (
                           <tr key={signup.id}>
                             <td className={rowStyle}>{index + 1}.</td>
@@ -97,7 +97,7 @@ export function ParticipantsTable({
                     </tbody>
                   </table>
                 ) : (
-                  <p className="px-6 py-4 text-gray-500">
+                  <p className="px-3 py-3 text-sm text-gray-600">
                     Ei vielä osallistujia
                   </p>
                 )}

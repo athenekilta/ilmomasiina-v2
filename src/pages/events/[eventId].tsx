@@ -105,10 +105,10 @@ function Registration({
   };
 
   return (
-    <div className="mb-8">
-      <div className="">
-        <h2 className="mb-1 text-xl font-semibold text-gray-800">Ilmo</h2>
-        <p className="text-brand-primary mb-2 font-medium">
+    <div className="mb-5">
+      <div>
+        <h2 className="mb-1 text-lg font-semibold text-brand-dark">Ilmo</h2>
+        <p className="text-brand-primary mb-2 text-sm font-medium">
           {formatRegistration(
             event.registrationStartDate,
             event.registrationEndDate,
@@ -127,27 +127,35 @@ function Registration({
             </h3>
             <div className="text-sm">
               <FieldSet title="Nimi">
-                <Input
-                  {...register("name")}
-                  placeholder="Your name"
-                  error={!!errors.name}
-                  helperText={errors.name?.message}
-                />
-                <span className="text-xs text-gray-600">
-                  {event.signupsPublic ? "Nimi on julkinen tieto." : ""} Voit
-                  halutessasi ilmoittautua salanimellä tapahtumaan.
-                </span>
+                <p className="text-gray-600 mb-2 text-xs leading-relaxed">
+                  {event.signupsPublic ? (
+                    <span>Nimi on julkinen tieto. </span>
+                  ) : null}
+                  Voit halutessasi ilmoittautua salanimellä tapahtumaan.
+                </p>
+                <div className="pb-6">
+                  <Input
+                    {...register("name")}
+                    placeholder="Your name"
+                    fullWidth
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                  />
+                </div>
               </FieldSet>
             </div>
             <div className="text-sm">
               <FieldSet title="Sähköposti">
-                <Input
-                  {...register("email")}
-                  type="email"
-                  placeholder="you@example.com"
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                />
+                <div className="pb-6">
+                  <Input
+                    {...register("email")}
+                    type="email"
+                    placeholder="you@example.com"
+                    fullWidth
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                  />
+                </div>
               </FieldSet>
             </div>
 
@@ -196,25 +204,26 @@ function Registration({
                 Vaihda
               </button>
             </p>
-            <div className="my-4 flex flex-col gap-1">
+            <div className="mt-3 flex flex-col gap-2.5">
               {event.Quotas.filter((quota) => quota.id !== "queue").map(
                 (quota) => (
                   <div
                     key={quota.id}
-                    className="flex items-center justify-between rounded-lg bg-white p-4 shadow"
+                    className="flex items-center justify-between gap-3 text-sm sm:text-base"
                   >
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-700">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-medium text-brand-dark">
                         {quota.title}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-600">
                         {quota.size
                           ? `${quota.size} paikkaa yhteensä`
                           : `${quota.Signups.length} ilmoittautumista`}
                       </p>
                     </div>
                     <Button
-                      className="ml-2 rounded-sm bg-blue-500 px-4 py-2 text-white transition duration-300"
+                      className="ml-2 shrink-0"
+                      color="primary"
                       onClick={handleSubmit(getHandleSignup(quota.id))}
                       disabled={!isRegistrationOpen || !isValid || isSubmitting}
                       loading={
@@ -255,59 +264,78 @@ export default function EventPage() {
     <>
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
-        <div className="mx-4">
-          <div className="my-4">
+        <div className="mx-auto w-full max-w-5xl min-w-0">
+          <div
+            className={`w-full min-w-0 rounded-control border shadow-soft p-4 sm:p-5 lg:p-6 ${
+              event?.draft
+                ? "border-amber-400 bg-amber-100"
+                : "border-stone-300 bg-brand-light"
+            }`}
+          >
             <Link
               href="/"
-              className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+              className="border-stone-200 -mx-1 mb-5 flex min-w-0 items-center gap-2 border-b pb-4 text-sm font-semibold text-brand-secondary transition-colors hover:text-brand-dark sm:mx-0"
             >
-              <span>&#8592; </span>
-              Takaisin etusivulle
+              <span className="shrink-0 text-base" aria-hidden>
+                ←
+              </span>
+              <span className="min-w-0">Takaisin etusivulle</span>
             </Link>
-          </div>
 
-          <div className="bg-brand-light mb-10 rounded-lg p-4 shadow-md">
             {isLoading || !event ? (
-              <div>
+              <div className="flex justify-center py-16">
                 <LoadingSpinner />
               </div>
             ) : (
               <>
                 {isAdmin && (
-                  <div className="mb-6 flex justify-start">
+                  <div className="mb-4 flex justify-start">
                     <Button.Link href={`/events/${event.id}/edit`}>
                       Muokkaa tapahtumaa
                     </Button.Link>
                   </div>
                 )}
-                <h1 className="mb-2 text-3xl font-bold text-gray-800">
+                <h1 className="mb-6 text-2xl font-extrabold uppercase text-brand-dark sm:text-3xl">
                   {event.title}
                 </h1>
 
-                {/* Event Details */}
-                <div className="mb-8">
-                  <p className="text-lg">
-                    <strong>Ajankohta: </strong>
-                    {formatDate(event.date)}
-                  </p>
-                  {event.location && (
-                    <p className="text-lg">
-                      <strong>Sijainti: </strong>
-                      {event.location}
+                <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+                  <div className="w-full min-w-0 space-y-1 text-sm sm:text-base sm:flex-1 sm:basis-0 sm:pr-2">
+                    <h2 className="mb-3 text-xs font-bold tracking-widest text-brand-secondary uppercase">
+                      Tiedot
+                    </h2>
+                    <p>
+                      <span className="font-semibold text-brand-dark">
+                        Ajankohta:{" "}
+                      </span>
+                      {formatDate(event.date)}
                     </p>
-                  )}
-                  <hr className="my-4" />
-                  <p className="text-base leading-relaxed">
-                    {event.description}
-                  </p>
+                    {event.location && (
+                      <p>
+                        <span className="font-semibold text-brand-dark">
+                          Sijainti:{" "}
+                        </span>
+                        {event.location}
+                      </p>
+                    )}
+                    <hr className="my-4 border-stone-200" />
+                    <div className="prose prose-sm max-w-none text-base leading-relaxed text-brand-dark">
+                      {event.description}
+                    </div>
+                  </div>
+
+                  <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
+                    <HydrationZustand>
+                      {event && <Registration event={event} />}
+                    </HydrationZustand>
+
+                    {event.signupsPublic && (
+                      <div className="mt-10">
+                        <ParticipantsTable event={event} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                {/* Registration Section, render only on client-side after zustand load */}
-                <HydrationZustand>
-                  {event && <Registration event={event} />}
-                </HydrationZustand>
-
-                {event.signupsPublic && <ParticipantsTable event={event} />}
               </>
             )}
           </div>

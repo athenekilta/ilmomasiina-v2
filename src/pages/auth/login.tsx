@@ -8,8 +8,8 @@ export default function LoginPage() {
     <ProtectedRoute unauthenticatedOnly>
       <PageHead title="Login" />
       <Layout>
-        <div className="bg-brand-light -mx-6 mt-16 flex max-w-2xl flex-col items-center gap-16 rounded-xl p-12 sm:mx-auto">
-          <h1 className="text-primary-950 text-4xl font-semibold tracking-tight">
+        <div className="surface-panel mx-auto mt-8 flex max-w-md flex-col items-center gap-6 p-6 sm:mt-10 sm:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand-dark">
             Login
           </h1>
           <LoginForm />

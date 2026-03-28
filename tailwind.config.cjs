@@ -3,11 +3,12 @@ const colors = require("tailwindcss/colors");
 const plugin = require("tailwindcss/plugin");
 
 const BRAND_GREEN = "#5E8C63";
-const BRAND_DARKGREEN ="#355E3B";
+const BRAND_DARKGREEN = "#355E3B";
 const BRAND_LIGHT = "#FCFAF7";
 const BRAND_BEIGE = "#F4EEE7";
 const BRAND_DARK = "#333333";
 const BRAND_DANGER = "#E07A5F";
+const BRAND_LIME = "#DDE8B8";
 
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
@@ -20,7 +21,15 @@ module.exports = {
       },
       fontFamily: {
         primary: ["Open Sans", "sans-serif"],
-        secondary: ["Open Sans", "sans-serif"]
+        secondary: ["Open Sans", "sans-serif"],
+      },
+      boxShadow: {
+        soft: "0 1px 2px rgba(51, 51, 51, 0.05), 0 1px 3px rgba(51, 51, 51, 0.08)",
+        card: "0 4px 6px -1px rgba(51, 51, 51, 0.06), 0 2px 4px -2px rgba(51, 51, 51, 0.04)",
+      },
+      borderRadius: {
+        /* Shared buttons, inputs, selects — tight, not pill-shaped */
+        control: "0.3125rem",
       },
       colors: {
         ...colors,
@@ -34,6 +43,7 @@ module.exports = {
           light: BRAND_LIGHT,
           dark: BRAND_DARK,
           danger: BRAND_DANGER,
+          lime: BRAND_LIME,
         },
         gray: colors.stone,
         primary: colors.green,

@@ -37,8 +37,8 @@ export function SignupForm() {
   const errorMessage = queryError;
 
   return (
-    <form className="felx relative flex-col gap-12" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-6">
+    <form className="relative flex w-full flex-col gap-6" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-4">
         <Input
           {...register("name")}
           fullWidth

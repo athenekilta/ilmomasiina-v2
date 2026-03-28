@@ -50,7 +50,9 @@ function EditSignup() {
       ? {
           ...signup,
           answers: signup.questions.map((q) => {
-            const existing = signup.answers.find((a) => a.questionId === q.id);
+            const existing = signup.answers.find(
+              (a) => a.questionId === q.id,
+            );
             return {
               questionId: q.id,
               answer: existing ? existing.answer : "",
@@ -91,117 +93,154 @@ function EditSignup() {
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div>
-        <LoadingSpinner />
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="surface-panel flex justify-center py-16">
+          <LoadingSpinner />
+        </div>
       </div>
     );
+  }
 
   if (isError || !signup) {
-    return <div>Error loading signup details or not found.</div>;
+    return (
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="surface-panel p-6 text-center sm:p-8">
+          <p className="text-brand-dark font-medium">
+            Error loading signup details or not found.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="bg-brand-light rounded-lg p-5 shadow-lg">
-      <h2 className="mb-4 text-xl font-bold">Muokkaa ilmoa</h2>
-      {isExistingSignup && (
-        <p className="text-md text-brand-danger mb-4">
-          Sinulla on jo <b>vahvistamaton</b> ilmoittautuminen, muokkaat nyt tätä
-          ilmoittautumista.
+    <div className="mx-auto w-full max-w-2xl">
+      <div className="surface-panel p-4 sm:p-5">
+        <h1 className="text-brand-dark mb-4 text-lg font-bold tracking-tight sm:text-xl">
+          Muokkaa ilmoa
+        </h1>
+        {isExistingSignup && (
+          <p className="text-md text-brand-danger mb-4">
+            Sinulla on jo <b>vahvistamaton</b> ilmoittautuminen, muokkaat nyt
+            tätä ilmoittautumista.
+          </p>
+        )}
+        <p className="text-sm text-gray-700">
+          <span className="font-medium text-brand-dark">Kiintiö:</span>{" "}
+          {signup.Quota.title}
         </p>
-      )}
-      <p>Kiintiö: {signup.Quota.title}</p>
-      <p>
-        Sija: {signup.indexOfSignupInQuota + 1} / {signup.Quota.size}
-      </p>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <fieldset className="flex flex-1 flex-col gap-2">
-          <label htmlFor="name" className="flex items-center">
-            Nimi:
-          </label>
-          <Input
-            {...register("name")}
-            disabled={true}
-            error={!!errors?.name}
-            helperText={errors?.name?.message}
-          />
-        </fieldset>
-        <fieldset className="flex flex-1 flex-col gap-2">
-          <label htmlFor="email" className="flex items-center">
-            Sähköposti:
-          </label>
-          <Input
-            {...register("email")}
-            disabled={true}
-            error={!!errors?.email}
-            helperText={errors?.email?.message}
-          />
-        </fieldset>
+        <p className="text-sm text-gray-700">
+          <span className="font-medium text-brand-dark">Sija:</span>{" "}
+          {signup.indexOfSignupInQuota + 1}
+          {signup.Quota.size != null ? ` / ${signup.Quota.size}` : ""}
+        </p>
 
-        {signup.questions.map((question, idx) => (
-          <fieldset key={question.id} className="flex flex-1 flex-col gap-2">
-            <label
-              htmlFor={`questions.${idx}.answer`}
-              className="flex items-center"
-            >
-              {question.question}{" "}
-              {question.required && <span className="text-red-500"> *</span>}
+        <form onSubmit={onSubmit} className="mt-5 space-y-4">
+          <fieldset className="flex min-w-0 flex-1 flex-col gap-2">
+            <label htmlFor="name" className="flex items-center text-sm font-medium text-brand-dark">
+              Nimi:
             </label>
             <Input
-              {...register(`answers.${idx}.answer`)}
-              error={!!errors?.answers?.[question.sortId]?.answer}
-              helperText={errors?.answers?.[question.sortId]?.answer?.message}
+              {...register("name")}
+              disabled={true}
+              fullWidth
+              error={!!errors?.name}
+              helperText={errors?.name?.message}
             />
           </fieldset>
-        ))}
-
-        <div className="my-4">
-          <h2 className="mb-2 text-lg font-semibold">Ehdot</h2>
-          <p>
-            Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
-            jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
-            tai löytämään paikalleen toisen osallistujan. Osallistumalla
-            tapahtumaan sitoudut noudattamaan{" "}
-            <a
-              href="https://athene.fi/periaatteet/"
-              target="_blank"
-              className="text-brand-darkgreen"
+          <fieldset className="flex min-w-0 flex-1 flex-col gap-2">
+            <label
+              htmlFor="email"
+              className="flex items-center text-sm font-medium text-brand-dark"
             >
-              {" "}
-              Athenen yhteisiä periaatteita.
-            </a>
-          </p>
-        </div>
+              Sähköposti:
+            </label>
+            <Input
+              {...register("email")}
+              disabled={true}
+              fullWidth
+              error={!!errors?.email}
+              helperText={errors?.email?.message}
+            />
+          </fieldset>
 
-        <div className="flex justify-between pt-4">
-          <Button
-            type="submit"
-            color="primary"
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? "Saving..." : "Ilmottaudu"}
-          </Button>
+          {signup.questions.map((question, idx) => (
+            <fieldset
+              key={question.id}
+              className="flex min-w-0 flex-1 flex-col gap-2"
+            >
+              <label
+                htmlFor={`questions.${idx}.answer`}
+                className="flex items-center text-sm font-medium text-brand-dark"
+              >
+                {question.question}{" "}
+                {question.required && (
+                  <span className="text-red-500"> *</span>
+                )}
+              </label>
+              <Input
+                {...register(`answers.${idx}.answer`)}
+                fullWidth
+                error={!!errors?.answers?.[question.sortId]?.answer}
+                helperText={
+                  errors?.answers?.[question.sortId]?.answer?.message
+                }
+              />
+            </fieldset>
+          ))}
 
-          <Button
-            type="button"
-            color="danger"
-            onClick={() => setShowDeleteConfirm(true)}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Signup"}
-          </Button>
-        </div>
-      </form>
+          <div className="surface-muted my-4 rounded-control border border-stone-200 p-3">
+            <h2 className="text-brand-dark mb-2 text-sm font-semibold">
+              Ehdot
+            </h2>
+            <p className="text-sm leading-relaxed text-gray-700">
+              Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova. Tämän
+              jälkeen ilmoittautunut on velvollinen maksamaan osallistumismaksun
+              tai löytämään paikalleen toisen osallistujan. Osallistumalla
+              tapahtumaan sitoudut noudattamaan{" "}
+              <a
+                href="https://athene.fi/periaatteet/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand-darkgreen font-medium underline-offset-2 hover:underline"
+              >
+                {" "}
+                Athenen yhteisiä periaatteita.
+              </a>
+            </p>
+          </div>
 
-      {showDeleteConfirm && (
-        <ConfirmationDialog
-          message="Are you sure you want to delete your signup? This action cannot be undone."
-          onConfirmAction={handleDelete}
-          onCancelAction={() => setShowDeleteConfirm(false)}
-          pending={deleteMutation.isPending}
-        />
-      )}
+          <div className="border-stone-200 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="submit"
+              color="primary"
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Saving..." : "Ilmottaudu"}
+            </Button>
+
+            <Button
+              type="button"
+              color="danger"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Signup"}
+            </Button>
+          </div>
+        </form>
+
+        {showDeleteConfirm && (
+          <ConfirmationDialog
+            message="Are you sure you want to delete your signup? This action cannot be undone."
+            onConfirmAction={handleDelete}
+            onCancelAction={() => setShowDeleteConfirm(false)}
+            pending={deleteMutation.isPending}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -209,9 +248,7 @@ function EditSignup() {
 export default function SignupPage() {
   return (
     <Layout>
-      <div className="m-4">
-        <EditSignup />
-      </div>
+      <EditSignup />
     </Layout>
   );
 }

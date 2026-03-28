@@ -10,48 +10,51 @@ export type UsersTableProps = {
 
 export function UsersTable({ users, handleAction }: UsersTableProps) {
   const session = useSession();
-  console.log("Current session user:", session.data?.user);
 
   return (
     <div className="overflow-x-auto">
-      <table className="bg-brand-light my-6 min-w-full divide-y divide-gray-200 rounded-sm shadow-sm">
-        <thead className="bg-gray-50">
+      <table className="surface-panel my-4 min-w-full divide-y divide-stone-200">
+        <thead className="bg-stone-100">
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               ID
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               Name
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               Email
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               Email Verified
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               Role
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="bg-brand-light divide-y divide-stone-200">
           {users.map((user, idx) => {
             const isCurrentUser = session.data?.user?.id === user.id;
             return (
-              <tr key={user.id ?? idx} className="hover:bg-gray-50">
-                <td className="px-4 py-2 text-sm text-gray-700">{user.id}</td>
-                <td className="px-4 py-2 text-sm text-gray-700">{user.name}</td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+              <tr key={user.id ?? idx} className="hover:bg-brand-beige">
+                <td className="px-3 py-1.5 text-sm text-gray-700">{user.id}</td>
+                <td className="px-3 py-1.5 text-sm text-gray-700">
+                  {user.name}
+                </td>
+                <td className="px-3 py-1.5 text-sm text-gray-700">
                   {user.email}
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-3 py-1.5 text-sm text-gray-700">
                   {user.emailVerified ? user.emailVerified.toString() : "—"}
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">{user.role}</td>
-                <td className="px-4 py-2">
+                <td className="px-3 py-1.5 text-sm text-gray-700">
+                  {user.role}
+                </td>
+                <td className="px-3 py-1.5">
                   <button
                     className={`rounded px-3 py-1 text-xs font-medium transition-colors duration-150 ${
                       user.role === "admin"

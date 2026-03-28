@@ -33,13 +33,15 @@ export default function DesktopPage() {
       <PageHead title="Tapahtumat" />
       <Layout>
         {!isLoading && eventsData ? (
-          <div className="flex flex-col px-6 py-4">
-            <h1 className="mb-2 text-xl font-extrabold uppercase">
-              Tapahtumat
-            </h1>
+          <div className="flex w-full flex-col pb-4">
+            <header className="border-brand-secondary mb-8 w-full border-b-2 pb-4">
+              <h1 className="text-brand-dark text-3xl font-bold tracking-tight sm:text-4xl">
+                Tapahtumat
+              </h1>
+            </header>
 
             {isAdmin && (
-              <div className="my-2 flex flex-wrap gap-3">
+              <div className="mb-8 flex flex-wrap gap-3">
                 <Button
                   variant="filled"
                   color={includeOlderEvents ? "primary" : "neutral"}
@@ -49,7 +51,7 @@ export default function DesktopPage() {
                       icon={
                         includeOlderEvents ? "history" : "history_toggle_off"
                       }
-                      className="h-4 w-4"
+                      size={18}
                     />
                   }
                   onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
@@ -66,7 +68,7 @@ export default function DesktopPage() {
                   startIcon={
                     <Icon
                       icon={includeDrafts ? "visibility" : "visibility_off"}
-                      className="h-4 w-4"
+                      size={18}
                     />
                   }
                   onClick={() => setIncludeDrafts(!includeDrafts)}
@@ -78,19 +80,21 @@ export default function DesktopPage() {
               </div>
             )}
 
-            <div className="flex flex-col gap-4">
+            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 sm:items-stretch lg:gap-8">
               {eventsData.map((event) => (
-                <EventCard key={event.id} event={event} isAdmin={isAdmin} />
+                <div key={event.id} className="flex h-full min-h-0 min-w-0">
+                  <EventCard event={event} isAdmin={isAdmin} />
+                </div>
               ))}
             </div>
 
             {isAdmin && (
-              <div className="mt-6">
+              <div className="mt-10 w-full border-t border-stone-300 pt-8">
                 <Button.Link
                   href="events/create"
                   variant="filled"
                   color="secondary"
-                  startIcon={<Icon icon="add" className="h-5 w-5" />}
+                  startIcon={<Icon icon="add" size={20} />}
                 >
                   Luo uusi tapahtuma
                 </Button.Link>
@@ -98,7 +102,9 @@ export default function DesktopPage() {
             )}
           </div>
         ) : (
-          <Icon icon="loading" />
+          <div className="flex justify-center py-12">
+            <Icon icon="loading" />
+          </div>
         )}
       </Layout>
     </>

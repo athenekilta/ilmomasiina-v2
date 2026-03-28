@@ -11,7 +11,7 @@ export default function EditEventPage() {
     <ProtectedRoute adminOnly>
       <PageHead title="Edit event" />
       <Layout>
-        <div className="bg-brand-light -mx-6 mt-16 flex flex-col gap-16 rounded-xl p-12 sm:mx-auto">
+        <div className="surface-panel mx-auto mt-4 w-full max-w-3xl p-4 sm:mt-6 sm:p-6">
           {isReady && <EventForm editId={eventId} />}
         </div>
       </Layout>

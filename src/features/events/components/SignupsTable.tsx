@@ -88,17 +88,17 @@ export function SignupsTable({
                 </td>
                 <td className="px-4 py-2 text-sm text-gray-700">
                   {signup.status == "CONFIRMED" && (
-                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                    <span className="rounded-control bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                       Vahvistettu
                     </span>
                   )}
                   {signup.status == "PENDING" &&
                     (signup.completedAt ? (
-                      <span className="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
+                      <span className="rounded-control bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
                         Jonossa
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-2 text-xs font-semibold text-gray-800">
+                      <span className="rounded-control bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">
                         Keskeneräinen
                       </span>
                     ))}

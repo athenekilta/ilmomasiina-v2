@@ -18,7 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           disabled={props.disabled}
           {...htmlProps}
-          className="w-full bg-transparent px-2 py-2 text-black outline-hidden placeholder:text-black/30 disabled:cursor-not-allowed"
+          className="w-full bg-transparent px-2 py-2 text-brand-dark outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed disabled:text-gray-500"
         />
         <InputHelperText error={props.error}>{helperText}</InputHelperText>
       </InputBase>

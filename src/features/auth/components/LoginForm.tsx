@@ -39,7 +39,7 @@ export function LoginForm() {
   const errorMessages = queryError;
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex flex-col gap-12">
+    <form onSubmit={handleSubmit} className="relative flex w-full flex-col gap-6">
       <div className="flex flex-col gap-6">
         <Input
           {...register("email")}

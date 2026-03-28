@@ -9,30 +9,29 @@ export interface AlertProps {
   createdAt: Date;
 }
 
+const accentClass: Record<BaseVariant, string> = {
+  primary: "bg-brand-primary",
+  secondary: "bg-brand-lime",
+  error: "bg-danger",
+  default: "bg-gray-400",
+  warning: "bg-warning",
+};
+
 export function Alert({ ...props }: AlertProps) {
+  const variant = props.variant ?? "default";
+
   return (
     <div
-      data-var={props.variant}
-      className="w-full rounded-lg bg-white shadow-lg"
+      data-var={variant}
+      className="surface-panel flex max-w-md overflow-hidden shadow-card"
     >
-      <div className="relative flex items-center justify-between gap-4 text-lg">
-        <div
-          className={c(
-            "h-fill rounded-lg p-3",
-            c.variant(props.variant ?? "default")({
-              primary: "bg-brand-green text-white",
-              secondary: "bg-brand-lime",
-              error: "bg-red-300",
-              default: "bg-gray-300",
-              warning: "bg-warning-300",
-            }),
-          )}
-        >
-          <div className="flex flex-col items-stretch">
-            <p className="pr-1 text-sm font-medium">{props.title}</p>
-            <p className="text-sm text-black">{props.description}</p>
-          </div>
-        </div>
+      <div
+        className={c("w-1.5 shrink-0", accentClass[variant])}
+        aria-hidden
+      />
+      <div className="flex min-w-0 flex-1 flex-col gap-1 p-3 pl-4">
+        <p className="text-sm font-semibold text-brand-dark">{props.title}</p>
+        <p className="text-sm leading-snug text-gray-600">{props.description}</p>
       </div>
     </div>
   );

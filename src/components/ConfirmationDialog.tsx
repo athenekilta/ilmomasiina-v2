@@ -12,19 +12,26 @@ export function ConfirmationDialog({
   pending: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-brand-light w-full max-w-md rounded-lg p-6 shadow-xl">
-        <h3 className="mb-4 text-lg font-semibold">Confirm Deletion</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="surface-panel w-full max-w-md p-6 shadow-card">
+        <h3 className="text-brand-dark mb-3 text-lg font-bold tracking-tight">
+          Confirm Deletion
+        </h3>
 
-        <p className="mb-6 text-gray-600">{message}</p>
+        <p className="text-gray-600 mb-6 text-sm leading-relaxed">{message}</p>
 
-        <div className="flex justify-end space-x-4">
-          <Button color="secondary" onClick={onCancelAction}>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+          <Button
+            color="secondary"
+            className="w-full sm:w-auto"
+            onClick={onCancelAction}
+          >
             Cancel
           </Button>
 
           <Button
             color="danger"
+            className="w-full sm:w-auto"
             onClick={onConfirmAction}
             aria-disabled={pending}
           >

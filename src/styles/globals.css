@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @config '../../tailwind.config.cjs';
 
@@ -17,5 +17,24 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+
+  body {
+    @apply font-primary text-brand-dark antialiased;
+  }
+}
+
+/* Shared surfaces: warm paper on beige (Athene), no glass / wash effects */
+@layer components {
+  .surface-panel {
+    @apply rounded-control border border-stone-300 bg-brand-light shadow-soft;
+  }
+
+  .surface-muted {
+    @apply rounded-control border border-stone-200 bg-stone-100;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-3 sm:px-4;
   }
 }

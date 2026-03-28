@@ -50,7 +50,7 @@ export function TextInputForm({
     >
       <Input
         readOnly={!isEditing}
-        className={c("flex-1", isEditing ? "" : "bg-white")}
+        className={c("flex-1", isEditing ? "" : "bg-brand-light")}
         onClick={() => setIsEditing(true)}
         error={!!error}
         helperText={error?.message ? String(error?.message) : undefined}

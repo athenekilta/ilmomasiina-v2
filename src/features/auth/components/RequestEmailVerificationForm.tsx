@@ -71,7 +71,6 @@ export function RequestEmailVerificationForm(
         href={routes.auth.login}
         color="primary"
         variant="bordered"
-        loading={isSubmitting}
       >
         Login
       </Button.Link>

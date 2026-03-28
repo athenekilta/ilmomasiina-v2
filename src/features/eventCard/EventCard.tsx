@@ -27,35 +27,46 @@ export function EventCard({
   const isRegistrationClosed = endDate < now;
 
   return (
-    <div
-      className={`rounded-xl shadow-xs transition-all duration-300 hover:shadow-md ${
+    <article
+      className={`flex h-full min-h-0 w-full min-w-0 flex-col rounded-control border shadow-soft transition-shadow duration-200 hover:shadow-card ${
         event.draft
-          ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20"
-          : "bg-brand-light border-gray-200 dark:border-gray-700 dark:bg-gray-800"
+          ? "border-amber-400 bg-amber-100"
+          : "border-stone-300 bg-brand-light"
       }`}
     >
-      <div className="flex flex-col p-4">
-        <Link href={`events/${event.id}`}>
-          <div className="flex-row justify-between sm:flex">
-            <div>
-              <h2 className="text-brand-primary upper text-xl font-bold">
-                {event.title}
-              </h2>
-              <span className="text-brand-dark text-xs">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 p-5 sm:p-6">
+        <Link
+          href={`events/${event.id}`}
+          className="group flex min-h-0 min-w-0 flex-1 flex-col rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-brand-light"
+        >
+          <div className="shrink-0">
+            <h2 className="text-xl font-bold tracking-tight text-brand-dark group-hover:text-brand-secondary sm:text-2xl">
+              {event.title}
+            </h2>
+
+            <div className="mt-3 space-y-1.5 text-sm leading-relaxed text-gray-700 sm:text-base">
+              <p className="min-w-0 break-words">
+                <span className="font-semibold text-brand-dark">Ajankohta:</span>{" "}
                 {formatDateTime(event.date, {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
-                {event.location && <span> - {event.location}</span>}
-              </span>
+              </p>
+              {event.location ? (
+                <p className="min-w-0 break-words">
+                  <span className="font-semibold text-brand-dark">Paikka:</span>{" "}
+                  {event.location}
+                </p>
+              ) : null}
             </div>
-            <div className="self-start">
+
+            <div className="mt-3">
               {isRegistrationClosed ? (
-                <span className="text-brand-danger text-xs sm:text-sm">
+                <span className="inline-block text-sm font-semibold text-brand-danger">
                   Ilmoittautuminen sulkeutunut
                 </span>
               ) : (
-                <span className="text-brand-primary mt-2 text-xs sm:text-sm">
+                <span className="inline-block text-sm font-semibold text-brand-primary">
                   {formatRegistration(
                     event.registrationStartDate,
                     event.registrationEndDate,
@@ -63,52 +74,63 @@ export function EventCard({
                 </span>
               )}
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
             {event.draft && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-800/30 dark:text-amber-200">
-                <Icon icon="draft" className="mr-1 h-3 w-3" />
-                Luonnos
-              </span>
+              <div className="mt-4">
+                <span className="inline-flex items-center rounded-control border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
+                  <Icon icon="draft" className="mr-1.5 h-3.5 w-3.5" />
+                  Luonnos
+                </span>
+              </div>
             )}
           </div>
 
+          <div className="min-h-2 flex-1" aria-hidden />
+
           {event.Quotas.length > 0 && (
-            <div className="mt-1 flex flex-col gap-1">
-              {event.Quotas.map((quota) => (
-                <div
-                  key={quota.id}
-                  className="text-brand-dark flex items-center justify-between text-sm"
-                >
-                  <span className="text-sm font-semibold">{quota.title}</span>
-                  <div className="ml-2 flex items-center">
-                    <span className="text-sm font-normal">
-                      {quota.signupCount} / {quota.size ?? "\u221E"}
+            <div className="mt-auto shrink-0 border-t border-stone-200 pt-5">
+              <h3 className="mb-3 text-xs font-bold tracking-widest text-brand-secondary uppercase">
+                Kiintiöt
+              </h3>
+              <ul className="flex list-none flex-col gap-2.5 p-0">
+                {event.Quotas.map((quota) => (
+                  <li
+                    key={quota.id}
+                    className="flex items-center justify-between gap-3 text-sm sm:text-base"
+                  >
+                    <span className="font-semibold text-brand-dark">
+                      {quota.title}
                     </span>
-                  </div>
-                </div>
-              ))}
+                    <span className="shrink-0 text-right">
+                      <span className="tabular-nums text-gray-700">
+                        {quota.signupCount} / {quota.size ?? "\u221E"}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </Link>
 
         {isAdmin && (
-          <>
-            <Divider />
-            <Button.Link
-              href={routes.app.events.edit(event.id)}
-              variant="filled"
-              color="neutral"
-              size="small"
-              startIcon={<Icon icon="edit" className="h-4 w-4" />}
-              className="w-36"
-            >
-              Muokkaa
-            </Button.Link>
-          </>
+          <div className="mt-auto shrink-0">
+            <Divider spacingY="lg" tone="strong" />
+            <div>
+              <Button.Link
+                href={routes.app.events.edit(event.id)}
+                variant="filled"
+                color="primary"
+                size="small"
+                startIcon={<Icon icon="edit" size={18} />}
+                className="w-auto min-w-30 justify-center"
+              >
+                Muokkaa
+              </Button.Link>
+            </div>
+          </div>
         )}
       </div>
-    </div>
+    </article>
   );
 }
