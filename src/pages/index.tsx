@@ -41,59 +41,73 @@ export default function DesktopPage() {
             </header>
 
             {isAdmin && (
-              <div className="mb-8 flex flex-wrap gap-3">
-                <Button
-                  variant="filled"
-                  color={includeOlderEvents ? "primary" : "neutral"}
-                  size="small"
-                  startIcon={
-                    <Icon
-                      icon={
-                        includeOlderEvents ? "history" : "history_toggle_off"
-                      }
-                      size={18}
-                    />
-                  }
-                  onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
-                >
-                  {includeOlderEvents
-                    ? "Kaikki tapahtumat"
-                    : "Tulevat tapahtumat"}
-                </Button>
+              <section
+                className="mb-8 w-full"
+                aria-label="Hallinnan suodattimet"
+              >
+                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                  Näkymä
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="filled"
+                    color={includeOlderEvents ? "primary" : "neutral"}
+                    size="small"
+                    startIcon={
+                      <Icon
+                        icon={
+                          includeOlderEvents ? "history" : "history_toggle_off"
+                        }
+                        size={18}
+                      />
+                    }
+                    onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
+                  >
+                    {includeOlderEvents
+                      ? "Kaikki tapahtumat"
+                      : "Tulevat tapahtumat"}
+                  </Button>
 
-                <Button
-                  variant="filled"
-                  color={includeDrafts ? "primary" : "neutral"}
-                  size="small"
-                  startIcon={
-                    <Icon
-                      icon={includeDrafts ? "visibility" : "visibility_off"}
-                      size={18}
-                    />
-                  }
-                  onClick={() => setIncludeDrafts(!includeDrafts)}
-                >
-                  {includeDrafts
-                    ? "Luonnokset näkyvissä"
-                    : "Luonnokset piilotettu"}
-                </Button>
-              </div>
+                  <Button
+                    variant="filled"
+                    color={includeDrafts ? "primary" : "neutral"}
+                    size="small"
+                    startIcon={
+                      <Icon
+                        icon={includeDrafts ? "visibility" : "visibility_off"}
+                        size={18}
+                      />
+                    }
+                    onClick={() => setIncludeDrafts(!includeDrafts)}
+                  >
+                    {includeDrafts
+                      ? "Luonnokset näkyvissä"
+                      : "Luonnokset piilotettu"}
+                  </Button>
+                </div>
+              </section>
             )}
 
-            <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 sm:items-stretch lg:gap-8">
-              {eventsData.map((event) => (
-                <div key={event.id} className="flex h-full min-h-0 min-w-0">
-                  <EventCard event={event} isAdmin={isAdmin} />
-                </div>
-              ))}
-            </div>
+            <section className="w-full" aria-label="Tapahtumalista">
+              <h2 className="sr-only">Tapahtumalista</h2>
+              <ul className="grid w-full list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 sm:items-stretch lg:gap-8">
+                {eventsData.map((event) => (
+                  <li key={event.id} className="flex h-full min-h-0 min-w-0">
+                    <EventCard event={event} isAdmin={isAdmin} />
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             {isAdmin && (
               <div className="mt-10 w-full border-t border-stone-300 pt-8">
+                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                  Hallinta
+                </h2>
                 <Button.Link
                   href="events/create"
                   variant="filled"
-                  color="secondary"
+                  color="primary"
                   startIcon={<Icon icon="add" size={20} />}
                 >
                   Luo uusi tapahtuma
@@ -103,7 +117,11 @@ export default function DesktopPage() {
           </div>
         ) : (
           <div className="flex justify-center py-12">
-            <Icon icon="loading" />
+            <Icon
+              icon="autorenew"
+              size={28}
+              className="text-brand-primary animate-spin"
+            />
           </div>
         )}
       </Layout>
