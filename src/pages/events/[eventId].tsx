@@ -209,7 +209,7 @@ function Registration({
                 (quota) => (
                   <div
                     key={quota.id}
-                    className="flex items-center justify-between gap-3 text-sm sm:text-base"
+                    className="surface-muted p-2 flex items-center justify-between gap-3 text-sm sm:text-base"
                   >
                     <div className="min-w-0">
                       <h3 className="text-base font-medium text-brand-dark">

@@ -33,8 +33,4 @@
   .surface-muted {
     @apply rounded-control border border-stone-200 bg-stone-100;
   }
-
-  .page-container {
-    @apply mx-auto w-full max-w-6xl px-3 sm:px-4;
-  }
 }
