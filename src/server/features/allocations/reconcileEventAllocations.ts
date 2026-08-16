@@ -4,12 +4,20 @@ import {
   SignupStatus,
 } from "@/generated/prisma/client";
 import type { PrismaClient } from "@/generated/prisma/client";
+import type { QueueAcceptedNotification } from "./sendQueueAcceptedEmails";
 
 type Tx = Prisma.TransactionClient;
 
 type ReconcileOptions = {
   forceAfterClose?: boolean;
 };
+
+async function sendQueueAcceptedEmails(
+  notification: QueueAcceptedNotification,
+) {
+  const mail = await import("./sendQueueAcceptedEmails");
+  await mail.sendQueueAcceptedEmails(notification);
+}
 
 const IN_PROGRESS_RESERVATION_MINUTES = 20;
 
@@ -35,7 +43,7 @@ export async function cleanupExpiredInProgressSignups(prisma: PrismaClient) {
   });
 
   for (const event of events) {
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(${event.id})`;
       await tx.signup.deleteMany({
         where: {
@@ -45,8 +53,9 @@ export async function cleanupExpiredInProgressSignups(prisma: PrismaClient) {
           registrationIntent: null,
         },
       });
-      await reconcileEventAllocations(tx, event.id);
+      return reconcileEventAllocations(tx, event.id);
     });
+    await sendQueueAcceptedEmails(result.queueAcceptedNotification);
   }
 }
 
@@ -66,9 +75,10 @@ export async function finalizeClosedEventAllocations(prisma: PrismaClient) {
   });
 
   for (const event of events) {
-    await prisma.$transaction((tx) =>
+    const result = await prisma.$transaction((tx) =>
       reconcileEventAllocations(tx, event.id, { forceAfterClose: true }),
     );
+    await sendQueueAcceptedEmails(result.queueAcceptedNotification);
   }
 }
 
@@ -229,6 +239,28 @@ export async function reconcileEventAllocations(
     }),
   );
 
+  const queueAcceptedSignups = event.Quotas.flatMap((quota) =>
+    quota.Signups.filter(
+      (signup) =>
+        (signup.status === SignupStatus.PENDING ||
+          signup.status === SignupStatus.WAITLISTED) &&
+        allocated.has(signup.id),
+    ).map((signup) => ({
+      id: signup.id,
+      name: signup.name,
+      email: signup.email,
+    })),
+  );
+
   await Promise.all(updates);
-  return { event, afterClose, allocatedSignupIds: allocated };
+  return {
+    event,
+    afterClose,
+    allocatedSignupIds: allocated,
+    queueAcceptedNotification: {
+      eventId: event.id,
+      eventName: event.title,
+      signups: queueAcceptedSignups,
+    },
+  };
 }

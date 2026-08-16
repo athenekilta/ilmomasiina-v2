@@ -26,6 +26,7 @@ type QuotasProps = {
   errors: FieldErrors<EventFormValues>;
   eventId?: number;
   editId?: number;
+  seatHoldingSignupCounts: Record<string, number>;
 };
 
 export function Quotas({
@@ -35,6 +36,7 @@ export function Quotas({
   errors,
   eventId,
   editId,
+  seatHoldingSignupCounts,
 }: QuotasProps) {
   const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
@@ -67,6 +69,29 @@ export function Quotas({
         "Quotas",
         quotas.filter((quota) => quota.id !== id),
       );
+    },
+    [getValues, setValue],
+  );
+
+  const moveUnusedPlacesToJokerPlaces = useCallback(
+    (id: string, usedPlaces: number) => {
+      const quotas = [...getValues("Quotas")];
+      const quotaIndex = quotas.findIndex((quota) => quota.id === id);
+      const quota = quotas[quotaIndex];
+      if (!quota || quota.size === null) return;
+
+      const unusedPlaces = Math.max(quota.size - usedPlaces, 0);
+      if (unusedPlaces === 0) return;
+
+      quotas[quotaIndex] = {
+        ...quota,
+        size: quota.size - unusedPlaces,
+      };
+      setValue("Quotas", quotas, { shouldDirty: true, shouldValidate: true });
+      setValue("extraCapacity", getValues("extraCapacity") + unusedPlaces, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     },
     [getValues, setValue],
   );
@@ -173,6 +198,12 @@ export function Quotas({
                           setValue("Quotas", quotas);
                         }}
                         deleteQuota={deleteQuota}
+                        seatHoldingSignupCount={
+                          seatHoldingSignupCounts[quota.id] ?? 0
+                        }
+                        moveUnusedPlacesToJokerPlaces={
+                          moveUnusedPlacesToJokerPlaces
+                        }
                         errors={
                           errors.Quotas &&
                           (errors.Quotas[index] as FieldErrorsImpl<Quota>)

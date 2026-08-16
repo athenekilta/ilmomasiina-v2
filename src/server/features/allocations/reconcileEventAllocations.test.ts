@@ -8,6 +8,8 @@ import { reconcileEventAllocations } from "./reconcileEventAllocations";
 
 type TestSignup = {
   id: string;
+  name: string;
+  email: string;
   status: SignupStatus;
   completedAt: Date | null;
   createdAt: Date;
@@ -29,6 +31,8 @@ const signup = (
   status: SignupStatus = SignupStatus.WAITLISTED,
 ): TestSignup => ({
   id,
+  name: id,
+  email: `${id}@example.com`,
   status,
   completedAt: new Date(2026, 0, 1, 12, order),
   createdAt: new Date(2026, 0, 1, 12, order),
@@ -48,6 +52,7 @@ async function allocate({
   const updates = new Map<string, SignupStatus>();
   const event = {
     id: 1,
+    title: "Test event",
     extraCapacity: sharedPlaces,
     registrationEndDate: afterClose
       ? new Date(2026, 0, 1)
@@ -76,7 +81,11 @@ async function allocate({
     event.id,
     afterClose ? { forceAfterClose: true } : {},
   );
-  return { allocated: result.allocatedSignupIds, updates };
+  return {
+    allocated: result.allocatedSignupIds,
+    queueAcceptedNotification: result.queueAcceptedNotification,
+    updates,
+  };
 }
 
 test("a confirmed shared signup moves into a freed protected place", async () => {
@@ -104,6 +113,10 @@ test("a confirmed shared signup moves into a freed protected place", async () =>
     "employee-next",
     "employee-shared",
   ]);
+  assert.deepEqual(
+    result.queueAcceptedNotification.signups.map((item) => item.id),
+    ["employee-next"],
+  );
 });
 
 test("trip categories compete for shared places by click time", async () => {
@@ -210,6 +223,23 @@ test("unused protected places are not shared", async () => {
   assert.equal(result.allocated.has("open-own"), true);
   assert.equal(result.allocated.has("open-shared"), true);
   assert.equal(result.allocated.has("open-waiting"), false);
+});
+
+test("a zero-sized quota can allocate transferred joker places", async () => {
+  const result = await allocate({
+    quotas: [
+      {
+        id: "transferred",
+        size: 0,
+        sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+        sortId: 1,
+        Signups: [signup("shared", 1)],
+      },
+    ],
+    sharedPlaces: 1,
+  });
+
+  assert.equal(result.allocated.has("shared"), true);
 });
 
 test("an unlimited legacy quota does not consume finite shared places", async () => {

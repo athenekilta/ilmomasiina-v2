@@ -21,7 +21,7 @@ export const signupSchema = z.object({
 export const quotaSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
-  size: z.number().int().min(1).nullable(),
+  size: z.number().int().min(0).nullable(),
   sharedPlacesAllocation: z.enum([
     "NEVER",
     "IMMEDIATE",

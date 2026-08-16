@@ -14,6 +14,7 @@ import {
   cleanupExpiredInProgressSignups,
   reconcileEventAllocations,
 } from "../features/allocations/reconcileEventAllocations";
+import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
 const DEMO_SIGNUP_EMAIL_PREFIX = "dev-demo-";
 
@@ -158,7 +159,7 @@ export const signupsRouter = router({
     .mutation(async ({ ctx, input }) => {
       ensureDevelopment();
 
-      return ctx.prisma.$transaction(async (tx) => {
+      const result = await ctx.prisma.$transaction(async (tx) => {
         const quota = await tx.quota.findUnique({
           where: { id: input.quotaId },
           select: { eventId: true },
@@ -180,9 +181,16 @@ export const signupsRouter = router({
         if (!signup) return null;
 
         await tx.signup.delete({ where: { id: signup.id } });
-        await reconcileEventAllocations(tx, quota.eventId);
-        return signup;
+        const allocation = await reconcileEventAllocations(tx, quota.eventId);
+        return {
+          signup,
+          queueAcceptedNotification: allocation.queueAcceptedNotification,
+        };
       });
+
+      if (!result) return null;
+      await sendQueueAcceptedEmails(result.queueAcceptedNotification);
+      return result.signup;
     }),
 
   createSignup: publicProcedure
@@ -266,8 +274,8 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { currentSignup, newSignup } = await ctx.prisma.$transaction(
-        async (tx) => {
+      const { currentSignup, newSignup, queueAcceptedNotification } =
+        await ctx.prisma.$transaction(async (tx) => {
           const currentSignup = await tx.signup.findUnique({
             where: { id: input.signupId },
             include: {
@@ -333,16 +341,27 @@ export const signupsRouter = router({
             where: { id: input.signupId },
             data: { completedAt: new Date() },
           });
-          await reconcileEventAllocations(tx, currentSignup.Quota.eventId);
+          const allocation = await reconcileEventAllocations(
+            tx,
+            currentSignup.Quota.eventId,
+          );
           const newSignup = await tx.signup.findUniqueOrThrow({
             where: { id: input.signupId },
           });
 
-          return { currentSignup, newSignup };
-        },
-      );
+          return {
+            currentSignup,
+            newSignup,
+            queueAcceptedNotification: allocation.queueAcceptedNotification,
+          };
+        });
 
       const wasCompletedBefore = currentSignup.completedAt !== null;
+      const wasQueued =
+        currentSignup.status === SignupStatus.PENDING ||
+        currentSignup.status === SignupStatus.WAITLISTED;
+
+      await sendQueueAcceptedEmails(queueAcceptedNotification);
 
       // Only send confirmation email if this is the first time being confirmed
       const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
@@ -352,6 +371,7 @@ export const signupsRouter = router({
         currentSignup.status !== SignupStatus.CONFIRMED &&
         newSignup.status === SignupStatus.CONFIRMED
       ) {
+        if (wasQueued) return newSignup;
         await (
           await ctx.mail.templates.eventSignup({
             eventName: currentSignup.Quota.Event.title,
@@ -404,43 +424,13 @@ export const signupsRouter = router({
         throw new Error("Signup not found");
       }
 
-      const previouslyWaiting = await ctx.prisma.signup.findMany({
-        where: {
-          Quota: { eventId: signup.Quota.Event.id },
-          status: { in: [SignupStatus.PENDING, SignupStatus.WAITLISTED] },
-          completedAt: { not: null },
-        },
-        select: { id: true },
-      });
-
-      await ctx.prisma.$transaction(async (tx) => {
+      const allocation = await ctx.prisma.$transaction(async (tx) => {
         await tx.answer.deleteMany({ where: { signupId: input.signupId } });
         await tx.signup.delete({ where: { id: input.signupId } });
-        await reconcileEventAllocations(tx, signup.Quota.Event.id);
+        return reconcileEventAllocations(tx, signup.Quota.Event.id);
       });
 
-      const promoted = await ctx.prisma.signup.findFirst({
-        where: {
-          id: { in: previouslyWaiting.map((item) => item.id) },
-          status: SignupStatus.CONFIRMED,
-        },
-      });
-
-      if (promoted) {
-        const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-        const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-        const editUrl = `${nextAuthUrl}events/${signup.Quota.Event.id}/${promoted.id}`;
-        await (
-          await ctx.mail.templates.eventQueueAccepted({
-            eventName: signup.Quota.Event.title,
-            editUrl,
-          })
-        ).send({
-          to: { displayName: promoted.name, address: promoted.email },
-          from: "DoNotReply@athene.fi",
-        });
-      }
-
+      await sendQueueAcceptedEmails(allocation.queueAcceptedNotification);
       return signup;
     }),
 
@@ -452,7 +442,7 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.$transaction(async (tx) => {
+      const result = await ctx.prisma.$transaction(async (tx) => {
         const signup = await tx.signup.findUnique({
           where: { id: input.signupId },
           include: { Quota: true },
@@ -478,9 +468,21 @@ export const signupsRouter = router({
             originalQuotaId: targetQuota.id,
           },
         });
-        await reconcileEventAllocations(tx, targetQuota.eventId);
-        return tx.signup.findUniqueOrThrow({ where: { id: signup.id } });
+        const allocation = await reconcileEventAllocations(
+          tx,
+          targetQuota.eventId,
+        );
+        const updatedSignup = await tx.signup.findUniqueOrThrow({
+          where: { id: signup.id },
+        });
+        return {
+          updatedSignup,
+          queueAcceptedNotification: allocation.queueAcceptedNotification,
+        };
       });
+
+      await sendQueueAcceptedEmails(result.queueAcceptedNotification);
+      return result.updatedSignup;
     }),
 
   deleteUnconfirmedSignups: publicProcedure.mutation(async ({ ctx }) => {

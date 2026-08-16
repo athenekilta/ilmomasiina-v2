@@ -22,11 +22,11 @@ import { Divider } from "@/components/Divider";
 
 const quotaSegmentColors = [
   { className: "bg-brand-primary" },
-  { className: "bg-brand-secondary" },
-  { className: "bg-amber-500" },
-  { className: "bg-emerald-600" },
-  { className: "bg-sky-600" },
-  { className: "bg-violet-600" },
+  { className: "bg-[#66859a]" },
+  { className: "bg-[#a18452]" },
+  { className: "bg-[#806f91]" },
+  { className: "bg-[#a56f63]" },
+  { className: "bg-[#568b85]" },
 ];
 
 function Registration({

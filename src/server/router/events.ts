@@ -9,6 +9,7 @@ import {
 } from "@/features/events/utils/eventFormSchema";
 import { RaffleStatus, SignupStatus } from "@/generated/prisma/client";
 import { reconcileEventAllocations } from "../features/allocations/reconcileEventAllocations";
+import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
 export const eventsRouter = router({
   getEvents: publicProcedure.query(async ({ ctx }) => {
@@ -106,9 +107,10 @@ export const eventsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      await ctx.prisma.$transaction((tx) =>
+      const allocation = await ctx.prisma.$transaction((tx) =>
         reconcileEventAllocations(tx, input.eventId),
       );
+      await sendQueueAcceptedEmails(allocation.queueAcceptedNotification);
       const event = await ctx.prisma.event.findUnique({
         where: {
           id: input.eventId,
@@ -334,79 +336,84 @@ export const eventsRouter = router({
 
       // Apply allocation-affecting changes and reconcile signup statuses
       // atomically so the event cannot expose a partially updated state.
-      const updatedEvent = await ctx.prisma.$transaction(async (tx) => {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${input.id})`;
-        const event = await tx.event.update({
-          where: {
-            id: input.id,
-          },
-          data: {
-            title: input.title,
-            badgeText: input.badgeText?.trim() || null,
-            badgeTone: input.badgeTone ?? "GREEN",
-            date: input.date,
-            registrationStartDate: input.registrationStartDate,
-            registrationEndDate: input.registrationEndDate,
-            description: input.description,
-            location: input.location,
-            price: input.price,
-            webpageUrl: input.webpageUrl,
-            draft: input.draft,
-            signupsPublic: input.signupsPublic,
-            verificationEmail: input.verificationEmail,
-            openQuotaSize: openQuotaSize,
-            extraCapacity: input.extraCapacity,
-            Quotas: {
-              create: newQuotas.map((quota) => ({
-                id: quota.id,
-                title: quota.title,
-                size: quota.size,
-                sharedPlacesAllocation: quota.sharedPlacesAllocation,
-                sortId: quota.sortId,
-              })),
-              update: existingQuotasToUpdate.map((quota) => ({
-                where: { id: quota.id },
-                data: {
+      const { updatedEvent, queueAcceptedNotification } =
+        await ctx.prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${input.id})`;
+          const event = await tx.event.update({
+            where: {
+              id: input.id,
+            },
+            data: {
+              title: input.title,
+              badgeText: input.badgeText?.trim() || null,
+              badgeTone: input.badgeTone ?? "GREEN",
+              date: input.date,
+              registrationStartDate: input.registrationStartDate,
+              registrationEndDate: input.registrationEndDate,
+              description: input.description,
+              location: input.location,
+              price: input.price,
+              webpageUrl: input.webpageUrl,
+              draft: input.draft,
+              signupsPublic: input.signupsPublic,
+              verificationEmail: input.verificationEmail,
+              openQuotaSize: openQuotaSize,
+              extraCapacity: input.extraCapacity,
+              Quotas: {
+                create: newQuotas.map((quota) => ({
+                  id: quota.id,
                   title: quota.title,
                   size: quota.size,
                   sharedPlacesAllocation: quota.sharedPlacesAllocation,
                   sortId: quota.sortId,
-                },
-              })),
-              delete: quotasToDelete.map((quota) => ({ id: quota.id })),
-            },
-            Questions: {
-              create: newQuestions.map((question) => ({
-                id: question.id,
-                question: question.question,
-                type: question.type,
-                options: question.options,
-                sortId: question.sortId,
-                required: question.required,
-                public: question.public,
-              })),
-              update: questionsToUpdate.map((question) => ({
-                where: { id: question.id },
-                data: {
+                })),
+                update: existingQuotasToUpdate.map((quota) => ({
+                  where: { id: quota.id },
+                  data: {
+                    title: quota.title,
+                    size: quota.size,
+                    sharedPlacesAllocation: quota.sharedPlacesAllocation,
+                    sortId: quota.sortId,
+                  },
+                })),
+                delete: quotasToDelete.map((quota) => ({ id: quota.id })),
+              },
+              Questions: {
+                create: newQuestions.map((question) => ({
+                  id: question.id,
                   question: question.question,
                   type: question.type,
                   options: question.options,
                   sortId: question.sortId,
                   required: question.required,
                   public: question.public,
-                },
-              })),
-              delete: questionsToDelete.map((question) => ({
-                id: question.id,
-              })),
+                })),
+                update: questionsToUpdate.map((question) => ({
+                  where: { id: question.id },
+                  data: {
+                    question: question.question,
+                    type: question.type,
+                    options: question.options,
+                    sortId: question.sortId,
+                    required: question.required,
+                    public: question.public,
+                  },
+                })),
+                delete: questionsToDelete.map((question) => ({
+                  id: question.id,
+                })),
+              },
             },
-          },
+          });
+
+          const allocation = await reconcileEventAllocations(tx, input.id);
+          return {
+            updatedEvent: event,
+            queueAcceptedNotification: allocation.queueAcceptedNotification,
+          };
         });
 
-        await reconcileEventAllocations(tx, input.id);
-        return event;
-      });
-
+      await sendQueueAcceptedEmails(queueAcceptedNotification);
       return updatedEvent;
     }),
   startRaffle: adminProcedure

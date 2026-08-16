@@ -182,6 +182,14 @@ export function EventForm({ editId }: EventFormProps) {
   });
 
   const isDraft = useWatch({ control, name: "draft" });
+  const seatHoldingSignupCounts = (signups ?? []).reduce<
+    Record<string, number>
+  >((counts, signup) => {
+    if (signup.status === "CONFIRMED" || signup.status === "IN_PROGRESS") {
+      counts[signup.quotaId] = (counts[signup.quotaId] ?? 0) + 1;
+    }
+    return counts;
+  }, {});
 
   if (editId && (signUpsLoading || isLoading)) {
     return (
@@ -247,6 +255,7 @@ export function EventForm({ editId }: EventFormProps) {
           errors={errors}
           eventId={editEvent?.id}
           editId={editId}
+          seatHoldingSignupCounts={seatHoldingSignupCounts}
         />
 
         <Divider spacingY="none" />
