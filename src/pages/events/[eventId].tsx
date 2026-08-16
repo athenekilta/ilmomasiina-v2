@@ -90,7 +90,7 @@ function Registration({
   return (
     <div className="mb-5">
       <div>
-        <h2 className="mb-1 text-lg font-semibold text-brand-dark">Ilmo</h2>
+        <h2 className="text-brand-dark mb-1 text-lg font-semibold">Ilmo</h2>
         <p className="text-brand-primary mb-2 text-sm font-medium">
           {formatRegistration(
             event.registrationStartDate,
@@ -105,7 +105,7 @@ function Registration({
             </h3>
             <div className="text-sm">
               <FieldSet title="Nimi">
-                <p className="text-gray-600 mb-2 text-xs leading-relaxed">
+                <p className="mb-2 text-xs leading-relaxed text-gray-600">
                   {event.signupsPublic ? (
                     <span>Nimi on julkinen tieto. </span>
                   ) : null}
@@ -182,37 +182,71 @@ function Registration({
                 Vaihda
               </button>
             </p>
-            <div className="mt-3 flex flex-col gap-2.5">
+            <div className="mt-2.5 flex flex-col gap-2">
               {event.Quotas.filter((quota) => quota.id !== "queue").map(
-                (quota) => (
-                  <div
-                    key={quota.id}
-                    className="surface-muted p-2 flex items-center justify-between gap-3 text-sm sm:text-base"
-                  >
-                    <div className="min-w-0">
-                      <h3 className="text-base font-medium text-brand-dark">
-                        {quota.title}
-                      </h3>
-                      <p className="text-xs text-gray-600">
-                        {quota.size
-                          ? `${quota.size} paikkaa yhteensä`
-                          : `${quota.Signups.length} ilmoittautumista`}
-                      </p>
-                    </div>
-                    <Button
-                      className="ml-2 shrink-0"
-                      color="primary"
-                      onClick={handleSubmit(getHandleSignup(quota.id))}
-                      disabled={!isRegistrationOpen || !isValid || isSubmitting}
-                      loading={
-                        isSubmitting &&
-                        createSignupMutation.variables?.quotaId === quota.id
-                      }
+                (quota) => {
+                  const signupCount = quota.Signups.length;
+                  const size = quota.size;
+                  const isFull = size ? signupCount >= size : false;
+                  const fillPercentage = size
+                    ? Math.min((signupCount / size) * 100, 100)
+                    : 0;
+
+                  return (
+                    <div
+                      key={quota.id}
+                      className="surface-muted flex flex-col gap-1.5 p-2 sm:px-3 sm:py-2"
                     >
-                      Ilmoo
-                    </Button>
-                  </div>
-                ),
+                      <div className="flex items-baseline justify-between gap-2">
+                        <h3 className="text-brand-dark truncate text-sm font-semibold">
+                          {quota.title}
+                        </h3>
+                        <span className="shrink-0 text-xs font-medium text-gray-700 tabular-nums">
+                          {size
+                            ? `${signupCount} / ${size} paikkaa`
+                            : `${signupCount} ilmoittautunutta`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5">
+                        {size ? (
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-stone-200">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${
+                                isFull
+                                  ? "bg-brand-danger"
+                                  : signupCount / size > 0.75
+                                    ? "bg-amber-500"
+                                    : "bg-brand-primary"
+                              }`}
+                              style={{
+                                width: `${fillPercentage}%`,
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex-1" />
+                        )}
+
+                        <Button
+                          size="small"
+                          className="shrink-0 px-3"
+                          color="primary"
+                          onClick={handleSubmit(getHandleSignup(quota.id))}
+                          disabled={
+                            !isRegistrationOpen || !isValid || isSubmitting
+                          }
+                          loading={
+                            isSubmitting &&
+                            createSignupMutation.variables?.quotaId === quota.id
+                          }
+                        >
+                          Ilmoo
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                },
               )}
             </div>
           </div>
@@ -244,15 +278,15 @@ export default function EventPage() {
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
           <div
-            className={`w-full min-w-0 rounded-control border shadow-soft p-4 sm:p-5 lg:p-6 ${
+            className={`rounded-control shadow-soft w-full min-w-0 border p-4 sm:p-5 lg:p-6 ${
               event?.draft
                 ? "border-amber-400 bg-amber-100"
-                : "border-stone-300 bg-brand-light"
+                : "bg-brand-light border-stone-300"
             }`}
           >
             <Link
               href="/"
-              className="border-stone-200 -mx-1 mb-5 flex min-w-0 items-center gap-2 border-b pb-4 text-sm font-semibold text-brand-secondary transition-colors hover:text-brand-dark sm:mx-0"
+              className="text-brand-secondary hover:text-brand-dark -mx-1 mb-5 flex min-w-0 items-center gap-2 border-b border-stone-200 pb-4 text-sm font-semibold transition-colors sm:mx-0"
             >
               <span className="shrink-0 text-base" aria-hidden>
                 ←
@@ -273,31 +307,31 @@ export default function EventPage() {
                     </Button.Link>
                   </div>
                 )}
-                <h1 className="mb-6 text-2xl font-extrabold uppercase text-brand-dark sm:text-3xl">
+                <h1 className="text-brand-dark mb-6 text-2xl font-extrabold uppercase sm:text-3xl">
                   {event.title}
                 </h1>
 
                 <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
-                  <div className="w-full min-w-0 space-y-1 text-sm sm:text-base sm:flex-1 sm:basis-0 sm:pr-2">
-                    <h2 className="mb-3 text-xs font-bold tracking-widest text-brand-secondary uppercase">
+                  <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
+                    <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
                       Tiedot
                     </h2>
                     <p>
-                      <span className="font-semibold text-brand-dark">
+                      <span className="text-brand-dark font-semibold">
                         Ajankohta:{" "}
                       </span>
                       {formatDate(event.date)}
                     </p>
                     {event.location && (
                       <p>
-                        <span className="font-semibold text-brand-dark">
+                        <span className="text-brand-dark font-semibold">
                           Sijainti:{" "}
                         </span>
                         {event.location}
                       </p>
                     )}
                     <hr className="my-4 border-stone-200" />
-                    <div className="prose prose-sm max-w-none text-base leading-relaxed text-brand-dark">
+                    <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
                       {event.description}
                     </div>
                   </div>
@@ -308,12 +342,13 @@ export default function EventPage() {
                     </HydrationZustand>
                   </div>
                 </div>
-                                    {event.signupsPublic && (
-                                      <>
+
+                {event.signupsPublic && (
+                  <>
                     <hr className="my-10 border-stone-200" />
-                        <ParticipantsTable event={event} />
-                      </>
-                    )}
+                    <ParticipantsTable event={event} />
+                  </>
+                )}
               </>
             )}
           </div>

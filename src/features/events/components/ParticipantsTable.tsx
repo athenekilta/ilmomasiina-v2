@@ -21,42 +21,20 @@ export function ParticipantsTable({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-lg font-semibold text-brand-dark">Ilmonneet</h2>
+      <h2 className="text-brand-dark text-lg font-semibold">Ilmonneet</h2>
       {event.Quotas.map(
         (quota) =>
           !(quota.id == "queue" && quota.Signups.length == 0) && (
-            <div
-              key={quota.id}
-              className="surface-panel"
-            >
-              <div className="flex justify-between items-center border-b border-stone-200 p-3 text-base font-medium text-brand-dark">
-                <h3 className="w-full text-wrap">{quota.title}</h3>
-                {quota.id !== "queue" && (
-                  <>
-                    <span className="text-md mx-5 text-nowrap font-normal text-gray-700">
-                      {quota.Signups.length} / {quota.size ?? "∞"}
-                    </span>
-                    {quota.size && (
-                      <div className="bg-brand-beige ml-auto h-1.5 w-60 overflow-hidden rounded-sm">
-                        <div
-                          className={`h-full rounded-sm ${
-                            quota.Signups.length >= quota.size
-                              ? "bg-red-500"
-                              : quota.Signups.length / quota.size > 0.75
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                          }`}
-                          style={{
-                            width: `${Math.min((quota.Signups.length / quota.size) * 100, 100)}%`,
-                          }}
-                        ></div>
-                      </div>
-                    )}
-                  </>
-                )}
-                {quota.id === "queue" && (
-                  <span className="text-md ml-5 font-normal text-gray-700">
-                    {quota.Signups.length}
+            <div key={quota.id} className="surface-panel">
+              <div className="text-brand-dark flex items-center justify-between border-b border-stone-200 px-4 py-3 text-base font-semibold">
+                <h3 className="truncate">{quota.title}</h3>
+                {quota.id !== "queue" ? (
+                  <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
+                    {quota.Signups.length} / {quota.size ?? "∞"}
+                  </span>
+                ) : (
+                  <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
+                    {quota.Signups.length} jonossa
                   </span>
                 )}
               </div>
@@ -65,16 +43,16 @@ export function ParticipantsTable({
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="border-b border-stone-200">
-                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
+                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                           Sija
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
+                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                           Nimi
                         </th>
                         {publicQuestions.map((q) => (
                           <th
                             key={q.id}
-                            className="max-w-44 px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase"
+                            className="text-brand-dark max-w-44 px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase"
                             title={q.question}
                           >
                             <span className="line-clamp-3 whitespace-normal">
@@ -82,11 +60,11 @@ export function ParticipantsTable({
                             </span>
                           </th>
                         ))}
-                        <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
+                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                           Ilmoittautumisaika
                         </th>
                         {quota.id === "queue" && (
-                          <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-brand-dark uppercase">
+                          <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                             Kiintiö
                           </th>
                         )}
