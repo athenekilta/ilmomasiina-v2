@@ -135,7 +135,8 @@ model Event {
   date                  DateTime
   registrationStartDate DateTime
   registrationEndDate   DateTime
-  openQuotaSize         Int                @default(0) // Assuming validation is handled at application level
+  openQuotaSize         Int                @default(0) // Legacy field, retained for migration compatibility
+  extraCapacity         Int                @default(0)
   description           String?
   price                 String?
   location              String?
@@ -197,7 +198,8 @@ model Signup {
   quotaId            String
   originalQuotaId    String
   registrationIntent DateTime?
-  status             SignupStatus @default(PENDING)
+  status             SignupStatus @default(IN_PROGRESS)
+  allocatedAt        DateTime?
   Quota              Quota        @relation("Quota", fields: [quotaId], references: [id])
   OriginalQuota      Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
   Answers            Answer[]
@@ -206,9 +208,19 @@ model Signup {
 }
 
 enum SignupStatus {
+  IN_PROGRESS
   PENDING
   CONFIRMED
+  WAITLISTED
   REJECTED
+}
+
+// Every quota allocates its protected places immediately. Shared places are
+// either unavailable, allocated immediately, or allocated after registration closes.
+enum SharedPlacesAllocation {
+  NEVER
+  IMMEDIATE
+  AFTER_REGISTRATION_CLOSE
 }
 
 model RaffleSimulation {
@@ -223,14 +235,15 @@ model RaffleSimulation {
 }
 
 model Quota {
-  id              String   @id @default(cuid())
-  title           String
-  size            Int?
-  sortId          Int
-  eventId         Int
-  Event           Event    @relation(fields: [eventId], references: [id])
-  Signups         Signup[] @relation("Quota")
-  OriginalSignups Signup[] @relation("OriginalQuota")
+  id                     String                 @id @default(cuid())
+  title                  String
+  size                   Int?
+  sharedPlacesAllocation SharedPlacesAllocation @default(NEVER)
+  sortId                 Int
+  eventId                Int
+  Event                  Event                  @relation(fields: [eventId], references: [id])
+  Signups                Signup[]               @relation("Quota")
+  OriginalSignups        Signup[]               @relation("OriginalQuota")
 
   @@index([eventId])
 }

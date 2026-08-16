@@ -1,5 +1,6 @@
 import { FieldSet } from "@/components/FieldSet";
 import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
 import { QuotaRow } from "./QuotaRow";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
@@ -45,22 +46,7 @@ export function Quotas({
         id,
         title: "",
         size: null,
-        sortId,
-        eventId: eventId ?? NaN,
-        signupCount: 0,
-      },
-    ]);
-  }, [eventId, getValues, setValue]);
-
-  const createPublicQueue = useCallback(() => {
-    const quotas = getValues("Quotas");
-    const sortId = quotas.length + 1;
-    setValue("Quotas", [
-      ...quotas,
-      {
-        id: eventId ? "public-quota-" + eventId : "public-quota",
-        title: "Avoin kiintiö",
-        size: null,
+        sharedPlacesAllocation: "NEVER",
         sortId,
         eventId: eventId ?? NaN,
         signupCount: 0,
@@ -106,18 +92,37 @@ export function Quotas({
 
   return (
     <FieldSet title="Kiintiöt">
+      <div className="mb-5 rounded-md bg-blue-50 p-4 text-sm text-blue-900">
+        <p>
+          Jokaiselle kiintiölle määritetään oma paikkamäärä. Kiintiökohtaisesti
+          valitaan, voiko kiintiö käyttää jaettuja paikkoja heti,
+          ilmoittautumisen päätyttyä vai ei lainkaan.
+        </p>
+        <div className="mt-4 max-w-xs">
+          <label className="mb-1 block font-semibold">Jaetut paikat</label>
+          <Input
+            type="number"
+            min={0}
+            value={watch("extraCapacity")}
+            onChange={(event) =>
+              setValue(
+                "extraCapacity",
+                event.target.value === "" ? 0 : event.target.valueAsNumber,
+              )
+            }
+            error={!!errors.extraCapacity}
+            helperText={errors.extraCapacity?.message}
+          />
+        </div>
+        <p className="mt-3 font-semibold">
+          Paikkoja yhteensä:{" "}
+          {watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
+            watch("extraCapacity")}
+        </p>
+      </div>
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuota()} type="button">
           Lisää kiintiö
-        </Button>
-        <Button
-          type="button"
-          onClick={() => createPublicQueue()}
-          disabled={
-            !!watch("Quotas").find((quota) => quota.id.includes("public-quota"))
-          }
-        >
-          Lisää avoin kiintiö
         </Button>
       </div>
 

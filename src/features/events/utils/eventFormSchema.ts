@@ -21,7 +21,12 @@ export const signupSchema = z.object({
 export const quotaSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
-  size: z.number().min(1).nullable(),
+  size: z.number().int().min(1).nullable(),
+  sharedPlacesAllocation: z.enum([
+    "NEVER",
+    "IMMEDIATE",
+    "AFTER_REGISTRATION_CLOSE",
+  ]),
   sortId: z.number().positive(),
   eventId: z.union([z.number(), z.nan()]),
 });
@@ -84,6 +89,7 @@ export const eventFormSchema = z.object({
   draft: z.boolean(),
   signupsPublic: z.boolean(),
   verificationEmail: z.string().optional(),
+  extraCapacity: z.number().int().min(0),
   raffleEnabled: z.boolean().default(false),
   Quotas: z.array(quotaSchema.extend({ signupCount: z.number() })),
   Questions: z.array(questionSchema),

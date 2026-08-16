@@ -114,6 +114,7 @@ export function EventForm({ editId }: EventFormProps) {
         })) || [],
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
+      extraCapacity: editEvent?.extraCapacity ?? 0,
       price: editEvent?.price || "",
       location: editEvent?.location || "",
       title: editEvent?.title || "",
@@ -274,6 +275,7 @@ export function EventForm({ editId }: EventFormProps) {
                   signups={signups}
                   eventId={editId}
                   eventName={editEvent?.title}
+                  quotas={editEvent?.Quotas ?? []}
                 />
               ) : (
                 <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
