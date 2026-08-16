@@ -72,41 +72,36 @@ export function EventCard({
         >
           <BannerImage src={getEventImage(event.id)} muted={isClosed} />
 
-          {/* A closed event still belongs in the list, but it is not
-              actionable — the drained image and the padlock say so before
-              any text is read. The status line stays red for the people who
-              do read it. */}
-          {isClosed && (
-            <span
-              className={`absolute left-3 rounded-full bg-stone-900/65 p-1.5 text-white ${
-                event.draft ? "top-11" : "top-3"
-              }`}
-              title="Ilmoittautuminen sulkeutunut"
-            >
-              <Lock size={14} strokeWidth={2.5} aria-hidden />
-            </span>
-          )}
-
           {event.draft && (
             <span className="absolute top-0 left-0 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
               Luonnos
             </span>
           )}
 
-          {/* Editorial tag ("Vuoden haippisin"). Deliberately not the solid
-              rectangle glued to the corner: a floating pill that reads as a
-              sticker on the picture. Inverted — dark green ground, lime
-              text — because lime on a pale image barely registered; this
-              way it carries across any picture without borrowing the coral
-              or amber that already mean "closed" and "draft" elsewhere on
-              the card. */}
-          {event.badgeText && (
-            <span
-              className={`shadow-card absolute top-3 right-3 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
-            >
-              {event.badgeText}
-            </span>
-          )}
+          {/* Corner stack, so a closed event that also carries an editorial
+              tag shows both instead of one landing on top of the other. */}
+          <div className="absolute top-3 right-3 flex max-w-[80%] flex-col items-end gap-2">
+            {/* A closed event still belongs in the list, but it is not
+                actionable — the drained image and this padlock say so
+                before any text is read. */}
+            {isClosed && (
+              <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase sm:text-[0.8125rem]">
+                <Lock size={13} strokeWidth={2.75} aria-hidden />
+                Ilmo päättynyt
+              </span>
+            )}
+
+            {/* Editorial tag ("Vuoden haippisin"). Deliberately not the
+                solid rectangle glued to the corner: a floating pill that
+                reads as a sticker on the picture. */}
+            {event.badgeText && (
+              <span
+                className={`shadow-card max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+              >
+                {event.badgeText}
+              </span>
+            )}
+          </div>
 
           {/* Two layers rather than one gradient over the whole block: the
               ramp is a fixed height that always sits directly above the
