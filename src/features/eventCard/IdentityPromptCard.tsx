@@ -6,9 +6,10 @@ import { Input } from "@/components/Input";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 
-/* Square by design — the event banners are 2:1, so a 1:1 image marks this
-   card as something other than an event at a glance. */
-const PROMPT_IMAGE = "/placeholders/paheenjohtaja.png";
+/* Runs the full height of the card along its edge, so this card reads
+   differently from an event card (which wears its image as a wide banner
+   across the top). */
+const PROMPT_IMAGE = "/placeholders/kaappikello.png";
 
 /**
  * Sits between the heading and the event grid until the reader has an
@@ -41,71 +42,78 @@ export function IdentityPromptCard() {
   return (
     <section
       aria-labelledby="identity-prompt-title"
-      className="rounded-card mb-4 w-full border border-stone-200 bg-white p-4 sm:p-5"
+      className="rounded-card mb-4 flex w-full overflow-hidden border border-stone-200 bg-white"
     >
-      {/* The square stays small on mobile and sits beside the copy: given
-          to the full width it would be a 375px tall block of picture above
-          a two-line prompt. */}
-      <div className="flex min-w-0 items-start gap-4">
-        <div className="bg-brand-sand rounded-control relative size-20 shrink-0 overflow-hidden sm:size-28">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PROMPT_IMAGE}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        </div>
+      <div className="min-w-0 flex-1 p-4 sm:p-5">
+        <h2
+          id="identity-prompt-title"
+          className="text-brand-secondary text-base font-bold tracking-tight sm:text-lg"
+        >
+          Konfiguroi ilmo-identiteettisi
+        </h2>
+        <p className="text-brand-dark mt-1 text-sm sm:text-base">
+          Nimi ja sähköposti tähän selaimeen, niin oot valmiina tappeleen
+          paikoista.
+        </p>
 
-        <div className="min-w-0 flex-1">
-          <h2
-            id="identity-prompt-title"
-            className="text-brand-secondary text-base font-bold tracking-tight sm:text-lg"
+        <form
+          onSubmit={save}
+          className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
+        >
+          <div className="min-w-0 flex-1">
+            <Input
+              {...register("name")}
+              placeholder="Nimi"
+              fullWidth
+              error={!!errors.name}
+              helperText={errors.name?.message}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <Input
+              {...register("email")}
+              type="email"
+              placeholder="sinä@example.com"
+              fullWidth
+              error={!!errors.email}
+              helperText={errors.email?.message}
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="filled"
+            color="primary"
+            className="justify-center sm:w-auto"
           >
-            Laita tietosi valmiiksi
-          </h2>
-          <p className="text-brand-dark mt-1 text-sm sm:text-base">
-            Nimi ja sähköposti talteen nyt, niin ilmoittautuminen vie sekunnin
-            — juuri silloin kun paikoista on kiire.
-          </p>
-        </div>
+            Tallenna
+          </Button>
+        </form>
       </div>
 
-      <form
-        onSubmit={save}
-        className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start"
-      >
-        <div className="min-w-0 flex-1">
-          <Input
-            {...register("name")}
-            placeholder="Nimi"
-            fullWidth
-            error={!!errors.name}
-            helperText={errors.name?.message}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <Input
-            {...register("email")}
-            type="email"
-            placeholder="sinä@example.com"
-            fullWidth
-            error={!!errors.email}
-            helperText={errors.email?.message}
-          />
-        </div>
-        <Button
-          type="submit"
-          variant="filled"
-          color="primary"
-          className="justify-center sm:w-auto"
-        >
-          Tallenna
-        </Button>
-      </form>
+      {/* Flush to the card's edge and stretched to its full height — the
+          card is a flex row, so this column takes whatever height the copy
+          and the form end up needing. */}
+      {/* `contain` rather than `cover`, with room around it: the clock is a
+          tall object and cropping it to the column's width cut its sides
+          off. No background of its own — it sits on the card. */}
+      {/* Wide enough that the clock's height, not the column's width, is
+          what limits it — the image is 400×728, so filling the card's
+          height needs roughly 55% of that height in width. */}
+      <div className="w-36 shrink-0 pt-2 pr-3 pl-1 sm:w-44 sm:pr-4">
+        {/* Stands on the card's bottom edge and takes nearly its full
+            height: `object-bottom` puts the leftover space above the clock
+            rather than splitting it evenly, so the case never floats. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={PROMPT_IMAGE}
+          alt=""
+          aria-hidden
+          className="h-full w-full object-contain object-bottom"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      </div>
     </section>
   );
 }
