@@ -54,8 +54,10 @@ export function getChoiceConfigurationIssues(
   return issues;
 }
 
-export function decodeCheckboxAnswer(answer: string): string[] {
-  if (answer === "") return [];
+export function decodeCheckboxAnswer(
+  answer: string | null | undefined,
+): string[] {
+  if (!answer) return [];
   return answer
     .replace(/\r\n?/g, CHOICE_ANSWER_SEPARATOR)
     .split(CHOICE_ANSWER_SEPARATOR);

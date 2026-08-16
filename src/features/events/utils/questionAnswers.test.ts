@@ -36,6 +36,8 @@ test("checkbox answers encode canonically and decode line endings", () => {
   );
   assert.deepEqual(decodeCheckboxAnswer("Alpha\r\nGamma"), ["Alpha", "Gamma"]);
   assert.deepEqual(decodeCheckboxAnswer(""), []);
+  assert.deepEqual(decodeCheckboxAnswer(undefined), []);
+  assert.deepEqual(decodeCheckboxAnswer(null), []);
 });
 
 test("choice configuration requires two non-empty unique single-line options", () => {
