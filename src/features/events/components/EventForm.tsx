@@ -263,7 +263,7 @@ export function EventForm({ editId }: EventFormProps) {
         <Divider spacingY="none" />
 
         <FieldSet title="Vahvistusviesti sähköpostiin">
-          <TextArea {...register("verificationEmail")} rows={5} />
+          <TextArea {...register("verificationEmail")} rows={5} fullWidth />
         </FieldSet>
 
         {editId && (
