@@ -70,10 +70,10 @@ function AccountDropdownPanel({
       aria-labelledby={titleId}
       className="bg-brand-light text-brand-dark rounded-control shadow-card absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto border border-stone-200 ring-1 ring-stone-900/10"
     >
-      <div className="bg-brand-light sticky top-0 flex items-start justify-between gap-2 border-b border-stone-200 px-4 py-3">
+      <div className="bg-brand-light sticky top-0 flex items-center justify-between gap-2 border-b border-stone-200 px-4 py-3">
         <h2
           id={titleId}
-          className="text-brand-dark pr-2 text-sm font-bold tracking-tight"
+          className="text-brand-dark pr-2 text-sm font-bold tracking-wide uppercase"
         >
           {title}
         </h2>
@@ -137,11 +137,11 @@ export function HeaderAccountMenu() {
     ? (displayLine ?? "Tili")
     : displayLine
       ? displayLine
-      : "Ilmoittautuminen";
+      : "Ilmo-identiteetti";
 
   const triggerSub = sessionUser
     ? subLine
-    : (subLine ?? "Aseta nimi ja sähköposti");
+    : (subLine ?? "Nimi ja sähköposti puuttuvat");
 
   if (sessionLoading) {
     return (
@@ -166,8 +166,8 @@ export function HeaderAccountMenu() {
         aria-haspopup="dialog"
         aria-label={
           sessionUser || displayLine
-            ? `Ilmoittautumistiedot: ${displayLine ?? subLine ?? ""}`
-            : "Aseta ilmoittautumistiedot"
+            ? `Ilmo-identiteetti: ${displayLine ?? subLine ?? ""}`
+            : "Aseta ilmo-identiteetti"
         }
         className="rounded-control focus-visible:ring-offset-brand-primary flex items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
       >
@@ -200,7 +200,7 @@ export function HeaderAccountMenu() {
         open={open}
         onClose={closePanel}
         titleId={titleId}
-        title={sessionUser ? "Tilin tiedot" : "Ilmoittautumistiedot"}
+        title={sessionUser ? "Tilin tiedot" : "Ilmo-identiteetti"}
         panelRef={panelRef}
         triggerRef={triggerRef}
       >

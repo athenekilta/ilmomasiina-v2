@@ -13,15 +13,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const { helperText, ...htmlProps } =
       InputBase.removeExtensionInputBaseProps(props);
     return (
-      <InputBase {...props}>
-        <input
-          ref={ref}
-          disabled={props.disabled}
-          {...htmlProps}
-          className="w-full bg-transparent px-2 py-2 text-brand-dark outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed disabled:text-gray-500"
-        />
+      <div className={props.fullWidth ? "w-full" : "inline-block"}>
+        <InputBase {...props}>
+          <input
+            ref={ref}
+            disabled={props.disabled}
+            {...htmlProps}
+            className="text-brand-dark w-full bg-transparent px-2 py-2 outline-hidden placeholder:text-gray-400 disabled:cursor-not-allowed disabled:text-gray-500"
+          />
+        </InputBase>
         <InputHelperText error={props.error}>{helperText}</InputHelperText>
-      </InputBase>
+      </div>
     );
   },
 );

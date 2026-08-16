@@ -43,6 +43,12 @@ export default function DesktopPage() {
       <Layout>
         {!isLoading && eventsData ? (
           <div className="flex-col pb-4">
+            {/* Above the heading, not under it: this is not an event, and
+                under "Tapahtumat" it read as the first item in the list. */}
+            <HydrationZustand>
+              <IdentityPromptCard />
+            </HydrationZustand>
+
             <header className="mb-6 w-full">
               <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 Tapahtumat
@@ -96,10 +102,6 @@ export default function DesktopPage() {
                 </div>
               </section>
             )}
-
-            <HydrationZustand>
-              <IdentityPromptCard />
-            </HydrationZustand>
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>

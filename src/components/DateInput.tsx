@@ -35,22 +35,24 @@ export function DateInput<T extends FieldValues = FieldValues>({
   });
 
   const selected =
-    typeof value === "string" ? nativeDate.form.parse(value) ?? null : null;
+    typeof value === "string" ? (nativeDate.form.parse(value) ?? null) : null;
 
   return (
-    <InputBase error={error} className={className}>
-      <DatePicker
-        selected={selected}
-        onChange={(date: Date | null) => {
-          onChange(date ? nativeDate.form.stringify(date) : "");
-        }}
-        dateFormat="dd.MM.yyyy"
-        locale={fi}
-        strictParsing
-        placeholderText={placeholder}
-        className="w-full bg-transparent px-2 py-2 text-black outline-hidden placeholder:text-black/30"
-      />
+    <div className="w-full">
+      <InputBase error={error} className={className}>
+        <DatePicker
+          selected={selected}
+          onChange={(date: Date | null) => {
+            onChange(date ? nativeDate.form.stringify(date) : "");
+          }}
+          dateFormat="dd.MM.yyyy"
+          locale={fi}
+          strictParsing
+          placeholderText={placeholder}
+          className="w-full bg-transparent px-2 py-2 text-black outline-hidden placeholder:text-black/30"
+        />
+      </InputBase>
       <InputHelperText error={error}>{helperText}</InputHelperText>
-    </InputBase>
+    </div>
   );
 }

@@ -41,30 +41,32 @@ export function TimeInput<T extends FieldValues = FieldValues>({
     : null;
 
   return (
-    <InputBase error={error} className={className}>
-      <DatePicker
-        selected={selected}
-        onChange={(date: Date | null) => {
-          if (!date) {
-            onChange("");
-            return;
-          }
+    <div className="w-full">
+      <InputBase error={error} className={className}>
+        <DatePicker
+          selected={selected}
+          onChange={(date: Date | null) => {
+            if (!date) {
+              onChange("");
+              return;
+            }
 
-          const hours = String(date.getHours()).padStart(2, "0");
-          const minutes = String(date.getMinutes()).padStart(2, "0");
-          onChange(`${hours}:${minutes}`);
-        }}
-        showTimeSelect
-        showTimeSelectOnly
-        timeFormat="HH:mm"
-        timeIntervals={15}
-        timeCaption="Aika"
-        dateFormat="HH:mm"
-        locale={fi}
-        placeholderText={placeholder}
-        className="w-full bg-transparent px-2 py-2 text-black outline-hidden placeholder:text-black/30"
-      />
+            const hours = String(date.getHours()).padStart(2, "0");
+            const minutes = String(date.getMinutes()).padStart(2, "0");
+            onChange(`${hours}:${minutes}`);
+          }}
+          showTimeSelect
+          showTimeSelectOnly
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          timeCaption="Aika"
+          dateFormat="HH:mm"
+          locale={fi}
+          placeholderText={placeholder}
+          className="w-full bg-transparent px-2 py-2 text-black outline-hidden placeholder:text-black/30"
+        />
+      </InputBase>
       <InputHelperText error={error}>{helperText}</InputHelperText>
-    </InputBase>
+    </div>
   );
 }
