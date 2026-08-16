@@ -4,7 +4,7 @@ import { prisma } from "../external/prisma";
 import cuid from "cuid";
 import type { NextApiRequest } from "next";
 import { mail } from "../external/mail";
-import { headers } from "next/headers";
+import { fromNodeHeaders } from "better-auth/node";
 import { Session } from "@/server/auth";
 
 type CreateContextOptions = {
@@ -50,7 +50,9 @@ export const createContext = async (opts: CreateNextContextOptions) => {
   const { req, res } = opts;
 
   // Get the session from the server using the getServerSession wrapper function
-  const session = await getServerAuthSession({ headers: req.headers });
+  const session = await getServerAuthSession({
+    headers: fromNodeHeaders(req.headers),
+  });
 
   return await createContextInner({ session, req });
 };
