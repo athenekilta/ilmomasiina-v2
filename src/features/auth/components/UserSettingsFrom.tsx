@@ -14,7 +14,7 @@ export function UserSettingsForm() {
   const requestPasswordChangeMutation =
     api.auth.passwordChange.request.useMutation();
   return (
-    <div className="mx-auto mt-5 max-w-4xl rounded-lg bg-white p-4 shadow-md">
+    <div className="surface-panel mx-auto mt-2 max-w-3xl p-4 sm:p-5">
       <FieldSet title={"Nimi / Name"}>
         <TextInputForm
           onSubmit={(name) => {

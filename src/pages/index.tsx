@@ -33,64 +33,85 @@ export default function DesktopPage() {
       <PageHead title="Tapahtumat" />
       <Layout>
         {!isLoading && eventsData ? (
-          <div className="flex flex-col px-6 py-4">
-            <h1 className="mb-2 text-xl font-extrabold uppercase">
-              Tapahtumat
-            </h1>
+          <div className="flex w-full flex-col pb-4">
+            <header className="border-brand-secondary mb-8 w-full border-b-2 pb-4">
+              <h1 className="text-brand-dark text-3xl font-bold tracking-tight sm:text-4xl">
+                Tapahtumat
+              </h1>
+            </header>
 
             {isAdmin && (
-              <div className="my-2 flex flex-wrap gap-3">
-                <Button
-                  variant="filled"
-                  color={includeOlderEvents ? "primary" : "neutral"}
-                  size="small"
-                  startIcon={
-                    <Icon
-                      icon={
-                        includeOlderEvents ? "history" : "history_toggle_off"
-                      }
-                      className="h-4 w-4"
-                    />
-                  }
-                  onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
-                >
-                  {includeOlderEvents
-                    ? "Kaikki tapahtumat"
-                    : "Tulevat tapahtumat"}
-                </Button>
+              <section
+                className="mb-8 w-full"
+                aria-label="Hallinnan suodattimet"
+              >
+                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                  Näkymä
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    variant="filled"
+                    color={includeOlderEvents ? "primary" : "neutral"}
+                    size="small"
+                    startIcon={
+                      <Icon
+                        icon={
+                          includeOlderEvents ? "history" : "history_toggle_off"
+                        }
+                        size={18}
+                      />
+                    }
+                    onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
+                  >
+                    {includeOlderEvents
+                      ? "Kaikki tapahtumat"
+                      : "Tulevat tapahtumat"}
+                  </Button>
 
-                <Button
-                  variant="filled"
-                  color={includeDrafts ? "primary" : "neutral"}
-                  size="small"
-                  startIcon={
-                    <Icon
-                      icon={includeDrafts ? "visibility" : "visibility_off"}
-                      className="h-4 w-4"
-                    />
-                  }
-                  onClick={() => setIncludeDrafts(!includeDrafts)}
-                >
-                  {includeDrafts
-                    ? "Luonnokset näkyvissä"
-                    : "Luonnokset piilotettu"}
-                </Button>
-              </div>
+                  <Button
+                    variant="filled"
+                    color={includeDrafts ? "primary" : "neutral"}
+                    size="small"
+                    startIcon={
+                      <Icon
+                        icon={includeDrafts ? "visibility" : "visibility_off"}
+                        size={18}
+                      />
+                    }
+                    onClick={() => setIncludeDrafts(!includeDrafts)}
+                  >
+                    {includeDrafts
+                      ? "Luonnokset näkyvissä"
+                      : "Luonnokset piilotettu"}
+                  </Button>
+                </div>
+              </section>
             )}
 
-            <div className="flex flex-col gap-4">
-              {eventsData.map((event) => (
-                <EventCard key={event.id} event={event} isAdmin={isAdmin} />
-              ))}
-            </div>
+            <section className="w-full" aria-label="Tapahtumalista">
+              <h2 className="sr-only">Tapahtumalista</h2>
+              <ul className="grid w-full list-none auto-rows-[24rem] grid-cols-1 p-0 sm:grid-cols-2">
+                {eventsData.map((event) => (
+                  <li
+                    key={event.id}
+                    className="relative flex h-full min-w-0 border-t border-stone-300 first:border-t-0 sm:[&:last-child:nth-child(odd)::after]:absolute sm:[&:last-child:nth-child(odd)::after]:top-0 sm:[&:last-child:nth-child(odd)::after]:left-full sm:[&:last-child:nth-child(odd)::after]:h-full sm:[&:last-child:nth-child(odd)::after]:w-px sm:[&:last-child:nth-child(odd)::after]:bg-stone-300 sm:[&:last-child:nth-child(odd)::after]:content-[''] sm:[&:last-child:nth-child(odd)::before]:absolute sm:[&:last-child:nth-child(odd)::before]:top-[-1px] sm:[&:last-child:nth-child(odd)::before]:left-full sm:[&:last-child:nth-child(odd)::before]:h-px sm:[&:last-child:nth-child(odd)::before]:w-full sm:[&:last-child:nth-child(odd)::before]:bg-stone-300 sm:[&:last-child:nth-child(odd)::before]:content-[''] sm:[&:nth-child(2)]:border-t-0 sm:[&:nth-child(even)]:border-l"
+                  >
+                    <EventCard event={event} isAdmin={isAdmin} />
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             {isAdmin && (
-              <div className="mt-6">
+              <div className="mt-10 w-full border-t border-stone-300 pt-8">
+                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                  Hallinta
+                </h2>
                 <Button.Link
                   href="events/create"
                   variant="filled"
-                  color="secondary"
-                  startIcon={<Icon icon="add" className="h-5 w-5" />}
+                  color="primary"
+                  startIcon={<Icon icon="add" size={20} />}
                 >
                   Luo uusi tapahtuma
                 </Button.Link>
@@ -98,7 +119,13 @@ export default function DesktopPage() {
             )}
           </div>
         ) : (
-          <Icon icon="loading" />
+          <div className="flex justify-center py-12">
+            <Icon
+              icon="autorenew"
+              size={28}
+              className="text-brand-primary animate-spin"
+            />
+          </div>
         )}
       </Layout>
     </>

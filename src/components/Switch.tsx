@@ -17,7 +17,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         ref={ref}
         id={props.id}
         type="button"
-        className={"inline-block w-fit rounded-full disabled:opacity-70"}
+        className="inline-block w-fit rounded-full disabled:opacity-70 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-brand-beige"
         disabled={props.disabled}
         onClick={() => {
           if (props.disabled) return;
@@ -28,12 +28,12 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         <div
           aria-disabled={props.disabled}
           aria-selected={props.value}
-          className="bg-active-overlay group aria-selected:bg-primary-50 flex h-7 w-12 items-center rounded-full border border-gray-400 p-1 transition-colors dark:border-gray-300"
+          className="group flex h-7 w-12 items-center rounded-full border border-stone-400 bg-stone-200 p-1 transition-colors aria-selected:border-brand-secondary aria-selected:bg-brand-lime"
         >
           <motion.div
             animate={{ x: props.value ? 20 : 0 }}
             transition={{ duration: 0.1 }}
-            className="group-aria-selected:bg-brand-secondary group-aria-selected:group-aria-disabled:bg-primary-300 h-5 w-5 rounded-full bg-slate-500 transition-colors"
+            className="h-5 w-5 rounded-full border border-stone-300 bg-brand-light shadow-soft transition-colors group-aria-selected:border-brand-darkgreen group-aria-selected:bg-brand-secondary group-aria-selected:shadow-card group-aria-selected:group-aria-disabled:bg-stone-400 group-aria-selected:group-aria-disabled:border-stone-500"
           />
         </div>
       </button>

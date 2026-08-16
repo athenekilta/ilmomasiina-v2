@@ -43,11 +43,7 @@ export function EmailVerifier() {
       >
         {tokenMutation.error?.message}
       </p>
-      <Button.Link
-        color="primary"
-        href={routes.auth.login}
-        loading={tokenMutation.isPending}
-      >
+      <Button.Link color="primary" href={routes.auth.login}>
         Login
       </Button.Link>
 

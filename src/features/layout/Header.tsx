@@ -1,26 +1,16 @@
 import Link from "next/link";
-import { useUser } from "../auth/hooks/useUser";
-import { signOut } from "@/server/auth/auth-client";
-import { routes } from "@/utils/routes";
-export const Header = () => {
-  const user = useUser();
+import { HeaderAccountMenu } from "./HeaderAccountMenu";
 
-  console.log(user.data);
+export const Header = () => {
   return (
-    <nav className="bg-brand-primary flex h-16 items-center justify-between p-6">
-      <Link href="/">
-        <h1 className="font-primary text-2xl font-extrabold text-white uppercase">
+    <nav className="bg-brand-primary shadow-soft flex h-14 items-center justify-between px-4 sm:px-6">
+      <Link href="/" className="min-w-0 shrink focus-visible:outline-hidden">
+        <h1 className="font-primary truncate text-xl font-extrabold tracking-tight text-white uppercase sm:text-2xl">
           Athenen Ilmomasiina
         </h1>
       </Link>
 
-      {user.data && (
-        <div>
-          <Link href={routes.app.settings.user}>Profile</Link>
-          <br />
-          <button onClick={() => signOut()}>Logout</button>
-        </div>
-      )}
+      <HeaderAccountMenu />
     </nav>
   );
 };

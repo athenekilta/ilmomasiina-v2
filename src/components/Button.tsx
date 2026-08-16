@@ -127,7 +127,7 @@ function getClassName(props: {
   size?: ButtonSize;
 }) {
   const classNameList = [
-    "relative cursor-pointer flex items-center justify-center rounded-lg font-medium",
+    "relative flex cursor-pointer items-center justify-center rounded-control font-medium transition-[color,background-color,border-color,transform,box-shadow] duration-150 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-brand-beige enabled:active:scale-[0.98]",
     variableButtonClassNames[props.variant ?? "filled"][0],
     variableButtonClassNames[props.variant ?? "filled"][1][
       props.color ?? "primary"
@@ -154,57 +154,57 @@ const variableButtonClassNames: Record<
     "",
     {
       black:
-        "bg-black text-white enabled:hover:bg-black/75 enabled:active:bg-black/70",
+        "bg-black text-white enabled:hover:bg-stone-800 enabled:active:bg-stone-900",
       white:
-        "bg-white text-black enabled:hover:bg-white/75 enabled:active:bg-white/70",
+        "border border-stone-300 bg-brand-light text-brand-dark enabled:hover:bg-stone-100 enabled:active:bg-stone-200",
       primary:
-        "bg-brand-primary text-white enabled:hover:bg-brand-primary/75 enabled:active:bg-brand-primary/70",
+        "bg-brand-primary text-white shadow-soft enabled:hover:bg-brand-secondary enabled:hover:shadow-soft enabled:active:bg-brand-darkgreen",
       secondary:
-        "bg-brand-secondary text-white enabled:hover:bg-brand-secondary/75 enabled:active:bg-brand-secondary/70",
+        "bg-brand-secondary text-white enabled:hover:bg-brand-darkgreen enabled:active:bg-stone-800",
       danger:
-        "bg-danger text-white enabled:hover:bg-danger/75 enabled:active:bg-danger/70",
+        "bg-danger text-white enabled:hover:bg-rose-700 enabled:active:bg-rose-800",
       warning:
-        "bg-warning text-white enabled:hover:bg-warning/75 enabled:active:bg-warning/70",
+        "bg-warning text-white enabled:hover:bg-amber-600 enabled:active:bg-amber-700",
       neutral:
-        "bg-gray-200 text-gray-800 enabled:hover:bg-gray-300 enabled:active:bg-gray-400",
+        "bg-stone-200 text-brand-dark enabled:hover:bg-stone-300 enabled:active:bg-stone-400",
     },
   ],
   bordered: [
-    "border",
+    "border-2",
     {
       black:
-        "text-black bg-black/0 enabled:hover:bg-black/15 enabled:active:bg-black/10 border-black/50 enabled:hover:border-black/70",
+        "border-stone-900 bg-stone-800 text-white enabled:hover:bg-stone-900 enabled:active:bg-black",
       white:
-        "text-white bg-white/0 enabled:hover:bg-white/15 enabled:active:bg-white/10 border-white/50 enabled:hover:border-white/70",
+        "border-white bg-brand-secondary text-white enabled:hover:bg-brand-darkgreen enabled:active:bg-stone-900",
       primary:
-        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/15 enabled:active:bg-brand-primary/10 border-brand-primary/50 enabled:hover:border-brand-primary/70",
+        "border-brand-secondary bg-brand-beige text-brand-dark enabled:hover:bg-brand-lime enabled:active:bg-brand-primary enabled:active:text-white",
       secondary:
-        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/15 enabled:active:bg-brand-secondary/10 border-brand-secondary/50 enabled:hover:border-brand-secondary/70",
+        "border-brand-secondary bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "text-danger bg-danger/0 enabled:hover:bg-danger/15 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/70",
+        "border-rose-700 bg-rose-100 text-rose-900 enabled:hover:bg-rose-200 enabled:active:bg-rose-300",
       warning:
-        "text-warning bg-warning/0 enabled:hover:bg-warning/15 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/70",
+        "border-amber-600 bg-amber-100 text-amber-950 enabled:hover:bg-amber-200 enabled:active:bg-amber-300",
       neutral:
-        "text-gray-700 bg-gray-500/0 enabled:hover:bg-gray-500/15 enabled:active:bg-gray-500/10 border-gray-500/50 enabled:hover:border-gray-500/70",
+        "border-stone-500 bg-stone-200 text-brand-dark enabled:hover:bg-stone-300 enabled:active:bg-stone-400",
     },
   ],
   text: [
     "",
     {
       black:
-        "text-black bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+        "bg-stone-100 text-black enabled:hover:bg-stone-200 enabled:active:bg-stone-300",
       white:
-        "text-white bg-white/0 enabled:hover:bg-white/10 enabled:active:bg-white/20",
+        "bg-white text-brand-primary enabled:hover:bg-brand-beige enabled:active:bg-brand-lime enabled:active:text-brand-dark",
       primary:
-        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/10 enabled:active:bg-brand-primary/20",
+        "bg-brand-beige text-brand-dark enabled:hover:bg-brand-lime enabled:active:bg-brand-primary enabled:active:text-white",
       secondary:
-        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/10 enabled:active:bg-brand-secondary/20",
+        "bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
+        "bg-rose-50 text-danger enabled:hover:bg-rose-100 enabled:active:bg-rose-200",
       warning:
-        "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
+        "bg-amber-50 text-warning enabled:hover:bg-amber-100 enabled:active:bg-amber-200",
       neutral:
-        "text-gray-700 bg-gray-500/0 enabled:hover:bg-gray-500/10 enabled:active:bg-gray-500/20",
+        "bg-stone-200 text-brand-dark enabled:hover:bg-stone-300 enabled:active:bg-stone-400",
     },
   ],
 };

@@ -109,7 +109,7 @@ function getClassName(props: {
   inputAdornment?: "start" | "end";
 }) {
   const classNameList = [
-    "relative flex flex-row gap-4 items-center justify-center p-2",
+    "relative flex flex-row items-center justify-center gap-4 rounded-control p-2 transition-[color,background-color,border-color,transform] duration-150 ease-out focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-brand-beige enabled:active:scale-[0.98]",
     variableButtonClassNames[props.variant ?? "icon"][0],
     variableButtonClassNames[props.variant ?? "icon"][1][
       props.color ?? "black"
@@ -120,11 +120,11 @@ function getClassName(props: {
   else if (props.disabled) classNameList.push("opacity-40");
   if (props.className) classNameList.push(props.className);
 
-  if (!props.inputAdornment) classNameList.push("rounded-full");
+  if (!props.inputAdornment) classNameList.push("rounded-control");
   else if (props.inputAdornment === "start")
-    classNameList.push("-ml-2 pl-3 rounded-lg");
+    classNameList.push("-ml-2 pl-3 rounded-control");
   else if (props.inputAdornment === "end")
-    classNameList.push("-mr-2 pr-3 rounded-lg");
+    classNameList.push("-mr-2 pr-3 rounded-control");
 
   return classNameList.join(" ");
 }
@@ -137,35 +137,35 @@ const variableButtonClassNames: Record<
     "",
     {
       black:
-        "bg-black text-white enabled:hover:bg-black/85 enabled:active:bg-black/75",
+        "bg-black text-white enabled:hover:bg-stone-800 enabled:active:bg-stone-900",
       white:
-        "bg-white text-black enabled:hover:bg-black/85 enabled:active:bg-black/75",
+        "border border-stone-300 bg-brand-light text-brand-dark enabled:hover:bg-stone-100 enabled:active:bg-stone-200",
       primary:
-        "bg-brand-primary text-white enabled:hover:bg-brand-primary/85 enabled:active:bg-brand-primary/75",
+        "bg-brand-primary text-white enabled:hover:bg-brand-secondary enabled:active:bg-brand-darkgreen",
       secondary:
-        "bg-brand-lime text-black enabled:hover:bg-brand-lime/85 enabled:active:bg-brand-lime/75",
+        "bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "bg-danger text-white enabled:hover:bg-danger/85 enabled:active:bg-danger/75",
+        "bg-danger text-white enabled:hover:bg-rose-700 enabled:active:bg-rose-800",
       warning:
-        "bg-warning text-white enabled:hover:bg-warning/85 enabled:active:bg-warning/75",
+        "bg-warning text-white enabled:hover:bg-amber-600 enabled:active:bg-amber-700",
       neutral: "",
     },
   ],
   bordered: [
-    "border",
+    "border-2",
     {
       black:
-        "text-black bg-black/0 enabled:hover:bg-black/5 enabled:active:bg-black/10 border-black/50 enabled:hover:border-black/75",
+        "border-stone-900 bg-stone-800 text-white enabled:hover:bg-stone-900 enabled:active:bg-black",
       white:
-        "text-white bg-white/0 enabled:hover:bg-white/5 enabled:active:bg-white/10 border-white/50 enabled:hover:border-white/75",
+        "border-white bg-brand-secondary text-white enabled:hover:bg-brand-darkgreen enabled:active:bg-stone-900",
       primary:
-        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/5 enabled:active:bg-brand-primary/10 border-brand-primary/50 enabled:hover:border-brand-primary/75",
+        "border-brand-secondary bg-brand-beige text-brand-dark enabled:hover:bg-brand-lime enabled:active:bg-brand-primary enabled:active:text-white",
       secondary:
-        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/5 enabled:active:bg-brand-secondary/10 border-brand-secondary/50 enabled:hover:border-brand-secondary/75",
+        "border-brand-secondary bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "text-danger bg-danger/0 enabled:hover:bg-danger/5 enabled:active:bg-danger/10 border-danger/50 enabled:hover:border-danger/75",
+        "border-rose-700 bg-rose-100 text-rose-900 enabled:hover:bg-rose-200 enabled:active:bg-rose-300",
       warning:
-        "text-warning bg-warning/0 enabled:hover:bg-warning/5 enabled:active:bg-warning/10 border-warning/50 enabled:hover:border-warning/75",
+        "border-amber-600 bg-amber-100 text-amber-950 enabled:hover:bg-amber-200 enabled:active:bg-amber-300",
       neutral: "",
     },
   ],
@@ -173,17 +173,17 @@ const variableButtonClassNames: Record<
     "",
     {
       black:
-        "text-black   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+        "bg-stone-100 text-black enabled:hover:bg-stone-200 enabled:active:bg-stone-300",
       white:
-        "text-white   bg-black/0 enabled:hover:bg-black/10 enabled:active:bg-black/20",
+        "bg-white text-brand-primary enabled:hover:bg-brand-beige enabled:active:bg-brand-lime",
       primary:
-        "text-brand-primary bg-brand-primary/0 enabled:hover:bg-brand-primary/10 enabled:active:bg-brand-primary/20",
+        "bg-brand-beige text-brand-primary enabled:hover:bg-brand-lime enabled:active:bg-brand-primary enabled:active:text-white",
       secondary:
-        "text-brand-secondary bg-brand-secondary/0 enabled:hover:bg-brand-secondary/10 enabled:active:bg-brand-secondary/20",
+        "bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "text-danger bg-danger/0 enabled:hover:bg-danger/10 enabled:active:bg-danger/20",
+        "bg-rose-50 text-danger enabled:hover:bg-rose-100 enabled:active:bg-rose-200",
       warning:
-        "text-warning bg-warning/0 enabled:hover:bg-warning/10 enabled:active:bg-warning/20",
+        "bg-amber-50 text-warning enabled:hover:bg-amber-100 enabled:active:bg-amber-200",
       neutral: "",
     },
   ],

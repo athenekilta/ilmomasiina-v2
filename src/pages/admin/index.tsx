@@ -26,23 +26,25 @@ export default function ManageAdmins() {
       <Layout>
         {adminUsers?.length ? (
           <>
-            <p className="mt-8 text-center text-xl font-semibold">
+            <p className="mt-2 text-center text-lg font-semibold text-brand-dark">
               Admin käyttäjät
             </p>
             <UsersTable users={adminUsers} handleAction={handleRoleUpdate} />
           </>
         ) : (
-          <p className="text-center text-xl font-semibold">
+          <p className="text-center text-lg font-semibold text-brand-dark">
             Ei admin-käyttäjiä
           </p>
         )}
         {nonAdminUsers?.length ? (
           <>
-            <p className="text-center text-xl font-semibold">Muut käyttäjät</p>
+            <p className="mt-6 text-center text-lg font-semibold text-brand-dark">
+              Muut käyttäjät
+            </p>
             <UsersTable users={nonAdminUsers} handleAction={handleRoleUpdate} />
           </>
         ) : (
-          <p className="text-center text-xl font-semibold">
+          <p className="text-center text-lg font-semibold text-brand-dark">
             Ei muita käyttäjiä
           </p>
         )}

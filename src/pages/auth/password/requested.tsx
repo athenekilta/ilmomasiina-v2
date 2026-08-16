@@ -9,12 +9,12 @@ export default function RequestedPasswordChangePage() {
     <ProtectedRoute unauthenticatedOnly>
       <PageHead title={""} />
       <Layout>
-        <div className="bg-brand-light -mx-6 mt-16 flex max-w-2xl flex-col items-center gap-16 rounded-xl p-12 sm:mx-auto">
+        <div className="surface-panel mx-auto mt-8 flex w-full max-w-lg flex-col items-center gap-6 p-6 sm:mt-10 sm:p-8">
           <h1 className="text-primary-950 text-center text-4xl font-semibold tracking-tight">
             Forgot password
           </h1>
 
-          <p className="text-center text-black/70">
+          <p className="text-center text-gray-600">
             A password change link has been sent to your email.{" "}
           </p>
 

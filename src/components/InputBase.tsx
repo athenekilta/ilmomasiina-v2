@@ -24,7 +24,7 @@ export const InputBase = Object.assign(
       <div
         ref={ref}
         className={c(
-          "group relative flex items-center rounded-lg border bg-white",
+          "group relative flex items-center rounded-control border border-stone-300 bg-brand-light shadow-soft transition-[border-color,box-shadow] duration-200",
 
           // Full width
           c.if(props.fullWidth)("w-full"),
@@ -33,31 +33,24 @@ export const InputBase = Object.assign(
           c
             .if(props.disabled)("opacity-60")
             .elseIf(props.readOnly)("cursor-text")
-            .else("cursor-pointer"),
-
-          // Default styles
-          c.if(!props.error)("border-gray-300"),
+            .else("cursor-pointer hover:border-stone-400"),
 
           // Error state
           c.if(props.error)("border-danger"),
+
+          !props.readOnly &&
+            !props.disabled &&
+            c.if(props.error)(
+              "group-focus-within:border-danger group-focus-within:ring-0",
+            ).else(
+              "group-focus-within:border-brand-secondary group-focus-within:ring-0",
+            ),
 
           props.className,
 
           props.baseClassName,
         )}
       >
-        {/* Interactivity */}
-        {!props.readOnly && !props.disabled && (
-          <div
-            className={c(
-              "pointer-events-none absolute inset-0 transition-[clip-path] duration-250",
-              "[clip-path:circle(0)] group-focus-within:[clip-path:circle(100%)] group-hover:[clip-path:circle(100%)]",
-              "rounded-lg border",
-              c.if(props.error)("border-danger").else("border-gray-300"),
-            )}
-          />
-        )}
-
         {props.startIcon && (
           <span className="px-2 text-gray-500">{props.startIcon}</span>
         )}

@@ -55,10 +55,10 @@ export function ValidationSummary({ errors }: ValidationSummaryProps) {
   if (allErrors.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-96 rounded-lg bg-red-50 p-4 shadow-lg">
+    <div className="fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] rounded-control border border-rose-400 bg-rose-50 p-3 shadow-card">
       <div className="flex flex-col">
         <div className="shrink-0">
-          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <svg className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
         </div>

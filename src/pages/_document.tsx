@@ -15,7 +15,7 @@ export default class MyDocument extends Document {
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" />
           <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
           <meta charSet="utf-8" />
           <meta name="description" content="__TEMPLATE_DESCRIPTION" />
           <link rel="icon" href="/favicon.ico" />

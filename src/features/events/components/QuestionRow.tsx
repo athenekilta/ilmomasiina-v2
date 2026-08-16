@@ -40,7 +40,6 @@ export function QuestionRow({
       options: newOptions,
     });
   };
-  console.log(errors);
   return (
     <div className="my-1 gap-6 rounded-md border-2 border-slate-300 p-3 odd:bg-gray-100 even:bg-slate-100">
       <div className="mb-10 flex max-w-3/4 flex-col gap-6">
@@ -90,11 +89,20 @@ export function QuestionRow({
           value={question.required}
           onChange={(value) => onChange({ ...question, required: value })}
         />
-        <p>Julkinen</p>
-        <Switch
-          value={question.public}
-          onChange={(value) => onChange({ ...question, public: value })}
-        />
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-row items-center gap-2">
+            <p>Julkinen</p>
+            <Switch
+              value={question.public}
+              onChange={(value) => onChange({ ...question, public: value })}
+            />
+          </div>
+          <p className="max-w-md text-xs leading-snug text-gray-600">
+            Julkinen vastaus näkyy tapahtuman{" "}
+            <strong>julkisessa osallistujalistassa</strong>, kun
+            ilmoittautumiset on merkitty julkisiksi.
+          </p>
+        </div>
       </div>
       {question.type === questionSchema.shape.type.enum.radio ||
       question.type === questionSchema.shape.type.enum.checkbox ? (
