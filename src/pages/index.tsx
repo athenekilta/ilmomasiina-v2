@@ -1,10 +1,23 @@
-import { Icon } from "@/components/Icon";
+import {
+  CalendarClock,
+  Eye,
+  EyeOff,
+  History,
+  Loader2,
+  Plus,
+} from "lucide-react";
 import { api } from "@/utils/api";
 import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { useState } from "react";
 import { EventCard } from "@/features/eventCard/EventCard";
+import {
+  eventCardSpanClassName,
+  getEventCardSize,
+  getEventEmphasis,
+  pickBigEventIds,
+} from "@/features/eventCard/eventCardVariant";
 import { Button } from "@/components/Button";
 
 export default function DesktopPage() {
@@ -27,6 +40,29 @@ export default function DesktopPage() {
   const isLoading = isAdmin
     ? adminEventsQuery.isLoading
     : regularEventsQuery.isLoading;
+
+  // Events are sorted by date ascending, so the first one still ahead of us
+  // is the next event coming up — it gets emphasized on the grid.
+  const now = new Date();
+  const nextUpcomingEvent = eventsData?.find((event) => event.date >= now);
+  const bigEventIds = eventsData
+    ? pickBigEventIds(eventsData)
+    : new Set<number>();
+  const topCandidateId = [...bigEventIds][0];
+
+  // Rendered in plain chronological order — no reordering to cluster big
+  // squares together. The dense grid just plants each big square wherever
+  // it naturally falls among the small ones, so multiple big squares land
+  // on different sides of the grid instead of piling up on one edge.
+  const sizedEvents = eventsData?.map((event) => {
+    const isBig = bigEventIds.has(event.id);
+    const emphasis = getEventEmphasis(
+      event,
+      event.id === topCandidateId,
+      event.id === nextUpcomingEvent?.id,
+    );
+    return { event, emphasis, size: getEventCardSize(isBig) };
+  });
 
   return (
     <>
@@ -54,12 +90,11 @@ export default function DesktopPage() {
                     color={includeOlderEvents ? "primary" : "neutral"}
                     size="small"
                     startIcon={
-                      <Icon
-                        icon={
-                          includeOlderEvents ? "history" : "history_toggle_off"
-                        }
-                        size={18}
-                      />
+                      includeOlderEvents ? (
+                        <History size={18} strokeWidth={2.25} />
+                      ) : (
+                        <CalendarClock size={18} strokeWidth={2.25} />
+                      )
                     }
                     onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
                   >
@@ -73,10 +108,11 @@ export default function DesktopPage() {
                     color={includeDrafts ? "primary" : "neutral"}
                     size="small"
                     startIcon={
-                      <Icon
-                        icon={includeDrafts ? "visibility" : "visibility_off"}
-                        size={18}
-                      />
+                      includeDrafts ? (
+                        <Eye size={18} strokeWidth={2.25} />
+                      ) : (
+                        <EyeOff size={18} strokeWidth={2.25} />
+                      )
                     }
                     onClick={() => setIncludeDrafts(!includeDrafts)}
                   >
@@ -90,13 +126,25 @@ export default function DesktopPage() {
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
-              <ul className="grid w-full list-none auto-rows-[24rem] grid-cols-1 p-0 sm:grid-cols-2">
-                {eventsData.map((event) => (
+              {/* Fixed 3 equal-width columns — column tracks never resize, only
+                  how many a card spans, capped at 2 columns so a card never
+                  takes over the whole row. `aspect-square` ties each cell's
+                  height to its own column width instead of a guessed rem
+                  value, so cells are actually square at any viewport width —
+                  a 2×2 "hero" square is exactly as tall as it is wide, same
+                  as a 1×1 "standard" square. */}
+              <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 sm:grid-flow-dense sm:grid-cols-3">
+                {sizedEvents?.map(({ event, emphasis, size }) => (
                   <li
                     key={event.id}
-                    className="relative flex h-full min-w-0 border-t border-stone-300 first:border-t-0 sm:[&:last-child:nth-child(odd)::after]:absolute sm:[&:last-child:nth-child(odd)::after]:top-0 sm:[&:last-child:nth-child(odd)::after]:left-full sm:[&:last-child:nth-child(odd)::after]:h-full sm:[&:last-child:nth-child(odd)::after]:w-px sm:[&:last-child:nth-child(odd)::after]:bg-stone-300 sm:[&:last-child:nth-child(odd)::after]:content-[''] sm:[&:last-child:nth-child(odd)::before]:absolute sm:[&:last-child:nth-child(odd)::before]:top-[-1px] sm:[&:last-child:nth-child(odd)::before]:left-full sm:[&:last-child:nth-child(odd)::before]:h-px sm:[&:last-child:nth-child(odd)::before]:w-full sm:[&:last-child:nth-child(odd)::before]:bg-stone-300 sm:[&:last-child:nth-child(odd)::before]:content-[''] sm:[&:nth-child(2)]:border-t-0 sm:[&:nth-child(even)]:border-l"
+                    className={`min-w-0 sm:aspect-square ${eventCardSpanClassName[size]}`}
                   >
-                    <EventCard event={event} isAdmin={isAdmin} />
+                    <EventCard
+                      event={event}
+                      isAdmin={isAdmin}
+                      size={size}
+                      emphasis={emphasis}
+                    />
                   </li>
                 ))}
               </ul>
@@ -111,7 +159,7 @@ export default function DesktopPage() {
                   href="events/create"
                   variant="filled"
                   color="primary"
-                  startIcon={<Icon icon="add" size={20} />}
+                  startIcon={<Plus size={20} strokeWidth={2.25} />}
                 >
                   Luo uusi tapahtuma
                 </Button.Link>
@@ -120,9 +168,9 @@ export default function DesktopPage() {
           </div>
         ) : (
           <div className="flex justify-center py-12">
-            <Icon
-              icon="autorenew"
+            <Loader2
               size={28}
+              strokeWidth={2.25}
               className="text-brand-primary animate-spin"
             />
           </div>
