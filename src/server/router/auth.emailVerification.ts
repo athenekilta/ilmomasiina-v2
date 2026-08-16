@@ -44,7 +44,7 @@ export const emailVerificationRouter = router({
           email: input.email,
         },
         data: {
-          emailVerified: new Date(),
+          emailVerified: true,
         },
       });
       await ctx.prisma.emailVerificationToken.deleteMany({
