@@ -1,6 +1,3 @@
-/* Refaktoroitu erilleen [eventId].tsx:stä. Tätä komponenttia käytetään siellä.
-Tämän ja SignupsTablen voisi varmaan yhdistää*/
-
 import { useMemo } from "react";
 import { SignupRow } from "@/features/events/components/SingupRow";
 import { OriginalQuotaTitle } from "@/features/events/utils/utils";
