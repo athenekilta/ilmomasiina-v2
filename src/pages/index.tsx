@@ -12,11 +12,8 @@ import { Layout } from "../features/layout/Layout";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { useState } from "react";
 import { EventCard } from "@/features/eventCard/EventCard";
-import {
-  eventCardSpanClassName,
-  getEventCardSize,
-  pickBigEventIds,
-} from "@/features/eventCard/eventCardVariant";
+import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
+import HydrationZustand from "@/components/HydrationZustand";
 import { Button } from "@/components/Button";
 
 export default function DesktopPage() {
@@ -40,27 +37,14 @@ export default function DesktopPage() {
     ? adminEventsQuery.isLoading
     : regularEventsQuery.isLoading;
 
-  const bigEventIds = eventsData
-    ? pickBigEventIds(eventsData)
-    : new Set<number>();
-
-  // Rendered in plain chronological order — no reordering to cluster big
-  // squares together. The dense grid just plants each big square wherever
-  // it naturally falls among the small ones, so multiple big squares land
-  // on different sides of the grid instead of piling up on one edge.
-  const sizedEvents = eventsData?.map((event) => ({
-    event,
-    size: getEventCardSize(bigEventIds.has(event.id)),
-  }));
-
   return (
     <>
       <PageHead title="Tapahtumat" />
       <Layout>
         {!isLoading && eventsData ? (
-          <div className="flex-col pb-4 sm:mx-15">
-            <header className="border-brand-secondary mb-8 w-full border-b-2 pb-4">
-              <h1 className="text-brand-dark text-3xl font-bold tracking-tight sm:text-4xl">
+          <div className="flex-col pb-4">
+            <header className="mb-6 w-full">
+              <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 Tapahtumat
               </h1>
             </header>
@@ -113,25 +97,23 @@ export default function DesktopPage() {
               </section>
             )}
 
+            <HydrationZustand>
+              <IdentityPromptCard />
+            </HydrationZustand>
+
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
-              {/* Fixed equal-width columns — column tracks never resize,
-                  only how many a card spans, capped at 2 columns (and 2
-                  rows, to match) so a card never takes over the whole
-                  row. Cards stretch to fill their row (the grid default)
-                  — a row's height is set by its tallest card regardless,
-                  so a shorter neighbor must stretch too or the page
-                  background would show through the gap below it. Mobile
-                  stacks to a single column, where cards need a gap
-                  between them instead of relying on the grid's row
-                  boundaries. */}
-              <ul className="grid w-full list-none grid-cols-1 gap-3 p-0 sm:grid-flow-dense sm:grid-cols-3 sm:gap-0">
-                {sizedEvents?.map(({ event, size }) => (
-                  <li
-                    key={event.id}
-                    className={`min-w-0 ${eventCardSpanClassName[size]}`}
-                  >
-                    <EventCard event={event} isAdmin={isAdmin} size={size} />
+              {/* Every card is the same size. Columns are added only once
+                  the previous count would leave cards uncomfortably wide:
+                  two from `md` (768px), three from `xl` (1280px) — below
+                  that a single column keeps the banner from stretching
+                  out of proportion. Cards stretch to fill their row (the
+                  grid default), so a shorter card still lines up with a
+                  taller neighbour. */}
+              <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
+                {eventsData.map((event) => (
+                  <li key={event.id} className="min-w-0">
+                    <EventCard event={event} isAdmin={isAdmin} />
                   </li>
                 ))}
               </ul>

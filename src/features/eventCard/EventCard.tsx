@@ -1,74 +1,91 @@
+import { useState } from "react";
 import Link from "next/link";
-import { Calendar, Clock, MapPin, SquarePen } from "lucide-react";
+import { Calendar, Clock, Lock, MapPin, SquarePen } from "lucide-react";
 import { routes } from "@/utils/routes";
-import { formatDateTime, formatRegistration } from "@/utils/format";
+import { formatEventDateTime } from "@/utils/format";
 import { Button } from "@/components/Button";
 import { Divider } from "@/components/Divider";
-import {
-  isClosingSoon,
-  type EnrichedEvent,
-  type EventCardSize,
-} from "./eventCardVariant";
+import { type EnrichedEvent } from "./eventCardVariant";
+import { getEventImage } from "./eventCardImage";
+import { getEventFill } from "./eventFill";
+import { BADGE_TONE_CLASS } from "./badgeTone";
+import { EventFillIndicator } from "./EventFillIndicator";
+import { getRegistrationStatus } from "./registrationStatus";
 
 /* A real, fixed aspect ratio rather than a min-height fighting for
    leftover flex space — the image itself never stretches to fill a
    taller row (the card as a whole does, via `h-full`/`flex-1` below, so
    its white background — not the image — absorbs any extra height).
-   4:3 rather than square — tall enough to read as a real image, not so
-   tall it dwarfs the text below it. */
-const BANNER_ASPECT: Record<EventCardSize, string> = {
-  hero: "aspect-[4/3]",
-  standard: "aspect-[4/3]",
-};
+   2:1 matches the banner crops the images ship in. */
+const BANNER_ASPECT = "aspect-[2/1]";
 
-const TITLE_SIZE: Record<EventCardSize, string> = {
-  hero: "text-lg sm:text-xl",
-  standard: "text-sm sm:text-base",
-};
+/* Unmounts itself when the file is missing, so the gradient behind it
+   shows through instead of the browser's broken-image glyph. */
+function BannerImage({ src, muted }: { src: string; muted: boolean }) {
+  const [failed, setFailed] = useState(false);
 
-/* Quotas render as a plain text row rather than a labeled list, so they
-   stay a footnote instead of a block of their own — capped low enough
-   that a card with many quotas doesn't grow past its slot. */
-const QUOTA_PREVIEW_COUNT: Record<EventCardSize, number> = {
-  hero: 3,
-  standard: 1,
-};
+  if (failed) return null;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      loading="lazy"
+      className={`absolute inset-0 h-full w-full object-cover ${
+        muted ? "opacity-60 grayscale" : ""
+      }`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export function EventCard({
   event,
   isAdmin,
-  size = "standard",
 }: {
   event: EnrichedEvent;
   isAdmin: boolean;
-  size?: EventCardSize;
 }) {
-  const now = new Date();
-  const startDate = new Date(event.registrationStartDate);
-  const endDate = new Date(event.registrationEndDate);
-  const isRegistrationClosed = endDate < now;
-  const isRegistrationOpen = startDate <= now && endDate >= now;
-  const closingSoon = isClosingSoon(event);
-
-  const visibleQuotas = event.Quotas.slice(0, QUOTA_PREVIEW_COUNT[size]);
-  const hiddenQuotaCount = event.Quotas.length - visibleQuotas.length;
+  const fill = getEventFill(event);
+  const registration = getRegistrationStatus(event);
+  const isClosed = registration.state === "closed";
 
   return (
-    <article className="rounded-control flex h-full w-full min-w-0 flex-col overflow-hidden border border-stone-200 bg-white">
+    <article className="rounded-card flex h-full w-full min-w-0 flex-col overflow-hidden border border-stone-200 bg-white">
       <Link
         href={routes.app.events.event(event.id)}
         className="focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
       >
-        {/* Media banner. Stands in for a real event image until those are
-            supported — swap this block for an <img src={event.imageUrl}>
-            when that lands. */}
+        {/* Media banner. The fade under the title is the images' own
+            background colour rather than a dark scrim, so it reads as the
+            picture continuing rather than a bar dropped on top of it — and
+            the text sits on a light surface, dark, like the rest of the
+            card. `brand-sand` is also the banner's own background, so a
+            missing image leaves a plain sand block that the fade blends
+            into invisibly. */}
         <div
-          className={`from-brand-primary to-brand-secondary relative w-full overflow-hidden bg-linear-to-br ${BANNER_ASPECT[size]}`}
+          className={`relative w-full overflow-hidden ${BANNER_ASPECT} ${
+            isClosed ? "bg-stone-200" : "bg-brand-sand"
+          }`}
         >
-          <div
-            className="absolute inset-x-0 bottom-0 h-2/3 bg-linear-to-t from-black/60 via-black/15 to-transparent"
-            aria-hidden
-          />
+          <BannerImage src={getEventImage(event.id)} muted={isClosed} />
+
+          {/* A closed event still belongs in the list, but it is not
+              actionable — the drained image and the padlock say so before
+              any text is read. The status line stays red for the people who
+              do read it. */}
+          {isClosed && (
+            <span
+              className={`absolute left-3 rounded-full bg-stone-900/65 p-1.5 text-white ${
+                event.draft ? "top-11" : "top-3"
+              }`}
+              title="Ilmoittautuminen sulkeutunut"
+            >
+              <Lock size={14} strokeWidth={2.5} aria-hidden />
+            </span>
+          )}
 
           {event.draft && (
             <span className="absolute top-0 left-0 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
@@ -76,77 +93,116 @@ export function EventCard({
             </span>
           )}
 
-          <h2
-            className={`absolute right-4 bottom-3 left-4 line-clamp-2 font-bold tracking-tight text-white ${TITLE_SIZE[size]}`}
-          >
-            {event.title}
-          </h2>
+          {/* Editorial tag ("Vuoden haippisin"). Deliberately not the solid
+              rectangle glued to the corner: a floating pill that reads as a
+              sticker on the picture. Inverted — dark green ground, lime
+              text — because lime on a pale image barely registered; this
+              way it carries across any picture without borrowing the coral
+              or amber that already mean "closed" and "draft" elsewhere on
+              the card. */}
+          {event.badgeText && (
+            <span
+              className={`shadow-card absolute top-3 right-3 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+            >
+              {event.badgeText}
+            </span>
+          )}
+
+          {/* Two layers rather than one gradient over the whole block: the
+              ramp is a fixed height that always sits directly above the
+              text, and the text itself gets an even ground underneath. A
+              single gradient spanning the box stretched with the content,
+              so a third line of text pushed the ramp's midpoint up into the
+              title and left it sitting on a half-transparent wash. This way
+              the ground grows with the content and the fade never changes
+              shape. */}
+          <div className="absolute inset-x-0 bottom-0">
+            <div
+              className={`h-10 bg-linear-to-t to-transparent ${
+                isClosed ? "from-stone-200/95" : "from-brand-sand/91"
+              }`}
+              aria-hidden
+            />
+            <div
+              className={`px-4 pb-3 sm:px-5 ${
+                isClosed ? "bg-stone-200/95" : "bg-brand-sand/91"
+              }`}
+            >
+              <h2
+                className={`line-clamp-2 text-base font-bold tracking-tight sm:text-lg ${
+                  isClosed ? "text-stone-500" : "text-brand-secondary"
+                }`}
+              >
+                {event.title}
+              </h2>
+              {/* When and where, on one line where they fit — the two facts
+                people scan for before anything else. */}
+              <div
+                className={`mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs sm:text-sm ${
+                  isClosed ? "text-stone-500" : "text-brand-dark"
+                }`}
+              >
+                <p className="flex min-w-0 items-center gap-1.5">
+                  <Calendar
+                    size={13}
+                    strokeWidth={2}
+                    className="shrink-0 opacity-60"
+                  />
+                  <span className="min-w-0 truncate">
+                    {formatEventDateTime(event.date)}
+                  </span>
+                </p>
+                {event.location && (
+                  <p className="flex min-w-0 items-center gap-1.5">
+                    <MapPin
+                      size={13}
+                      strokeWidth={2}
+                      className="shrink-0 opacity-60"
+                    />
+                    <span className="min-w-0 truncate">{event.location}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 p-4 sm:p-5">
-          <div className="space-y-1 text-xs text-gray-700 sm:text-sm">
-            <p className="flex min-w-0 items-center gap-1.5">
-              <Calendar
-                size={13}
-                strokeWidth={2}
-                className="shrink-0 text-gray-500"
-              />
-              <span className="min-w-0 truncate">
-                {formatDateTime(event.date, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </span>
+        {/* Below the image: everything about signing up — when, and how
+            many have. The image and its overlay carry what the event is. */}
+        <div className="min-w-0 p-4 sm:p-5">
+          <div className="min-w-0">
+            <p
+              className={`flex min-w-0 items-center gap-1.5 text-sm font-semibold sm:text-base ${
+                registration.state === "closed"
+                  ? "text-brand-danger"
+                  : registration.urgent
+                    ? "text-brand-danger"
+                    : registration.state === "open"
+                      ? "text-brand-primary"
+                      : "text-brand-secondary"
+              }`}
+            >
+              {registration.state !== "closed" && (
+                <Clock size={14} strokeWidth={2.5} className="shrink-0" />
+              )}
+              <span className="min-w-0 truncate">{registration.headline}</span>
             </p>
-            {event.location && (
-              <p className="flex min-w-0 items-center gap-1.5">
-                <MapPin
-                  size={13}
-                  strokeWidth={2}
-                  className="shrink-0 text-gray-500"
-                />
-                <span className="min-w-0 truncate">{event.location}</span>
-              </p>
+            <p className="mt-0.5 truncate text-xs text-gray-500 sm:text-sm">
+              {registration.detail}
+            </p>
+
+            {/* Quota names are an inside detail — on the card they only
+                added noise, and showing one of five quotas told you less
+                than the totals do. The event page still lists them. */}
+            {event.Quotas.length > 0 && (
+              <div className="mt-3 min-w-0">
+                <EventFillIndicator fill={fill} />
+                <p className="mt-1.5 truncate text-sm text-gray-500">
+                  {fill.countText}
+                </p>
+              </div>
             )}
           </div>
-
-          <p className="text-xs sm:text-sm">
-            <span
-              className={`font-semibold ${isRegistrationOpen ? "text-brand-primary" : isRegistrationClosed ? "text-brand-danger" : "text-gray-500"}`}
-            >
-              {closingSoon && (
-                <Clock
-                  size={12}
-                  strokeWidth={2.5}
-                  className="mr-1 inline-block -translate-y-px"
-                />
-              )}
-              {isRegistrationClosed
-                ? "Ilmoittautuminen sulkeutunut"
-                : formatRegistration(
-                    event.registrationStartDate,
-                    event.registrationEndDate,
-                  )}
-            </span>
-          </p>
-
-          {size === "hero" && event.description && (
-            <p className="text-brand-dark line-clamp-2 text-xs leading-snug sm:text-sm">
-              {event.description}
-            </p>
-          )}
-
-          {visibleQuotas.length > 0 && (
-            <p className="min-w-0 truncate pt-1.5 text-xs text-gray-500">
-              {visibleQuotas
-                .map(
-                  (quota) =>
-                    `${quota.title} ${quota.signupCount}/${quota.size ?? "∞"}`,
-                )
-                .join(" · ")}
-              {hiddenQuotaCount > 0 && ` +${hiddenQuotaCount}`}
-            </p>
-          )}
         </div>
       </Link>
 

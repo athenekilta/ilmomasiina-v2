@@ -110,6 +110,15 @@ model PasswordChangeToken {
   email     String
 }
 
+/// Colour of the event card's badge. Picked by the admin rather than derived,
+/// since the badge text is editorial ("Vuoden haippisin") and only the person
+/// writing it knows how loud it should be.
+enum BadgeTone {
+  GREEN
+  PINK
+  DARK
+}
+
 enum RaffleStatus {
   NOT_STARTED
   REGISTRATION_OPEN
@@ -120,6 +129,9 @@ enum RaffleStatus {
 model Event {
   id                    Int                @id @default(autoincrement())
   title                 String
+  /// Free-form marketing tag shown on the event card, e.g. "Vuoden haippisin"
+  badgeText             String?
+  badgeTone             BadgeTone          @default(GREEN)
   date                  DateTime
   registrationStartDate DateTime
   registrationEndDate   DateTime

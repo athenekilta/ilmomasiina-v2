@@ -13,6 +13,14 @@ import type {
 import type { z } from "zod";
 import { TimeInput } from "@/components/TimeInput";
 import { DateInput } from "@/components/DateInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Select";
+import { BADGE_TONE_OPTIONS } from "@/features/eventCard/badgeTone";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
 
@@ -39,6 +47,36 @@ export function BasicInfoFields({
           error={!!errors.title}
           helperText={errors.title?.message}
         />
+      </FieldSet>
+      <FieldSet title="Badge (valinnainen)">
+        <div className="flex w-full flex-col gap-3">
+          <Input
+            {...register("badgeText")}
+            placeholder="esim. Vuoden haippisin"
+            error={!!errors.badgeText}
+            helperText={
+              errors.badgeText?.message ??
+              "Näkyy tapahtumakortin kuvan päällä. Jätä tyhjäksi jos et halua badgea."
+            }
+          />
+          <Select
+            value={watch("badgeTone") ?? "GREEN"}
+            onValueChange={(value) =>
+              setValue("badgeTone", value as EventFormValues["badgeTone"])
+            }
+          >
+            <SelectTrigger className="w-full sm:w-70">
+              <SelectValue placeholder="Badgen väri" />
+            </SelectTrigger>
+            <SelectContent>
+              {BADGE_TONE_OPTIONS.map((tone) => (
+                <SelectItem key={tone.value} value={tone.value}>
+                  {tone.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </FieldSet>
       <FieldSet title="Aika">
         <div className="grid w-full grid-cols-1 gap-6">
