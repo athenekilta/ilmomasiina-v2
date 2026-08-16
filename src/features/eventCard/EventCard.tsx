@@ -27,26 +27,22 @@ export function EventCard({
   const isRegistrationClosed = endDate < now;
 
   return (
-    <article
-      className={`flex h-full min-h-0 w-full min-w-0 flex-col rounded-control border shadow-soft transition-shadow duration-200 hover:shadow-card ${
-        event.draft
-          ? "border-amber-400 bg-amber-100"
-          : "border-stone-300 bg-brand-light"
-      }`}
-    >
-      <div className="flex min-h-0 flex-1 flex-col gap-4 p-5 sm:p-6">
+    <article className="flex h-full w-full min-w-0 flex-col">
+      <div className="flex h-full flex-col gap-4 p-5 sm:p-6">
         <Link
           href={`events/${event.id}`}
-          className="group flex min-h-0 min-w-0 flex-1 flex-col rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-brand-light"
+          className="group focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col rounded-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
         >
           <div className="shrink-0">
-            <h2 className="text-xl font-bold tracking-tight text-brand-dark group-hover:text-brand-secondary sm:text-2xl">
+            <h2 className="text-brand-dark group-hover:text-brand-secondary text-xl font-bold tracking-tight sm:text-2xl">
               {event.title}
             </h2>
 
             <div className="mt-3 space-y-1.5 text-sm leading-relaxed text-gray-700 sm:text-base">
               <p className="min-w-0 break-words">
-                <span className="font-semibold text-brand-dark">Ajankohta:</span>{" "}
+                <span className="text-brand-dark font-semibold">
+                  Ajankohta:
+                </span>{" "}
                 {formatDateTime(event.date, {
                   dateStyle: "medium",
                   timeStyle: "short",
@@ -54,7 +50,7 @@ export function EventCard({
               </p>
               {event.location ? (
                 <p className="min-w-0 break-words">
-                  <span className="font-semibold text-brand-dark">Paikka:</span>{" "}
+                  <span className="text-brand-dark font-semibold">Paikka:</span>{" "}
                   {event.location}
                 </p>
               ) : null}
@@ -62,11 +58,11 @@ export function EventCard({
 
             <div className="mt-3">
               {isRegistrationClosed ? (
-                <span className="inline-block text-sm font-semibold text-brand-danger">
+                <span className="text-brand-danger inline-block text-sm font-semibold">
                   Ilmoittautuminen sulkeutunut
                 </span>
               ) : (
-                <span className="inline-block text-sm font-semibold text-brand-primary">
+                <span className="text-brand-primary inline-block text-sm font-semibold">
                   {formatRegistration(
                     event.registrationStartDate,
                     event.registrationEndDate,
@@ -77,7 +73,7 @@ export function EventCard({
 
             {event.draft && (
               <div className="mt-4">
-                <span className="inline-flex items-center rounded-control border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
+                <span className="rounded-control inline-flex items-center border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
                   <Icon icon="draft" className="mr-1.5 h-3.5 w-3.5" />
                   Luonnos
                 </span>
@@ -85,11 +81,11 @@ export function EventCard({
             )}
           </div>
 
-          <div className="min-h-2 flex-1" aria-hidden />
+          <div className="flex-1" aria-hidden />
 
           {event.Quotas.length > 0 && (
-            <div className="mt-auto shrink-0 border-t border-stone-200 pt-5">
-              <h3 className="mb-3 text-xs font-bold tracking-widest text-brand-secondary uppercase">
+            <div className="mt-5 border-t border-stone-200 pt-5">
+              <h3 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
                 Kiintiöt
               </h3>
               <ul className="flex list-none flex-col gap-2.5 p-0">
@@ -98,11 +94,11 @@ export function EventCard({
                     key={quota.id}
                     className="flex items-center justify-between gap-3 text-sm sm:text-base"
                   >
-                    <span className="font-semibold text-brand-dark">
+                    <span className="text-brand-dark font-semibold">
                       {quota.title}
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="tabular-nums text-gray-700">
+                      <span className="text-gray-700 tabular-nums">
                         {quota.signupCount} / {quota.size ?? "\u221E"}
                       </span>
                     </span>
@@ -114,7 +110,7 @@ export function EventCard({
         </Link>
 
         {isAdmin && (
-          <div className="mt-auto shrink-0">
+          <div className="shrink-0">
             <Divider spacingY="lg" tone="strong" />
             <div>
               <Button.Link

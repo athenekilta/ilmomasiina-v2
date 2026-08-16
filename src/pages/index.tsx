@@ -90,9 +90,12 @@ export default function DesktopPage() {
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
-              <ul className="grid w-full list-none grid-cols-1 gap-6 p-0 sm:grid-cols-2 sm:items-stretch lg:gap-8">
+              <ul className="grid w-full list-none auto-rows-[24rem] grid-cols-1 p-0 sm:grid-cols-2">
                 {eventsData.map((event) => (
-                  <li key={event.id} className="flex h-full min-h-0 min-w-0">
+                  <li
+                    key={event.id}
+                    className="relative flex h-full min-w-0 border-t border-stone-300 first:border-t-0 sm:[&:last-child:nth-child(odd)::after]:absolute sm:[&:last-child:nth-child(odd)::after]:top-0 sm:[&:last-child:nth-child(odd)::after]:left-full sm:[&:last-child:nth-child(odd)::after]:h-full sm:[&:last-child:nth-child(odd)::after]:w-px sm:[&:last-child:nth-child(odd)::after]:bg-stone-300 sm:[&:last-child:nth-child(odd)::after]:content-[''] sm:[&:last-child:nth-child(odd)::before]:absolute sm:[&:last-child:nth-child(odd)::before]:top-[-1px] sm:[&:last-child:nth-child(odd)::before]:left-full sm:[&:last-child:nth-child(odd)::before]:h-px sm:[&:last-child:nth-child(odd)::before]:w-full sm:[&:last-child:nth-child(odd)::before]:bg-stone-300 sm:[&:last-child:nth-child(odd)::before]:content-[''] sm:[&:nth-child(2)]:border-t-0 sm:[&:nth-child(even)]:border-l"
+                  >
                     <EventCard event={event} isAdmin={isAdmin} />
                   </li>
                 ))}
