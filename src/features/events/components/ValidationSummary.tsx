@@ -55,7 +55,7 @@ export function ValidationSummary({ errors }: ValidationSummaryProps) {
   if (allErrors.length === 0) return null;
 
   return (
-    <div className="fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] rounded-control border border-rose-400 bg-rose-50 p-3 shadow-card">
+    <div className="fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] rounded-card border border-rose-400 bg-rose-50 p-3 shadow-card">
       <div className="flex flex-col">
         <div className="shrink-0">
           <svg className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">

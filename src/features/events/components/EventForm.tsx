@@ -19,7 +19,10 @@ import { Questions } from "./Questions";
 import { Quotas } from "./Quotas";
 import { SignupsTable } from "./SignupsTable";
 import { ValidationSummary } from "./ValidationSummary";
-import { eventFormSchema } from "../utils/eventFormSchema";
+import {
+  eventFormSchema,
+  normalizeQuestionOptions,
+} from "../utils/eventFormSchema";
 
 export type EventFormProps = {
   /**
@@ -106,10 +109,12 @@ export function EventForm({ editId }: EventFormProps) {
         editEvent?.Quotas.map((quota) => ({
           ...quota,
           signupCount:
-            signups?.filter((signup) => signup.quotaId === quota.id).length || 0,
+            signups?.filter((signup) => signup.quotaId === quota.id).length ||
+            0,
         })) || [],
       Questions: editEvent?.Questions || [],
       raffleEnabled: editEvent?.raffleEnabled || false,
+      extraCapacity: editEvent?.extraCapacity ?? 0,
       price: editEvent?.price || "",
       location: editEvent?.location || "",
       title: editEvent?.title || "",
@@ -149,6 +154,7 @@ export function EventForm({ editId }: EventFormProps) {
 
     if (!date || !registrationStartDate || !registrationEndDate) return;
 
+    const questions = data.Questions.map(normalizeQuestionOptions);
     const formData = {
       ...data,
       date,
@@ -161,14 +167,14 @@ export function EventForm({ editId }: EventFormProps) {
         ...formData,
         id: editId,
         quotas: data.Quotas,
-        questions: data.Questions,
+        questions,
       });
       alert.success("Event updated successfully");
     } else {
       const event = await createMutation.mutateAsync({
         ...formData,
         quotas: data.Quotas,
-        questions: data.Questions,
+        questions,
       });
       alert.success("Event created successfully");
       router.push(`/events/${event.id}/edit`);
@@ -176,10 +182,18 @@ export function EventForm({ editId }: EventFormProps) {
   });
 
   const isDraft = useWatch({ control, name: "draft" });
+  const seatHoldingSignupCounts = (signups ?? []).reduce<
+    Record<string, number>
+  >((counts, signup) => {
+    if (signup.status === "CONFIRMED" || signup.status === "IN_PROGRESS") {
+      counts[signup.quotaId] = (counts[signup.quotaId] ?? 0) + 1;
+    }
+    return counts;
+  }, {});
 
   if (editId && (signUpsLoading || isLoading)) {
     return (
-      <div className="pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center bg-brand-beige p-4 text-sm font-medium text-brand-dark">
+      <div className="bg-brand-beige text-brand-dark pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center p-4 text-sm font-medium">
         Loading...
       </div>
     );
@@ -190,7 +204,7 @@ export function EventForm({ editId }: EventFormProps) {
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
       <div className="flex flex-col gap-6 px-0 sm:px-1">
         <div className="flex flex-row flex-wrap items-start justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-brand-dark sm:text-3xl">
+          <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
             {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
           </h1>
 
@@ -241,6 +255,7 @@ export function EventForm({ editId }: EventFormProps) {
           errors={errors}
           eventId={editEvent?.id}
           editId={editId}
+          seatHoldingSignupCounts={seatHoldingSignupCounts}
         />
 
         <Divider spacingY="none" />
@@ -257,7 +272,7 @@ export function EventForm({ editId }: EventFormProps) {
         <Divider spacingY="none" />
 
         <FieldSet title="Vahvistusviesti sähköpostiin">
-          <TextArea {...register("verificationEmail")} rows={5} />
+          <TextArea {...register("verificationEmail")} rows={5} fullWidth />
         </FieldSet>
 
         {editId && (
@@ -269,6 +284,8 @@ export function EventForm({ editId }: EventFormProps) {
                   signups={signups}
                   eventId={editId}
                   eventName={editEvent?.title}
+                  quotas={editEvent?.Quotas ?? []}
+                  questions={editEvent?.Questions ?? []}
                 />
               ) : (
                 <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>

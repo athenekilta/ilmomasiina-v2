@@ -1,5 +1,6 @@
 import { FieldSet } from "@/components/FieldSet";
 import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
 import { QuotaRow } from "./QuotaRow";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
@@ -25,6 +26,7 @@ type QuotasProps = {
   errors: FieldErrors<EventFormValues>;
   eventId?: number;
   editId?: number;
+  seatHoldingSignupCounts: Record<string, number>;
 };
 
 export function Quotas({
@@ -34,6 +36,7 @@ export function Quotas({
   errors,
   eventId,
   editId,
+  seatHoldingSignupCounts,
 }: QuotasProps) {
   const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
@@ -45,22 +48,7 @@ export function Quotas({
         id,
         title: "",
         size: null,
-        sortId,
-        eventId: eventId ?? NaN,
-        signupCount: 0,
-      },
-    ]);
-  }, [eventId, getValues, setValue]);
-
-  const createPublicQueue = useCallback(() => {
-    const quotas = getValues("Quotas");
-    const sortId = quotas.length + 1;
-    setValue("Quotas", [
-      ...quotas,
-      {
-        id: eventId ? "public-quota-" + eventId : "public-quota",
-        title: "Avoin kiintiö",
-        size: null,
+        sharedPlacesAllocation: "NEVER",
         sortId,
         eventId: eventId ?? NaN,
         signupCount: 0,
@@ -81,6 +69,29 @@ export function Quotas({
         "Quotas",
         quotas.filter((quota) => quota.id !== id),
       );
+    },
+    [getValues, setValue],
+  );
+
+  const moveUnusedPlacesToJokerPlaces = useCallback(
+    (id: string, usedPlaces: number) => {
+      const quotas = [...getValues("Quotas")];
+      const quotaIndex = quotas.findIndex((quota) => quota.id === id);
+      const quota = quotas[quotaIndex];
+      if (!quota || quota.size === null) return;
+
+      const unusedPlaces = Math.max(quota.size - usedPlaces, 0);
+      if (unusedPlaces === 0) return;
+
+      quotas[quotaIndex] = {
+        ...quota,
+        size: quota.size - unusedPlaces,
+      };
+      setValue("Quotas", quotas, { shouldDirty: true, shouldValidate: true });
+      setValue("extraCapacity", getValues("extraCapacity") + unusedPlaces, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     },
     [getValues, setValue],
   );
@@ -106,23 +117,15 @@ export function Quotas({
 
   return (
     <FieldSet title="Kiintiöt">
+
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuota()} type="button">
           Lisää kiintiö
         </Button>
-        <Button
-          type="button"
-          onClick={() => createPublicQueue()}
-          disabled={
-            !!watch("Quotas").find((quota) => quota.id.includes("public-quota"))
-          }
-        >
-          Lisää avoin kiintiö
-        </Button>
       </div>
 
       {errors.Quotas && (
-        <div className="rounded-control mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
+        <div className="rounded-inner mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
           <svg
             className="text-danger mt-0.5 h-5 w-5 shrink-0"
             viewBox="0 0 20 20"
@@ -168,6 +171,12 @@ export function Quotas({
                           setValue("Quotas", quotas);
                         }}
                         deleteQuota={deleteQuota}
+                        seatHoldingSignupCount={
+                          seatHoldingSignupCounts[quota.id] ?? 0
+                        }
+                        moveUnusedPlacesToJokerPlaces={
+                          moveUnusedPlacesToJokerPlaces
+                        }
                         errors={
                           errors.Quotas &&
                           (errors.Quotas[index] as FieldErrorsImpl<Quota>)
@@ -182,6 +191,36 @@ export function Quotas({
           )}
         </Droppable>
       </DragDropContext>
+
+      <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
+        <p>
+        Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. 
+        Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. 
+        Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti, 
+        ilmoittautumisen päätyttyä tai ei lainkaan.
+        </p>
+        <div className="mt-4 max-w-xs">
+          <label className="mb-1 block font-semibold">Jokeripaikat</label>
+          <Input
+            type="number"
+            min={0}
+            value={watch("extraCapacity")}
+            onChange={(event) =>
+              setValue(
+                "extraCapacity",
+                event.target.value === "" ? 0 : event.target.valueAsNumber,
+              )
+            }
+            error={!!errors.extraCapacity}
+            helperText={errors.extraCapacity?.message}
+          />
+        </div>
+        <p className="mt-3 font-semibold">
+          Paikkoja yhteensä:{" "}
+          {watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
+            watch("extraCapacity")}
+        </p>
+      </div>
     </FieldSet>
   );
 }

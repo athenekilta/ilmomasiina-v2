@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { nativeDate } from "@/utils/nativeDate";
+import {
+  getChoiceConfigurationIssues,
+  normalizeChoiceOptions,
+} from "./questionAnswers";
 
 export const AnswerSchema = z.object({
   answer: z.string(),
@@ -17,21 +21,50 @@ export const signupSchema = z.object({
 export const quotaSchema = z.object({
   id: z.string(),
   title: z.string().min(1),
-  size: z.number().min(1).nullable(),
+  size: z.number().int().min(0).nullable(),
+  sharedPlacesAllocation: z.enum([
+    "NEVER",
+    "IMMEDIATE",
+    "AFTER_REGISTRATION_CLOSE",
+  ]),
   sortId: z.number().positive(),
   eventId: z.union([z.number(), z.nan()]),
 });
 
-export const questionSchema = z.object({
-  id: z.string(),
-  question: z.string().min(1),
-  type: z.enum(["text", "textarea", "radio", "checkbox"]),
-  options: z.array(z.string()),
-  sortId: z.number().positive(),
-  required: z.boolean(),
-  public: z.boolean(),
-  eventId: z.union([z.number(), z.nan()]),
-});
+export const questionSchema = z
+  .object({
+    id: z.string(),
+    question: z.string().min(1),
+    type: z.enum(["text", "textarea", "radio", "checkbox"]),
+    options: z.array(z.string()),
+    sortId: z.number().positive(),
+    required: z.boolean(),
+    public: z.boolean(),
+    eventId: z.union([z.number(), z.nan()]),
+  })
+  .superRefine((question, ctx) => {
+    if (question.type !== "radio" && question.type !== "checkbox") return;
+
+    getChoiceConfigurationIssues(question.options).forEach((issue) => {
+      ctx.addIssue({
+        code: "custom",
+        path: ["options", ...(issue.index === undefined ? [] : [issue.index])],
+        message: issue.message,
+      });
+    });
+  });
+
+export function normalizeQuestionOptions<
+  T extends { type: string; options: string[] },
+>(question: T): T {
+  return {
+    ...question,
+    options:
+      question.type === "radio" || question.type === "checkbox"
+        ? normalizeChoiceOptions(question.options)
+        : [],
+  };
+}
 
 export const eventFormSchema = z.object({
   title: z.string().min(1),
@@ -56,6 +89,7 @@ export const eventFormSchema = z.object({
   draft: z.boolean(),
   signupsPublic: z.boolean(),
   verificationEmail: z.string().optional(),
+  extraCapacity: z.number().int().min(0),
   raffleEnabled: z.boolean().default(false),
   Quotas: z.array(quotaSchema.extend({ signupCount: z.number() })),
   Questions: z.array(questionSchema),

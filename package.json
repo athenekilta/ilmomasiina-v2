@@ -17,6 +17,7 @@
     "delete-signups": "tsx src/scripts/delete-signups.ts",
     "test:raffle": "tsx src/scripts/test-raffle.ts",
     "test:raffle-simulation": "tsx src/scripts/test-raffle-simulation.ts",
+    "test:questions": "tsx --test src/features/events/utils/questionAnswers.test.ts",
     "studio": "prisma studio"
   },
   "dependencies": {

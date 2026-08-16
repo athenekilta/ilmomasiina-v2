@@ -100,7 +100,7 @@ export function QuestionRow({
 
       <div className="flex flex-wrap gap-6 sm:pl-36">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-brand-dark">Pakollinen</span>
+          <span className="text-brand-dark text-sm">Pakollinen</span>
           <Switch
             value={question.required}
             onChange={(value) => onChange({ ...question, required: value })}
@@ -108,16 +108,14 @@ export function QuestionRow({
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-brand-dark">Julkinen</span>
+            <span className="text-brand-dark text-sm">Julkinen</span>
             <Switch
               value={question.public}
               onChange={(value) => onChange({ ...question, public: value })}
             />
           </div>
           <p className="max-w-md text-xs leading-relaxed text-gray-600">
-            Julkinen vastaus näkyy tapahtuman{" "}
-            <strong>julkisessa osallistujalistassa</strong>, kun
-            ilmoittautumiset on merkitty julkisiksi.
+            Julkiset vastaukset näkyvät <strong>julkisessa osallistujalistassa</strong>.
           </p>
         </div>
       </div>
@@ -127,7 +125,6 @@ export function QuestionRow({
           {question.options.map((option, index) => (
             <div className="flex flex-row items-center gap-3" key={index}>
               <Input
-                key={index}
                 title={`Vaihtoehto ${index + 1}`}
                 value={option}
                 fullWidth
@@ -136,6 +133,8 @@ export function QuestionRow({
                   newOptions[index] = value.target.value;
                   onChange({ ...question, options: newOptions });
                 }}
+                error={!!errors?.options?.[index]}
+                helperText={errors?.options?.[index]?.message}
               />
               <Button
                 type="button"
@@ -150,6 +149,11 @@ export function QuestionRow({
           <Button type="button" size="small" onClick={() => addOption()}>
             Lisää vaihtoehto
           </Button>
+          {errors?.options?.root?.message ? (
+            <p className="text-sm text-red-600">
+              {errors.options.root.message}
+            </p>
+          ) : null}
         </div>
       )}
 

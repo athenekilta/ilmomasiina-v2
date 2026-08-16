@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { Check, UserRound } from "lucide-react";
+import { Check, RefreshCw, UserRound } from "lucide-react";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { signOut } from "@/server/auth/auth-client";
 import { routes } from "@/utils/routes";
@@ -30,7 +30,7 @@ function AccountDropdownPanel({
   open: boolean;
   onClose: () => void;
   titleId: string;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   panelRef: React.RefObject<HTMLDivElement | null>;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
@@ -68,7 +68,7 @@ function AccountDropdownPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
-      className="bg-brand-light text-brand-dark rounded-control shadow-card absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto border border-stone-200 ring-1 ring-stone-900/10"
+      className="bg-brand-light text-brand-dark rounded-card shadow-card absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto border border-stone-200 ring-1 ring-stone-900/10"
     >
       <div className="bg-brand-light sticky top-0 flex items-center justify-between gap-2 border-b border-stone-200 px-4 py-3">
         <h2
@@ -102,7 +102,7 @@ export function HeaderAccountMenu() {
 
   const {
     register,
-    formState: { errors },
+    formState: { errors, isDirty },
     handleSubmit,
     reset,
     storedUser,
@@ -202,7 +202,23 @@ export function HeaderAccountMenu() {
         open={open}
         onClose={closePanel}
         titleId={titleId}
-        title={sessionUser ? "Tilin tiedot" : "Ilmotiedot"}
+        title={
+          sessionUser ? (
+            "Tilin tiedot"
+          ) : storedUser?.email ? (
+            <span className="flex items-center gap-1.5">
+              <Check
+                size={16}
+                strokeWidth={3.5}
+                className="text-brand-primary shrink-0"
+                aria-hidden
+              />
+              Ilmotiedot kunnossa
+            </span>
+          ) : (
+            "Ilmotiedot ei kunnossa"
+          )
+        }
         panelRef={panelRef}
         triggerRef={triggerRef}
       >
@@ -272,13 +288,19 @@ export function HeaderAccountMenu() {
               />
             </div>
             <div className="mt-2 flex flex-col gap-2">
+              {/* Disabled until something actually changes: with the
+                  stored values already in the fields, a live button would
+                  promise an update it has nothing to make. It enables on
+                  the first keystroke. */}
               <Button
                 type="submit"
                 variant="filled"
                 color="primary"
+                disabled={!isDirty}
+                startIcon={<RefreshCw size={18} strokeWidth={2.25} />}
                 className="w-full justify-center"
               >
-                Tallenna
+                Päivitä
               </Button>
               <Button
                 type="button"

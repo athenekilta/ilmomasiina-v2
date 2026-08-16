@@ -126,6 +126,7 @@ export function BasicInfoFields({
           />
         </div>
       </FieldSet>
+
       <FieldSet title="Ilmoittautumiset julkisia">
         <Switch
           value={watch("signupsPublic")}

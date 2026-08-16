@@ -3,10 +3,13 @@ import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import {
+  normalizeQuestionOptions,
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
 import { RaffleStatus, SignupStatus } from "@/generated/prisma/client";
+import { reconcileEventAllocations } from "../features/allocations/reconcileEventAllocations";
+import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
 export const eventsRouter = router({
   getEvents: publicProcedure.query(async ({ ctx }) => {
@@ -104,6 +107,10 @@ export const eventsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      const allocation = await ctx.prisma.$transaction((tx) =>
+        reconcileEventAllocations(tx, input.eventId),
+      );
+      await sendQueueAcceptedEmails(allocation.queueAcceptedNotification);
       const event = await ctx.prisma.event.findUnique({
         where: {
           id: input.eventId,
@@ -149,45 +156,25 @@ export const eventsRouter = router({
         eventId: event.id,
         Signups: [],
         size: null,
+        sharedPlacesAllocation: "NEVER",
       });
 
-      // If the quotas are full put singups into queue
-      event.Quotas.forEach((quota) => {
-        if (quota.size && quota.Signups.length >= quota.size) {
-          const queueQuota = event.Quotas.find((q) => q.id === "queue");
-
-          if (!queueQuota) {
-            throw new Error("Queue quota not found"); // This should never happen
-          }
-
-          // only put unconfirmed signups into queue - existing confirmed signups aren't cancelled even if they result in the quota overflowing
-          const unconfirmedSignups = quota.Signups.filter(
-            (s) => s.status !== SignupStatus.CONFIRMED,
-          );
-
-          // move possible overflowing unconfirmed signups away
-          const allowedUnconfirmedSignupsInQuota = Math.max(
-            quota.size - quota.Signups.length + unconfirmedSignups.length,
-            0,
-          );
-
-          // if all are allowed, just skip
-          if (allowedUnconfirmedSignupsInQuota >= unconfirmedSignups.length)
-            return;
-
-          const overflowingUnconfirmedSignups = unconfirmedSignups.slice(
-            allowedUnconfirmedSignupsInQuota,
-          );
-
-          // add overflowing to queue Quota
-          queueQuota.Signups.push(...overflowingUnconfirmedSignups);
-          // filter away the moved signups from current quota
-          quota.Signups = quota.Signups.filter(
-            (s) =>
-              !overflowingUnconfirmedSignups.some((other) => s.id === other.id),
-          );
-        }
-      });
+      // Queue placement follows persisted allocation state. Incomplete forms
+      // stay in their selected quota so an active seat hold remains visible.
+      const queueQuota = event.Quotas.find((quota) => quota.id === "queue");
+      if (!queueQuota) throw new Error("Queue quota not found");
+      for (const quota of event.Quotas.filter((item) => item.id !== "queue")) {
+        const queued = quota.Signups.filter(
+          (signup) =>
+            signup.completedAt !== null &&
+            (signup.status === SignupStatus.PENDING ||
+              signup.status === SignupStatus.WAITLISTED),
+        );
+        queueQuota.Signups.push(...queued);
+        quota.Signups = quota.Signups.filter(
+          (signup) => !queued.some((item) => item.id === signup.id),
+        );
+      }
 
       // Return event if singups are public
       if (event.signupsPublic) return event;
@@ -227,12 +214,14 @@ export const eventsRouter = router({
         draft: z.boolean(),
         signupsPublic: z.boolean(),
         verificationEmail: z.string().optional(),
+        extraCapacity: z.number().int().min(0),
         quotas: z.array(quotaSchema),
         questions: z.array(questionSchema),
         raffle: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
       const openQuotaSize =
         input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
@@ -254,6 +243,7 @@ export const eventsRouter = router({
           verificationEmail: input.verificationEmail,
           raffleEnabled: input.raffle,
           openQuotaSize: openQuotaSize,
+          extraCapacity: input.extraCapacity,
         },
       });
 
@@ -265,7 +255,7 @@ export const eventsRouter = router({
           : quota.id,
       }));
 
-      const questions = input.questions.map((question) => ({
+      const questions = normalizedQuestions.map((question) => ({
         ...question,
         eventId: event.id,
       }));
@@ -297,11 +287,13 @@ export const eventsRouter = router({
         draft: z.boolean(),
         signupsPublic: z.boolean(),
         verificationEmail: z.string().optional(),
+        extraCapacity: z.number().int().min(0),
         quotas: z.array(quotaSchema),
         questions: z.array(questionSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
       // Delete quotas by IDs that are not in the input anymore and do not have signups
       const existingQuotas = await ctx.prisma.quota.findMany({
         where: { eventId: input.id },
@@ -330,80 +322,99 @@ export const eventsRouter = router({
         existingQuestions.map((question) => question.id),
       );
       const questionsToDelete = existingQuestions.filter(
-        (eq) => !input.questions.some((iq) => iq.id === eq.id),
+        (eq) => !normalizedQuestions.some((iq) => iq.id === eq.id),
       );
-      const questionsToUpdate = input.questions.filter((question) => {
+      const questionsToUpdate = normalizedQuestions.filter((question) => {
         return existingQuestionIds.has(question.id);
       });
-      const newQuestions = input.questions.filter((question) => {
+      const newQuestions = normalizedQuestions.filter((question) => {
         return !existingQuestionIds.has(question.id);
       });
 
       const openQuotaSize =
         input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
-      // Then update event with new data
-      return ctx.prisma.event.update({
-        where: {
-          id: input.id,
-        },
-        data: {
-          title: input.title,
-          badgeText: input.badgeText?.trim() || null,
-          badgeTone: input.badgeTone ?? "GREEN",
-          date: input.date,
-          registrationStartDate: input.registrationStartDate,
-          registrationEndDate: input.registrationEndDate,
-          description: input.description,
-          location: input.location,
-          price: input.price,
-          webpageUrl: input.webpageUrl,
-          draft: input.draft,
-          signupsPublic: input.signupsPublic,
-          verificationEmail: input.verificationEmail,
-          openQuotaSize: openQuotaSize,
-          Quotas: {
-            create: newQuotas.map((quota) => ({
-              id: quota.id,
-              title: quota.title,
-              size: quota.size,
-              sortId: quota.sortId,
-            })),
-            update: existingQuotasToUpdate.map((quota) => ({
-              where: { id: quota.id },
-              data: {
-                title: quota.title,
-                size: quota.size,
-                sortId: quota.sortId,
+      // Apply allocation-affecting changes and reconcile signup statuses
+      // atomically so the event cannot expose a partially updated state.
+      const { updatedEvent, queueAcceptedNotification } =
+        await ctx.prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(${input.id})`;
+          const event = await tx.event.update({
+            where: {
+              id: input.id,
+            },
+            data: {
+              title: input.title,
+              badgeText: input.badgeText?.trim() || null,
+              badgeTone: input.badgeTone ?? "GREEN",
+              date: input.date,
+              registrationStartDate: input.registrationStartDate,
+              registrationEndDate: input.registrationEndDate,
+              description: input.description,
+              location: input.location,
+              price: input.price,
+              webpageUrl: input.webpageUrl,
+              draft: input.draft,
+              signupsPublic: input.signupsPublic,
+              verificationEmail: input.verificationEmail,
+              openQuotaSize: openQuotaSize,
+              extraCapacity: input.extraCapacity,
+              Quotas: {
+                create: newQuotas.map((quota) => ({
+                  id: quota.id,
+                  title: quota.title,
+                  size: quota.size,
+                  sharedPlacesAllocation: quota.sharedPlacesAllocation,
+                  sortId: quota.sortId,
+                })),
+                update: existingQuotasToUpdate.map((quota) => ({
+                  where: { id: quota.id },
+                  data: {
+                    title: quota.title,
+                    size: quota.size,
+                    sharedPlacesAllocation: quota.sharedPlacesAllocation,
+                    sortId: quota.sortId,
+                  },
+                })),
+                delete: quotasToDelete.map((quota) => ({ id: quota.id })),
               },
-            })),
-            delete: quotasToDelete.map((quota) => ({ id: quota.id })),
-          },
-          Questions: {
-            create: newQuestions.map((question) => ({
-              id: question.id,
-              question: question.question,
-              type: question.type,
-              options: question.options,
-              sortId: question.sortId,
-              required: question.required,
-              public: question.public,
-            })),
-            update: questionsToUpdate.map((question) => ({
-              where: { id: question.id },
-              data: {
-                question: question.question,
-                type: question.type,
-                options: question.options,
-                sortId: question.sortId,
-                required: question.required,
-                public: question.public,
+              Questions: {
+                create: newQuestions.map((question) => ({
+                  id: question.id,
+                  question: question.question,
+                  type: question.type,
+                  options: question.options,
+                  sortId: question.sortId,
+                  required: question.required,
+                  public: question.public,
+                })),
+                update: questionsToUpdate.map((question) => ({
+                  where: { id: question.id },
+                  data: {
+                    question: question.question,
+                    type: question.type,
+                    options: question.options,
+                    sortId: question.sortId,
+                    required: question.required,
+                    public: question.public,
+                  },
+                })),
+                delete: questionsToDelete.map((question) => ({
+                  id: question.id,
+                })),
               },
-            })),
-            delete: questionsToDelete.map((question) => ({ id: question.id })),
-          },
-        },
-      });
+            },
+          });
+
+          const allocation = await reconcileEventAllocations(tx, input.id);
+          return {
+            updatedEvent: event,
+            queueAcceptedNotification: allocation.queueAcceptedNotification,
+          };
+        });
+
+      await sendQueueAcceptedEmails(queueAcceptedNotification);
+      return updatedEvent;
     }),
   startRaffle: adminProcedure
     .input(

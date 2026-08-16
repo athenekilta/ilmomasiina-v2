@@ -121,12 +121,23 @@ export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
 
 
 export const SignupStatus: {
+  IN_PROGRESS: 'IN_PROGRESS',
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
+  WAITLISTED: 'WAITLISTED',
   REJECTED: 'REJECTED'
 };
 
 export type SignupStatus = (typeof SignupStatus)[keyof typeof SignupStatus]
+
+
+export const SharedPlacesAllocation: {
+  NEVER: 'NEVER',
+  IMMEDIATE: 'IMMEDIATE',
+  AFTER_REGISTRATION_CLOSE: 'AFTER_REGISTRATION_CLOSE'
+};
+
+export type SharedPlacesAllocation = (typeof SharedPlacesAllocation)[keyof typeof SharedPlacesAllocation]
 
 }
 
@@ -149,6 +160,10 @@ export const QuestionType: typeof $Enums.QuestionType
 export type SignupStatus = $Enums.SignupStatus
 
 export const SignupStatus: typeof $Enums.SignupStatus
+
+export type SharedPlacesAllocation = $Enums.SharedPlacesAllocation
+
+export const SharedPlacesAllocation: typeof $Enums.SharedPlacesAllocation
 
 /**
  * ##  Prisma Client ʲˢ
@@ -9567,11 +9582,13 @@ export namespace Prisma {
   export type EventAvgAggregateOutputType = {
     id: number | null
     openQuotaSize: number | null
+    extraCapacity: number | null
   }
 
   export type EventSumAggregateOutputType = {
     id: number | null
     openQuotaSize: number | null
+    extraCapacity: number | null
   }
 
   export type EventMinAggregateOutputType = {
@@ -9583,6 +9600,7 @@ export namespace Prisma {
     registrationStartDate: Date | null
     registrationEndDate: Date | null
     openQuotaSize: number | null
+    extraCapacity: number | null
     description: string | null
     price: string | null
     location: string | null
@@ -9608,6 +9626,7 @@ export namespace Prisma {
     registrationStartDate: Date | null
     registrationEndDate: Date | null
     openQuotaSize: number | null
+    extraCapacity: number | null
     description: string | null
     price: string | null
     location: string | null
@@ -9633,6 +9652,7 @@ export namespace Prisma {
     registrationStartDate: number
     registrationEndDate: number
     openQuotaSize: number
+    extraCapacity: number
     description: number
     price: number
     location: number
@@ -9654,11 +9674,13 @@ export namespace Prisma {
   export type EventAvgAggregateInputType = {
     id?: true
     openQuotaSize?: true
+    extraCapacity?: true
   }
 
   export type EventSumAggregateInputType = {
     id?: true
     openQuotaSize?: true
+    extraCapacity?: true
   }
 
   export type EventMinAggregateInputType = {
@@ -9670,6 +9692,7 @@ export namespace Prisma {
     registrationStartDate?: true
     registrationEndDate?: true
     openQuotaSize?: true
+    extraCapacity?: true
     description?: true
     price?: true
     location?: true
@@ -9695,6 +9718,7 @@ export namespace Prisma {
     registrationStartDate?: true
     registrationEndDate?: true
     openQuotaSize?: true
+    extraCapacity?: true
     description?: true
     price?: true
     location?: true
@@ -9720,6 +9744,7 @@ export namespace Prisma {
     registrationStartDate?: true
     registrationEndDate?: true
     openQuotaSize?: true
+    extraCapacity?: true
     description?: true
     price?: true
     location?: true
@@ -9832,6 +9857,7 @@ export namespace Prisma {
     registrationStartDate: Date
     registrationEndDate: Date
     openQuotaSize: number
+    extraCapacity: number
     description: string | null
     price: string | null
     location: string | null
@@ -9876,6 +9902,7 @@ export namespace Prisma {
     registrationStartDate?: boolean
     registrationEndDate?: boolean
     openQuotaSize?: boolean
+    extraCapacity?: boolean
     description?: boolean
     price?: boolean
     location?: boolean
@@ -9905,6 +9932,7 @@ export namespace Prisma {
     registrationStartDate?: boolean
     registrationEndDate?: boolean
     openQuotaSize?: boolean
+    extraCapacity?: boolean
     description?: boolean
     price?: boolean
     location?: boolean
@@ -9930,6 +9958,7 @@ export namespace Prisma {
     registrationStartDate?: boolean
     registrationEndDate?: boolean
     openQuotaSize?: boolean
+    extraCapacity?: boolean
     description?: boolean
     price?: boolean
     location?: boolean
@@ -9955,6 +9984,7 @@ export namespace Prisma {
     registrationStartDate?: boolean
     registrationEndDate?: boolean
     openQuotaSize?: boolean
+    extraCapacity?: boolean
     description?: boolean
     price?: boolean
     location?: boolean
@@ -9971,7 +10001,7 @@ export namespace Prisma {
     raffleStatus?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "badgeText" | "badgeTone" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "badgeText" | "badgeTone" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "extraCapacity" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Questions?: boolean | Event$QuestionsArgs<ExtArgs>
     Quotas?: boolean | Event$QuotasArgs<ExtArgs>
@@ -10000,6 +10030,7 @@ export namespace Prisma {
       registrationStartDate: Date
       registrationEndDate: Date
       openQuotaSize: number
+      extraCapacity: number
       description: string | null
       price: string | null
       location: string | null
@@ -10448,6 +10479,7 @@ export namespace Prisma {
     readonly registrationStartDate: FieldRef<"Event", 'DateTime'>
     readonly registrationEndDate: FieldRef<"Event", 'DateTime'>
     readonly openQuotaSize: FieldRef<"Event", 'Int'>
+    readonly extraCapacity: FieldRef<"Event", 'Int'>
     readonly description: FieldRef<"Event", 'String'>
     readonly price: FieldRef<"Event", 'String'>
     readonly location: FieldRef<"Event", 'String'>
@@ -13174,6 +13206,7 @@ export namespace Prisma {
     originalQuotaId: string | null
     registrationIntent: Date | null
     status: $Enums.SignupStatus | null
+    allocatedAt: Date | null
   }
 
   export type SignupMaxAggregateOutputType = {
@@ -13186,6 +13219,7 @@ export namespace Prisma {
     originalQuotaId: string | null
     registrationIntent: Date | null
     status: $Enums.SignupStatus | null
+    allocatedAt: Date | null
   }
 
   export type SignupCountAggregateOutputType = {
@@ -13198,6 +13232,7 @@ export namespace Prisma {
     originalQuotaId: number
     registrationIntent: number
     status: number
+    allocatedAt: number
     _all: number
   }
 
@@ -13212,6 +13247,7 @@ export namespace Prisma {
     originalQuotaId?: true
     registrationIntent?: true
     status?: true
+    allocatedAt?: true
   }
 
   export type SignupMaxAggregateInputType = {
@@ -13224,6 +13260,7 @@ export namespace Prisma {
     originalQuotaId?: true
     registrationIntent?: true
     status?: true
+    allocatedAt?: true
   }
 
   export type SignupCountAggregateInputType = {
@@ -13236,6 +13273,7 @@ export namespace Prisma {
     originalQuotaId?: true
     registrationIntent?: true
     status?: true
+    allocatedAt?: true
     _all?: true
   }
 
@@ -13321,6 +13359,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent: Date | null
     status: $Enums.SignupStatus
+    allocatedAt: Date | null
     _count: SignupCountAggregateOutputType | null
     _min: SignupMinAggregateOutputType | null
     _max: SignupMaxAggregateOutputType | null
@@ -13350,6 +13389,7 @@ export namespace Prisma {
     originalQuotaId?: boolean
     registrationIntent?: boolean
     status?: boolean
+    allocatedAt?: boolean
     Quota?: boolean | QuotaDefaultArgs<ExtArgs>
     OriginalQuota?: boolean | QuotaDefaultArgs<ExtArgs>
     Answers?: boolean | Signup$AnswersArgs<ExtArgs>
@@ -13366,6 +13406,7 @@ export namespace Prisma {
     originalQuotaId?: boolean
     registrationIntent?: boolean
     status?: boolean
+    allocatedAt?: boolean
     Quota?: boolean | QuotaDefaultArgs<ExtArgs>
     OriginalQuota?: boolean | QuotaDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["signup"]>
@@ -13380,6 +13421,7 @@ export namespace Prisma {
     originalQuotaId?: boolean
     registrationIntent?: boolean
     status?: boolean
+    allocatedAt?: boolean
     Quota?: boolean | QuotaDefaultArgs<ExtArgs>
     OriginalQuota?: boolean | QuotaDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["signup"]>
@@ -13394,9 +13436,10 @@ export namespace Prisma {
     originalQuotaId?: boolean
     registrationIntent?: boolean
     status?: boolean
+    allocatedAt?: boolean
   }
 
-  export type SignupOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "completedAt" | "createdAt" | "quotaId" | "originalQuotaId" | "registrationIntent" | "status", ExtArgs["result"]["signup"]>
+  export type SignupOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "completedAt" | "createdAt" | "quotaId" | "originalQuotaId" | "registrationIntent" | "status" | "allocatedAt", ExtArgs["result"]["signup"]>
   export type SignupInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Quota?: boolean | QuotaDefaultArgs<ExtArgs>
     OriginalQuota?: boolean | QuotaDefaultArgs<ExtArgs>
@@ -13429,6 +13472,7 @@ export namespace Prisma {
       originalQuotaId: string
       registrationIntent: Date | null
       status: $Enums.SignupStatus
+      allocatedAt: Date | null
     }, ExtArgs["result"]["signup"]>
     composites: {}
   }
@@ -13864,6 +13908,7 @@ export namespace Prisma {
     readonly originalQuotaId: FieldRef<"Signup", 'String'>
     readonly registrationIntent: FieldRef<"Signup", 'DateTime'>
     readonly status: FieldRef<"Signup", 'SignupStatus'>
+    readonly allocatedAt: FieldRef<"Signup", 'DateTime'>
   }
     
 
@@ -15444,6 +15489,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     size: number | null
+    sharedPlacesAllocation: $Enums.SharedPlacesAllocation | null
     sortId: number | null
     eventId: number | null
   }
@@ -15452,6 +15498,7 @@ export namespace Prisma {
     id: string | null
     title: string | null
     size: number | null
+    sharedPlacesAllocation: $Enums.SharedPlacesAllocation | null
     sortId: number | null
     eventId: number | null
   }
@@ -15460,6 +15507,7 @@ export namespace Prisma {
     id: number
     title: number
     size: number
+    sharedPlacesAllocation: number
     sortId: number
     eventId: number
     _all: number
@@ -15482,6 +15530,7 @@ export namespace Prisma {
     id?: true
     title?: true
     size?: true
+    sharedPlacesAllocation?: true
     sortId?: true
     eventId?: true
   }
@@ -15490,6 +15539,7 @@ export namespace Prisma {
     id?: true
     title?: true
     size?: true
+    sharedPlacesAllocation?: true
     sortId?: true
     eventId?: true
   }
@@ -15498,6 +15548,7 @@ export namespace Prisma {
     id?: true
     title?: true
     size?: true
+    sharedPlacesAllocation?: true
     sortId?: true
     eventId?: true
     _all?: true
@@ -15593,6 +15644,7 @@ export namespace Prisma {
     id: string
     title: string
     size: number | null
+    sharedPlacesAllocation: $Enums.SharedPlacesAllocation
     sortId: number
     eventId: number
     _count: QuotaCountAggregateOutputType | null
@@ -15620,6 +15672,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     size?: boolean
+    sharedPlacesAllocation?: boolean
     sortId?: boolean
     eventId?: boolean
     Event?: boolean | EventDefaultArgs<ExtArgs>
@@ -15632,6 +15685,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     size?: boolean
+    sharedPlacesAllocation?: boolean
     sortId?: boolean
     eventId?: boolean
     Event?: boolean | EventDefaultArgs<ExtArgs>
@@ -15641,6 +15695,7 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     size?: boolean
+    sharedPlacesAllocation?: boolean
     sortId?: boolean
     eventId?: boolean
     Event?: boolean | EventDefaultArgs<ExtArgs>
@@ -15650,11 +15705,12 @@ export namespace Prisma {
     id?: boolean
     title?: boolean
     size?: boolean
+    sharedPlacesAllocation?: boolean
     sortId?: boolean
     eventId?: boolean
   }
 
-  export type QuotaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "size" | "sortId" | "eventId", ExtArgs["result"]["quota"]>
+  export type QuotaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "size" | "sharedPlacesAllocation" | "sortId" | "eventId", ExtArgs["result"]["quota"]>
   export type QuotaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Event?: boolean | EventDefaultArgs<ExtArgs>
     Signups?: boolean | Quota$SignupsArgs<ExtArgs>
@@ -15679,6 +15735,7 @@ export namespace Prisma {
       id: string
       title: string
       size: number | null
+      sharedPlacesAllocation: $Enums.SharedPlacesAllocation
       sortId: number
       eventId: number
     }, ExtArgs["result"]["quota"]>
@@ -16110,6 +16167,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Quota", 'String'>
     readonly title: FieldRef<"Quota", 'String'>
     readonly size: FieldRef<"Quota", 'Int'>
+    readonly sharedPlacesAllocation: FieldRef<"Quota", 'SharedPlacesAllocation'>
     readonly sortId: FieldRef<"Quota", 'Int'>
     readonly eventId: FieldRef<"Quota", 'Int'>
   }
@@ -16685,6 +16743,7 @@ export namespace Prisma {
     registrationStartDate: 'registrationStartDate',
     registrationEndDate: 'registrationEndDate',
     openQuotaSize: 'openQuotaSize',
+    extraCapacity: 'extraCapacity',
     description: 'description',
     price: 'price',
     location: 'location',
@@ -16737,7 +16796,8 @@ export namespace Prisma {
     quotaId: 'quotaId',
     originalQuotaId: 'originalQuotaId',
     registrationIntent: 'registrationIntent',
-    status: 'status'
+    status: 'status',
+    allocatedAt: 'allocatedAt'
   };
 
   export type SignupScalarFieldEnum = (typeof SignupScalarFieldEnum)[keyof typeof SignupScalarFieldEnum]
@@ -16760,6 +16820,7 @@ export namespace Prisma {
     id: 'id',
     title: 'title',
     size: 'size',
+    sharedPlacesAllocation: 'sharedPlacesAllocation',
     sortId: 'sortId',
     eventId: 'eventId'
   };
@@ -16942,6 +17003,20 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'SharedPlacesAllocation'
+   */
+  export type EnumSharedPlacesAllocationFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SharedPlacesAllocation'>
+    
+
+
+  /**
+   * Reference to a field of type 'SharedPlacesAllocation[]'
+   */
+  export type ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SharedPlacesAllocation[]'>
     
 
 
@@ -17405,6 +17480,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeFilter<"Event"> | Date | string
     openQuotaSize?: IntFilter<"Event"> | number
+    extraCapacity?: IntFilter<"Event"> | number
     description?: StringNullableFilter<"Event"> | string | null
     price?: StringNullableFilter<"Event"> | string | null
     location?: StringNullableFilter<"Event"> | string | null
@@ -17433,6 +17509,7 @@ export namespace Prisma {
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
     description?: SortOrderInput | SortOrder
     price?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
@@ -17464,6 +17541,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeFilter<"Event"> | Date | string
     openQuotaSize?: IntFilter<"Event"> | number
+    extraCapacity?: IntFilter<"Event"> | number
     description?: StringNullableFilter<"Event"> | string | null
     price?: StringNullableFilter<"Event"> | string | null
     location?: StringNullableFilter<"Event"> | string | null
@@ -17492,6 +17570,7 @@ export namespace Prisma {
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
     description?: SortOrderInput | SortOrder
     price?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
@@ -17525,6 +17604,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     openQuotaSize?: IntWithAggregatesFilter<"Event"> | number
+    extraCapacity?: IntWithAggregatesFilter<"Event"> | number
     description?: StringNullableWithAggregatesFilter<"Event"> | string | null
     price?: StringNullableWithAggregatesFilter<"Event"> | string | null
     location?: StringNullableWithAggregatesFilter<"Event"> | string | null
@@ -17683,6 +17763,7 @@ export namespace Prisma {
     originalQuotaId?: StringFilter<"Signup"> | string
     registrationIntent?: DateTimeNullableFilter<"Signup"> | Date | string | null
     status?: EnumSignupStatusFilter<"Signup"> | $Enums.SignupStatus
+    allocatedAt?: DateTimeNullableFilter<"Signup"> | Date | string | null
     Quota?: XOR<QuotaScalarRelationFilter, QuotaWhereInput>
     OriginalQuota?: XOR<QuotaScalarRelationFilter, QuotaWhereInput>
     Answers?: AnswerListRelationFilter
@@ -17698,6 +17779,7 @@ export namespace Prisma {
     originalQuotaId?: SortOrder
     registrationIntent?: SortOrderInput | SortOrder
     status?: SortOrder
+    allocatedAt?: SortOrderInput | SortOrder
     Quota?: QuotaOrderByWithRelationInput
     OriginalQuota?: QuotaOrderByWithRelationInput
     Answers?: AnswerOrderByRelationAggregateInput
@@ -17716,6 +17798,7 @@ export namespace Prisma {
     originalQuotaId?: StringFilter<"Signup"> | string
     registrationIntent?: DateTimeNullableFilter<"Signup"> | Date | string | null
     status?: EnumSignupStatusFilter<"Signup"> | $Enums.SignupStatus
+    allocatedAt?: DateTimeNullableFilter<"Signup"> | Date | string | null
     Quota?: XOR<QuotaScalarRelationFilter, QuotaWhereInput>
     OriginalQuota?: XOR<QuotaScalarRelationFilter, QuotaWhereInput>
     Answers?: AnswerListRelationFilter
@@ -17731,6 +17814,7 @@ export namespace Prisma {
     originalQuotaId?: SortOrder
     registrationIntent?: SortOrderInput | SortOrder
     status?: SortOrder
+    allocatedAt?: SortOrderInput | SortOrder
     _count?: SignupCountOrderByAggregateInput
     _max?: SignupMaxOrderByAggregateInput
     _min?: SignupMinOrderByAggregateInput
@@ -17749,6 +17833,7 @@ export namespace Prisma {
     originalQuotaId?: StringWithAggregatesFilter<"Signup"> | string
     registrationIntent?: DateTimeNullableWithAggregatesFilter<"Signup"> | Date | string | null
     status?: EnumSignupStatusWithAggregatesFilter<"Signup"> | $Enums.SignupStatus
+    allocatedAt?: DateTimeNullableWithAggregatesFilter<"Signup"> | Date | string | null
   }
 
   export type RaffleSimulationWhereInput = {
@@ -17825,6 +17910,7 @@ export namespace Prisma {
     id?: StringFilter<"Quota"> | string
     title?: StringFilter<"Quota"> | string
     size?: IntNullableFilter<"Quota"> | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFilter<"Quota"> | $Enums.SharedPlacesAllocation
     sortId?: IntFilter<"Quota"> | number
     eventId?: IntFilter<"Quota"> | number
     Event?: XOR<EventScalarRelationFilter, EventWhereInput>
@@ -17836,6 +17922,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     size?: SortOrderInput | SortOrder
+    sharedPlacesAllocation?: SortOrder
     sortId?: SortOrder
     eventId?: SortOrder
     Event?: EventOrderByWithRelationInput
@@ -17850,6 +17937,7 @@ export namespace Prisma {
     NOT?: QuotaWhereInput | QuotaWhereInput[]
     title?: StringFilter<"Quota"> | string
     size?: IntNullableFilter<"Quota"> | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFilter<"Quota"> | $Enums.SharedPlacesAllocation
     sortId?: IntFilter<"Quota"> | number
     eventId?: IntFilter<"Quota"> | number
     Event?: XOR<EventScalarRelationFilter, EventWhereInput>
@@ -17861,6 +17949,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     size?: SortOrderInput | SortOrder
+    sharedPlacesAllocation?: SortOrder
     sortId?: SortOrder
     eventId?: SortOrder
     _count?: QuotaCountOrderByAggregateInput
@@ -17877,6 +17966,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Quota"> | string
     title?: StringWithAggregatesFilter<"Quota"> | string
     size?: IntNullableWithAggregatesFilter<"Quota"> | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationWithAggregatesFilter<"Quota"> | $Enums.SharedPlacesAllocation
     sortId?: IntWithAggregatesFilter<"Quota"> | number
     eventId?: IntWithAggregatesFilter<"Quota"> | number
   }
@@ -18364,6 +18454,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -18392,6 +18483,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -18419,6 +18511,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18447,6 +18540,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18475,6 +18569,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -18499,6 +18594,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18524,6 +18620,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18675,6 +18772,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Quota: QuotaCreateNestedOneWithoutSignupsInput
     OriginalQuota: QuotaCreateNestedOneWithoutOriginalSignupsInput
     Answers?: AnswerCreateNestedManyWithoutSignupInput
@@ -18690,6 +18788,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Answers?: AnswerUncheckedCreateNestedManyWithoutSignupInput
   }
 
@@ -18701,6 +18800,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Quota?: QuotaUpdateOneRequiredWithoutSignupsNestedInput
     OriginalQuota?: QuotaUpdateOneRequiredWithoutOriginalSignupsNestedInput
     Answers?: AnswerUpdateManyWithoutSignupNestedInput
@@ -18716,6 +18816,7 @@ export namespace Prisma {
     originalQuotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Answers?: AnswerUncheckedUpdateManyWithoutSignupNestedInput
   }
 
@@ -18729,6 +18830,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
   }
 
   export type SignupUpdateManyMutationInput = {
@@ -18739,6 +18841,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type SignupUncheckedUpdateManyInput = {
@@ -18751,6 +18854,7 @@ export namespace Prisma {
     originalQuotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type RaffleSimulationCreateInput = {
@@ -18826,6 +18930,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     Event: EventCreateNestedOneWithoutQuotasInput
     Signups?: SignupCreateNestedManyWithoutQuotaInput
@@ -18836,6 +18941,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     eventId: number
     Signups?: SignupUncheckedCreateNestedManyWithoutQuotaInput
@@ -18846,6 +18952,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     Event?: EventUpdateOneRequiredWithoutQuotasNestedInput
     Signups?: SignupUpdateManyWithoutQuotaNestedInput
@@ -18856,6 +18963,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     eventId?: IntFieldUpdateOperationsInput | number
     Signups?: SignupUncheckedUpdateManyWithoutQuotaNestedInput
@@ -18866,6 +18974,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     eventId: number
   }
@@ -18874,6 +18983,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -18881,6 +18991,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     eventId?: IntFieldUpdateOperationsInput | number
   }
@@ -19326,6 +19437,7 @@ export namespace Prisma {
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
     description?: SortOrder
     price?: SortOrder
     location?: SortOrder
@@ -19345,6 +19457,7 @@ export namespace Prisma {
   export type EventAvgOrderByAggregateInput = {
     id?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
   }
 
   export type EventMaxOrderByAggregateInput = {
@@ -19356,6 +19469,7 @@ export namespace Prisma {
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
     description?: SortOrder
     price?: SortOrder
     location?: SortOrder
@@ -19381,6 +19495,7 @@ export namespace Prisma {
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
     description?: SortOrder
     price?: SortOrder
     location?: SortOrder
@@ -19400,6 +19515,7 @@ export namespace Prisma {
   export type EventSumOrderByAggregateInput = {
     id?: SortOrder
     openQuotaSize?: SortOrder
+    extraCapacity?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -19577,6 +19693,7 @@ export namespace Prisma {
     originalQuotaId?: SortOrder
     registrationIntent?: SortOrder
     status?: SortOrder
+    allocatedAt?: SortOrder
   }
 
   export type SignupMaxOrderByAggregateInput = {
@@ -19589,6 +19706,7 @@ export namespace Prisma {
     originalQuotaId?: SortOrder
     registrationIntent?: SortOrder
     status?: SortOrder
+    allocatedAt?: SortOrder
   }
 
   export type SignupMinOrderByAggregateInput = {
@@ -19601,6 +19719,7 @@ export namespace Prisma {
     originalQuotaId?: SortOrder
     registrationIntent?: SortOrder
     status?: SortOrder
+    allocatedAt?: SortOrder
   }
 
   export type EnumSignupStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -19709,6 +19828,13 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type EnumSharedPlacesAllocationFilter<$PrismaModel = never> = {
+    equals?: $Enums.SharedPlacesAllocation | EnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    in?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    not?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel> | $Enums.SharedPlacesAllocation
+  }
+
   export type SignupListRelationFilter = {
     every?: SignupWhereInput
     some?: SignupWhereInput
@@ -19723,6 +19849,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     size?: SortOrder
+    sharedPlacesAllocation?: SortOrder
     sortId?: SortOrder
     eventId?: SortOrder
   }
@@ -19737,6 +19864,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     size?: SortOrder
+    sharedPlacesAllocation?: SortOrder
     sortId?: SortOrder
     eventId?: SortOrder
   }
@@ -19745,6 +19873,7 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     size?: SortOrder
+    sharedPlacesAllocation?: SortOrder
     sortId?: SortOrder
     eventId?: SortOrder
   }
@@ -19769,6 +19898,16 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type EnumSharedPlacesAllocationWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SharedPlacesAllocation | EnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    in?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    not?: NestedEnumSharedPlacesAllocationWithAggregatesFilter<$PrismaModel> | $Enums.SharedPlacesAllocation
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel>
+    _max?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel>
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -20276,6 +20415,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type EnumSharedPlacesAllocationFieldUpdateOperationsInput = {
+    set?: $Enums.SharedPlacesAllocation
+  }
+
   export type EventUpdateOneRequiredWithoutQuotasNestedInput = {
     create?: XOR<EventCreateWithoutQuotasInput, EventUncheckedCreateWithoutQuotasInput>
     connectOrCreate?: EventCreateOrConnectWithoutQuotasInput
@@ -20622,6 +20765,13 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumSharedPlacesAllocationFilter<$PrismaModel = never> = {
+    equals?: $Enums.SharedPlacesAllocation | EnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    in?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    not?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel> | $Enums.SharedPlacesAllocation
+  }
+
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
@@ -20647,6 +20797,16 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumSharedPlacesAllocationWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SharedPlacesAllocation | EnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    in?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SharedPlacesAllocation[] | ListEnumSharedPlacesAllocationFieldRefInput<$PrismaModel>
+    not?: NestedEnumSharedPlacesAllocationWithAggregatesFilter<$PrismaModel> | $Enums.SharedPlacesAllocation
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel>
+    _max?: NestedEnumSharedPlacesAllocationFilter<$PrismaModel>
   }
 
   export type AccountCreateWithoutUserInput = {
@@ -20948,6 +21108,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     Signups?: SignupCreateNestedManyWithoutQuotaInput
     OriginalSignups?: SignupCreateNestedManyWithoutOriginalQuotaInput
@@ -20957,6 +21118,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     Signups?: SignupUncheckedCreateNestedManyWithoutQuotaInput
     OriginalSignups?: SignupUncheckedCreateNestedManyWithoutOriginalQuotaInput
@@ -21053,6 +21215,7 @@ export namespace Prisma {
     id?: StringFilter<"Quota"> | string
     title?: StringFilter<"Quota"> | string
     size?: IntNullableFilter<"Quota"> | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFilter<"Quota"> | $Enums.SharedPlacesAllocation
     sortId?: IntFilter<"Quota"> | number
     eventId?: IntFilter<"Quota"> | number
   }
@@ -21094,6 +21257,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21121,6 +21285,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21185,6 +21350,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21212,6 +21378,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21291,6 +21458,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Quota: QuotaCreateNestedOneWithoutSignupsInput
     OriginalQuota: QuotaCreateNestedOneWithoutOriginalSignupsInput
   }
@@ -21305,6 +21473,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
   }
 
   export type SignupCreateOrConnectWithoutAnswersInput = {
@@ -21364,6 +21533,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Quota?: QuotaUpdateOneRequiredWithoutSignupsNestedInput
     OriginalQuota?: QuotaUpdateOneRequiredWithoutOriginalSignupsNestedInput
   }
@@ -21378,12 +21548,14 @@ export namespace Prisma {
     originalQuotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type QuotaCreateWithoutSignupsInput = {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     Event: EventCreateNestedOneWithoutQuotasInput
     OriginalSignups?: SignupCreateNestedManyWithoutOriginalQuotaInput
@@ -21393,6 +21565,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     eventId: number
     OriginalSignups?: SignupUncheckedCreateNestedManyWithoutOriginalQuotaInput
@@ -21407,6 +21580,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     Event: EventCreateNestedOneWithoutQuotasInput
     Signups?: SignupCreateNestedManyWithoutQuotaInput
@@ -21416,6 +21590,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
     eventId: number
     Signups?: SignupUncheckedCreateNestedManyWithoutQuotaInput
@@ -21463,6 +21638,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     Event?: EventUpdateOneRequiredWithoutQuotasNestedInput
     OriginalSignups?: SignupUpdateManyWithoutOriginalQuotaNestedInput
@@ -21472,6 +21648,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     eventId?: IntFieldUpdateOperationsInput | number
     OriginalSignups?: SignupUncheckedUpdateManyWithoutOriginalQuotaNestedInput
@@ -21492,6 +21669,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     Event?: EventUpdateOneRequiredWithoutQuotasNestedInput
     Signups?: SignupUpdateManyWithoutQuotaNestedInput
@@ -21501,6 +21679,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     eventId?: IntFieldUpdateOperationsInput | number
     Signups?: SignupUncheckedUpdateManyWithoutQuotaNestedInput
@@ -21530,6 +21709,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21557,6 +21737,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21599,6 +21780,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21626,6 +21808,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21652,6 +21835,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21679,6 +21863,7 @@ export namespace Prisma {
     registrationStartDate: Date | string
     registrationEndDate: Date | string
     openQuotaSize?: number
+    extraCapacity?: number
     description?: string | null
     price?: string | null
     location?: string | null
@@ -21710,6 +21895,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     OriginalQuota: QuotaCreateNestedOneWithoutOriginalSignupsInput
     Answers?: AnswerCreateNestedManyWithoutSignupInput
   }
@@ -21723,6 +21909,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Answers?: AnswerUncheckedCreateNestedManyWithoutSignupInput
   }
 
@@ -21744,6 +21931,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Quota: QuotaCreateNestedOneWithoutSignupsInput
     Answers?: AnswerCreateNestedManyWithoutSignupInput
   }
@@ -21757,6 +21945,7 @@ export namespace Prisma {
     quotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
     Answers?: AnswerUncheckedCreateNestedManyWithoutSignupInput
   }
 
@@ -21789,6 +21978,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21816,6 +22006,7 @@ export namespace Prisma {
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
     openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
     description?: NullableStringFieldUpdateOperationsInput | string | null
     price?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21863,6 +22054,7 @@ export namespace Prisma {
     originalQuotaId?: StringFilter<"Signup"> | string
     registrationIntent?: DateTimeNullableFilter<"Signup"> | Date | string | null
     status?: EnumSignupStatusFilter<"Signup"> | $Enums.SignupStatus
+    allocatedAt?: DateTimeNullableFilter<"Signup"> | Date | string | null
   }
 
   export type SignupUpsertWithWhereUniqueWithoutOriginalQuotaInput = {
@@ -21995,6 +22187,7 @@ export namespace Prisma {
     id?: string
     title: string
     size?: number | null
+    sharedPlacesAllocation?: $Enums.SharedPlacesAllocation
     sortId: number
   }
 
@@ -22043,6 +22236,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     Signups?: SignupUpdateManyWithoutQuotaNestedInput
     OriginalSignups?: SignupUpdateManyWithoutOriginalQuotaNestedInput
@@ -22052,6 +22246,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
     Signups?: SignupUncheckedUpdateManyWithoutQuotaNestedInput
     OriginalSignups?: SignupUncheckedUpdateManyWithoutOriginalQuotaNestedInput
@@ -22061,6 +22256,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
     size?: NullableIntFieldUpdateOperationsInput | number | null
+    sharedPlacesAllocation?: EnumSharedPlacesAllocationFieldUpdateOperationsInput | $Enums.SharedPlacesAllocation
     sortId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -22148,6 +22344,7 @@ export namespace Prisma {
     originalQuotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
   }
 
   export type SignupCreateManyOriginalQuotaInput = {
@@ -22159,6 +22356,7 @@ export namespace Prisma {
     quotaId: string
     registrationIntent?: Date | string | null
     status?: $Enums.SignupStatus
+    allocatedAt?: Date | string | null
   }
 
   export type SignupUpdateWithoutQuotaInput = {
@@ -22169,6 +22367,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     OriginalQuota?: QuotaUpdateOneRequiredWithoutOriginalSignupsNestedInput
     Answers?: AnswerUpdateManyWithoutSignupNestedInput
   }
@@ -22182,6 +22381,7 @@ export namespace Prisma {
     originalQuotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Answers?: AnswerUncheckedUpdateManyWithoutSignupNestedInput
   }
 
@@ -22194,6 +22394,7 @@ export namespace Prisma {
     originalQuotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type SignupUpdateWithoutOriginalQuotaInput = {
@@ -22204,6 +22405,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Quota?: QuotaUpdateOneRequiredWithoutSignupsNestedInput
     Answers?: AnswerUpdateManyWithoutSignupNestedInput
   }
@@ -22217,6 +22419,7 @@ export namespace Prisma {
     quotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     Answers?: AnswerUncheckedUpdateManyWithoutSignupNestedInput
   }
 
@@ -22229,6 +22432,7 @@ export namespace Prisma {
     quotaId?: StringFieldUpdateOperationsInput | string
     registrationIntent?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumSignupStatusFieldUpdateOperationsInput | $Enums.SignupStatus
+    allocatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
 

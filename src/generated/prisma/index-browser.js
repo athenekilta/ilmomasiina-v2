@@ -196,6 +196,7 @@ exports.Prisma.EventScalarFieldEnum = {
   registrationStartDate: 'registrationStartDate',
   registrationEndDate: 'registrationEndDate',
   openQuotaSize: 'openQuotaSize',
+  extraCapacity: 'extraCapacity',
   description: 'description',
   price: 'price',
   location: 'location',
@@ -239,7 +240,8 @@ exports.Prisma.SignupScalarFieldEnum = {
   quotaId: 'quotaId',
   originalQuotaId: 'originalQuotaId',
   registrationIntent: 'registrationIntent',
-  status: 'status'
+  status: 'status',
+  allocatedAt: 'allocatedAt'
 };
 
 exports.Prisma.RaffleSimulationScalarFieldEnum = {
@@ -256,6 +258,7 @@ exports.Prisma.QuotaScalarFieldEnum = {
   id: 'id',
   title: 'title',
   size: 'size',
+  sharedPlacesAllocation: 'sharedPlacesAllocation',
   sortId: 'sortId',
   eventId: 'eventId'
 };
@@ -310,9 +313,17 @@ exports.QuestionType = exports.$Enums.QuestionType = {
 };
 
 exports.SignupStatus = exports.$Enums.SignupStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
+  WAITLISTED: 'WAITLISTED',
   REJECTED: 'REJECTED'
+};
+
+exports.SharedPlacesAllocation = exports.$Enums.SharedPlacesAllocation = {
+  NEVER: 'NEVER',
+  IMMEDIATE: 'IMMEDIATE',
+  AFTER_REGISTRATION_CLOSE: 'AFTER_REGISTRATION_CLOSE'
 };
 
 exports.Prisma.ModelName = {

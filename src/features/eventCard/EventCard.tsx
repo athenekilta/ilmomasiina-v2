@@ -93,8 +93,10 @@ export function EventCard({
 
             {/* Editorial tag ("Vuoden haippisin"). Deliberately not the
                 solid rectangle glued to the corner: a floating pill that
-                reads as a sticker on the picture. */}
-            {event.badgeText && (
+                reads as a sticker on the picture. Dropped once the event
+                is closed: hype has nothing left to sell, and two stacked
+                pills crowd the image for no gain. */}
+            {event.badgeText && !isClosed && (
               <span
                 className={`shadow-card max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
               >

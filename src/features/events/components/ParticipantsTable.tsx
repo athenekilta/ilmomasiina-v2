@@ -1,6 +1,3 @@
-/* Refaktoroitu erilleen [eventId].tsx:stä. Tätä komponenttia käytetään siellä.
-Tämän ja SignupsTablen voisi varmaan yhdistää*/
-
 import { useMemo } from "react";
 import { SignupRow } from "@/features/events/components/SingupRow";
 import { OriginalQuotaTitle } from "@/features/events/utils/utils";
@@ -30,7 +27,7 @@ export function ParticipantsTable({
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== "queue" ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.Signups.length} / {quota.size ?? "∞"}
+                    {quota.Signups.length} ilmoittautunutta
                   </span>
                 ) : (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">

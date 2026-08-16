@@ -25,13 +25,23 @@
 }
 
 /* Shared surfaces: minimal white cards on the beige page background, no
-   glass / wash effects. */
+   glass / wash effects. `rounded-card` (not `rounded-control`) so panels
+   across the app match the event cards on the front page — controls inside
+   them keep the tighter radius. */
 @layer components {
   .surface-panel {
-    @apply rounded-control border border-stone-200 bg-white shadow-soft;
+    /* Border only, no shadow — same treatment as the event cards on the
+       front page, so panels across the app sit on the page the same way. */
+    @apply rounded-card border border-stone-200 bg-white;
   }
 
+  /* Nested inside a panel: the page background colour, one radius step
+     tighter than the card around it. */
   .surface-muted {
-    @apply rounded-control border border-stone-200 bg-stone-100;
+    /* No border: inside a panel the colour change is the edge, and a second
+       hairline around every nested box turned the page into a grid of
+       outlines. */
+    @apply rounded-inner bg-brand-beige;
   }
+
 }
