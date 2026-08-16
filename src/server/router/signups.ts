@@ -5,6 +5,10 @@ import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import { TRPCError } from "@trpc/server";
 import { SignupStatus } from "@/generated/prisma/client";
+import {
+  getChoiceConfigurationIssues,
+  validateAndCanonicalizeSignupAnswers,
+} from "@/features/events/utils/questionAnswers";
 import { createSignupsCsv } from "../features/exports/buildSignupsCsv";
 
 export const signupsRouter = router({
@@ -179,72 +183,102 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // First get the current signup to check if it was already confirmed
-      const currentSignup = await ctx.prisma.signup.findUnique({
-        where: { id: input.signupId },
-        include: { Quota: { include: { Event: true } } },
-      });
+      const { currentSignup, newSignup } = await ctx.prisma.$transaction(
+        async (tx) => {
+          const currentSignup = await tx.signup.findUnique({
+            where: { id: input.signupId },
+            include: {
+              Quota: {
+                include: {
+                  Event: { include: { Questions: true } },
+                },
+              },
+            },
+          });
 
-      if (!currentSignup) {
-        throw new Error("Signup not found");
-      }
+          if (!currentSignup) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Signup not found",
+            });
+          }
+
+          const questions = currentSignup.Quota.Event.Questions;
+          const hasInvalidChoiceConfiguration = questions.some((question) => {
+            if (question.type !== "radio" && question.type !== "checkbox") {
+              return false;
+            }
+            return getChoiceConfigurationIssues(question.options).length > 0;
+          });
+          if (hasInvalidChoiceConfiguration) {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message:
+                "Tapahtuman monivalintakysymys on määritetty virheellisesti",
+            });
+          }
+
+          const validated = validateAndCanonicalizeSignupAnswers(
+            questions,
+            input.answers,
+          );
+          if (!validated.success) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: validated.message,
+            });
+          }
+
+          for (const answer of validated.answers) {
+            await tx.answer.upsert({
+              where: {
+                signup_and_question: {
+                  questionId: answer.questionId,
+                  signupId: input.signupId,
+                },
+              },
+              update: { answer: answer.answer },
+              create: {
+                questionId: answer.questionId,
+                signupId: input.signupId,
+                answer: answer.answer,
+              },
+            });
+          }
+
+          const firstIds = currentSignup.Quota.size
+            ? await tx.signup.findMany({
+                where: {
+                  quotaId: currentSignup.quotaId,
+                },
+                orderBy: [
+                  { createdAt: "asc" },
+                  { id: "asc" }, // tie-breaker to keep order deterministic
+                ],
+                take: currentSignup.Quota.size,
+                select: { id: true },
+              })
+            : [];
+
+          const isWithinQuota =
+            !currentSignup.Quota.size ||
+            firstIds.some((s) => s.id === input.signupId);
+
+          const signup = await tx.signup.update({
+            where: {
+              id: input.signupId,
+            },
+            data: {
+              completedAt: new Date(),
+              ...(isWithinQuota ? { status: SignupStatus.CONFIRMED } : {}),
+            },
+          });
+
+          return { currentSignup, newSignup: signup };
+        },
+      );
 
       const wasCompletedBefore = currentSignup.completedAt !== null;
-
-      // Update answers
-      for (const answer of input.answers) {
-        await ctx.prisma.answer.upsert({
-          where: {
-            signup_and_question: {
-              questionId: answer.questionId,
-              signupId: input.signupId,
-            },
-          },
-          update: {
-            answer: answer.answer,
-          },
-          create: {
-            questionId: answer.questionId,
-            signupId: input.signupId,
-            answer: answer.answer,
-          },
-        });
-      }
-
-      const newSignup = await ctx.prisma.$transaction(async (tx) => {
-        const firstIds = currentSignup.Quota.size
-          ? await tx.signup.findMany({
-              where: {
-                quotaId: currentSignup.quotaId,
-              },
-              orderBy: [
-                { createdAt: "asc" },
-                { id: "asc" }, // tie-breaker to keep order deterministic
-              ],
-              take: currentSignup.Quota.size,
-              select: { id: true },
-            })
-          : [];
-
-        const isWithinQuota =
-          !currentSignup.Quota.size ||
-          firstIds.some((s) => s.id === input.signupId);
-
-        console.log("is within quota?", isWithinQuota);
-
-        // Update signup
-        const signup = await ctx.prisma.signup.update({
-          where: {
-            id: input.signupId,
-          },
-          data: {
-            completedAt: new Date(),
-            ...(isWithinQuota ? { status: SignupStatus.CONFIRMED } : {}),
-          },
-        });
-
-        return signup;
-      });
 
       // Only send confirmation email if this is the first time being confirmed
       const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";

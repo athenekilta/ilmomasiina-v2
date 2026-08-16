@@ -3,6 +3,7 @@ import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { adminProcedure } from "../trpc/procedures/adminProcedure";
 import {
+  normalizeQuestionOptions,
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
@@ -231,6 +232,7 @@ export const eventsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
       const openQuotaSize =
         input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
@@ -260,7 +262,7 @@ export const eventsRouter = router({
           : quota.id,
       }));
 
-      const questions = input.questions.map((question) => ({
+      const questions = normalizedQuestions.map((question) => ({
         ...question,
         eventId: event.id,
       }));
@@ -295,6 +297,7 @@ export const eventsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
       // Delete quotas by IDs that are not in the input anymore and do not have signups
       const existingQuotas = await ctx.prisma.quota.findMany({
         where: { eventId: input.id },
@@ -323,12 +326,12 @@ export const eventsRouter = router({
         existingQuestions.map((question) => question.id),
       );
       const questionsToDelete = existingQuestions.filter(
-        (eq) => !input.questions.some((iq) => iq.id === eq.id),
+        (eq) => !normalizedQuestions.some((iq) => iq.id === eq.id),
       );
-      const questionsToUpdate = input.questions.filter((question) => {
+      const questionsToUpdate = normalizedQuestions.filter((question) => {
         return existingQuestionIds.has(question.id);
       });
-      const newQuestions = input.questions.filter((question) => {
+      const newQuestions = normalizedQuestions.filter((question) => {
         return !existingQuestionIds.has(question.id);
       });
 

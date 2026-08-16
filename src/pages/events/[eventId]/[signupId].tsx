@@ -1,11 +1,12 @@
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { useRouter } from "next/router";
 import { api } from "@/utils/api";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { signupFormSchema } from "../../../features/events/utils/signupFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/Input";
+import { TextArea } from "@/components/TextArea";
 import { Button } from "@/components/Button";
 import { useMemo, useState } from "react";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -14,6 +15,11 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { PageHead } from "@/features/layout/PageHead";
 import Link from "next/link";
+import {
+  decodeCheckboxAnswer,
+  encodeCheckboxAnswer,
+  validateAndCanonicalizeQuestionAnswer,
+} from "@/features/events/utils/questionAnswers";
 
 function EditSignup() {
   const router = useRouter();
@@ -50,6 +56,7 @@ function EditSignup() {
   const {
     handleSubmit,
     register,
+    control,
     setError,
     clearErrors,
     formState: { errors },
@@ -61,9 +68,20 @@ function EditSignup() {
           email: signup.email,
           answers: sortedQuestions.map((q) => {
             const existing = signup.answers.find((a) => a.questionId === q.id);
+            let answer = existing?.answer ?? "";
+            if (q.type === "checkbox") {
+              answer = encodeCheckboxAnswer(
+                decodeCheckboxAnswer(answer).filter((selection) =>
+                  q.options.includes(selection),
+                ),
+                q.options,
+              );
+            } else if (q.type === "radio" && !q.options.includes(answer)) {
+              answer = "";
+            }
             return {
               questionId: q.id,
-              answer: existing ? existing.answer : "",
+              answer,
             };
           }),
         }
@@ -72,25 +90,32 @@ function EditSignup() {
 
   const onSubmit = handleSubmit(async (values) => {
     clearErrors("answers");
-    let hasRequiredError = false;
-    sortedQuestions.forEach((q, i) => {
-      if (q.required && !(values.answers[i]?.answer?.trim() ?? "")) {
-        setError(`answers.${i}.answer`, {
+    const canonicalAnswers: { questionId: string; answer: string }[] = [];
+    let hasAnswerError = false;
+    sortedQuestions.forEach((question, index) => {
+      const result = validateAndCanonicalizeQuestionAnswer(
+        question,
+        values.answers[index]?.answer ?? "",
+      );
+      if (!result.success) {
+        setError(`answers.${index}.answer`, {
           type: "manual",
-          message: "Vastaus on pakollinen",
+          message: result.message,
         });
-        hasRequiredError = true;
+        hasAnswerError = true;
+        return;
       }
+      canonicalAnswers.push({
+        questionId: question.id,
+        answer: result.answer,
+      });
     });
-    if (hasRequiredError) return;
+    if (hasAnswerError) return;
 
     try {
       await updateMutation.mutateAsync({
         signupId: signupId!,
-        answers: values.answers.map((ans) => ({
-          questionId: ans.questionId,
-          answer: ans.answer,
-        })),
+        answers: canonicalAnswers,
       });
       alerts.success("Ilmoittautuminen onnistui");
       router.push(`/events/${eventId}`);
@@ -246,10 +271,7 @@ function EditSignup() {
                       key={question.id}
                       className="min-w-0 border-0 p-0"
                     >
-                      <label
-                        htmlFor={`answers.${idx}.answer`}
-                        className="text-brand-dark mb-2 flex flex-wrap items-baseline gap-x-1 text-sm font-semibold"
-                      >
+                      <legend className="text-brand-dark mb-2 flex flex-wrap items-baseline gap-x-1 text-sm font-semibold">
                         <span>{question.question}</span>
                         {question.required ? (
                           <span className="text-xs font-bold text-red-600">
@@ -261,20 +283,114 @@ function EditSignup() {
                             julkinen
                           </span>
                         ) : null}
-                      </label>
+                      </legend>
                       {question.public ? (
                         <p className="text-brand-secondary mb-2 text-xs leading-relaxed">
                           Tämä vastaus näkyy tapahtuman julkisessa
                           osallistujalistassa.
                         </p>
                       ) : null}
-                      <Input
-                        {...register(`answers.${idx}.answer`)}
-                        fullWidth
-                        id={`answers.${idx}.answer`}
-                        error={!!errors?.answers?.[idx]?.answer}
-                        helperText={errors?.answers?.[idx]?.answer?.message}
+                      <input
+                        type="hidden"
+                        {...register(`answers.${idx}.questionId`)}
                       />
+                      {question.type === "text" ? (
+                        <Input
+                          {...register(`answers.${idx}.answer`)}
+                          fullWidth
+                          id={`answers.${idx}.answer`}
+                          error={!!errors?.answers?.[idx]?.answer}
+                          helperText={errors?.answers?.[idx]?.answer?.message}
+                        />
+                      ) : question.type === "textarea" ? (
+                        <TextArea
+                          {...register(`answers.${idx}.answer`)}
+                          rows={4}
+                          fullWidth
+                          id={`answers.${idx}.answer`}
+                          error={!!errors?.answers?.[idx]?.answer}
+                          helperText={errors?.answers?.[idx]?.answer?.message}
+                        />
+                      ) : (
+                        <Controller
+                          control={control}
+                          name={`answers.${idx}.answer`}
+                          render={({ field }) => (
+                            <div
+                              className="space-y-2"
+                              aria-describedby={
+                                errors?.answers?.[idx]?.answer
+                                  ? `answers.${idx}.error`
+                                  : undefined
+                              }
+                              aria-invalid={!!errors?.answers?.[idx]?.answer}
+                            >
+                              {question.options.map((option, optionIdx) => {
+                                const optionId = `answer-${question.id}-${optionIdx}`;
+                                const selections =
+                                  question.type === "checkbox"
+                                    ? decodeCheckboxAnswer(field.value).filter(
+                                        (selection) =>
+                                          question.options.includes(selection),
+                                      )
+                                    : [];
+                                return (
+                                  <label
+                                    key={option}
+                                    htmlFor={optionId}
+                                    className="text-brand-dark flex cursor-pointer items-start gap-2 text-sm"
+                                  >
+                                    <input
+                                      id={optionId}
+                                      ref={
+                                        optionIdx === 0 ? field.ref : undefined
+                                      }
+                                      name={field.name}
+                                      type={question.type}
+                                      value={option}
+                                      checked={
+                                        question.type === "radio"
+                                          ? field.value === option
+                                          : selections.includes(option)
+                                      }
+                                      onBlur={field.onBlur}
+                                      onChange={() => {
+                                        if (question.type === "radio") {
+                                          field.onChange(option);
+                                          return;
+                                        }
+                                        const nextSelections =
+                                          selections.includes(option)
+                                            ? selections.filter(
+                                                (selection) =>
+                                                  selection !== option,
+                                              )
+                                            : [...selections, option];
+                                        field.onChange(
+                                          encodeCheckboxAnswer(
+                                            nextSelections,
+                                            question.options,
+                                          ),
+                                        );
+                                      }}
+                                      className="accent-brand-secondary mt-0.5 size-4"
+                                    />
+                                    <span>{option}</span>
+                                  </label>
+                                );
+                              })}
+                              {errors?.answers?.[idx]?.answer?.message ? (
+                                <p
+                                  id={`answers.${idx}.error`}
+                                  className="text-sm text-red-600"
+                                >
+                                  {errors.answers[idx].answer.message}
+                                </p>
+                              ) : null}
+                            </div>
+                          )}
+                        />
+                      )}
                     </fieldset>
                   ))}
                 </div>
@@ -302,7 +418,7 @@ function EditSignup() {
               </p>
             </div>
 
-            <div className="border-stone-200 space-y-4 border-t pt-6">
+            <div className="space-y-4 border-t border-stone-200 pt-6">
               <Button
                 type="submit"
                 color="primary"
@@ -316,7 +432,9 @@ function EditSignup() {
                   type="button"
                   className="text-danger font-medium underline-offset-2 transition-colors hover:text-rose-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                   onClick={() => setShowDeleteConfirm(true)}
-                  disabled={deleteMutation.isPending || updateMutation.isPending}
+                  disabled={
+                    deleteMutation.isPending || updateMutation.isPending
+                  }
                 >
                   {deleteMutation.isPending
                     ? "Poistetaan…"
