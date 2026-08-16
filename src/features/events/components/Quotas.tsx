@@ -125,7 +125,7 @@ export function Quotas({
       </div>
 
       {errors.Quotas && (
-        <div className="rounded-control mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
+        <div className="rounded-inner mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
           <svg
             className="text-danger mt-0.5 h-5 w-5 shrink-0"
             viewBox="0 0 20 20"
@@ -192,7 +192,7 @@ export function Quotas({
         </Droppable>
       </DragDropContext>
 
-      <div className="my-5 rounded-md bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
         <p>
         Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. 
         Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. 

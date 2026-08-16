@@ -217,7 +217,7 @@ export function RaffleSignup({
   const renderContent = () => {
     if (statusQuery.data?.phase === RaffleStatus.NOT_STARTED) {
       return (
-        <div className="mb-4 rounded-lg bg-blue-50 p-6">
+        <div className="mb-4 rounded-card bg-blue-50 p-6">
           <h3 className="text-lg font-semibold text-blue-900">
             Raffle Registration Opens In
           </h3>
@@ -230,7 +230,7 @@ export function RaffleSignup({
 
     if (statusQuery.data?.phase === RaffleStatus.REGISTRATION_OPEN) {
       return (
-        <div className="mb-4 rounded-lg bg-green-50 p-6">
+        <div className="mb-4 rounded-card bg-green-50 p-6">
           <h3 className="text-lg font-semibold text-green-900">
             Registration Open!
           </h3>
@@ -299,7 +299,7 @@ export function RaffleSignup({
           </div>
 
           {resultQuery.data && (
-            <div className="mb-4 rounded-lg bg-gray-50 p-6">
+            <div className="mb-4 rounded-card bg-gray-50 p-6">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Raffle Results
               </h3>

@@ -202,7 +202,7 @@ function EditSignup() {
 
           {isExistingSignup && (
             <div
-              className="rounded-control mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
+              className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"
             >
               Löysimme jo sinun vahvistamattoman ilmoittautumisen tähän
@@ -214,7 +214,7 @@ function EditSignup() {
           )}
 
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
-            <div className="surface-muted rounded-control border border-stone-200/90 p-4">
+            <div className="surface-muted p-4">
               <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
                 Kiintiö
               </p>
@@ -222,7 +222,7 @@ function EditSignup() {
                 {signup.Quota.title}
               </p>
             </div>
-            <div className="surface-muted rounded-control border border-stone-200/90 p-4">
+            <div className="surface-muted p-4">
               <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
                 {signup.placement.type === "QUEUE" ? "Jonossa" : "Kiintiössä"}
               </p>
@@ -236,7 +236,7 @@ function EditSignup() {
             <input type="hidden" {...register("name")} />
             <input type="hidden" {...register("email")} />
 
-            <section className="rounded-control mb-8 border border-stone-200 bg-white/50 p-4 sm:p-5">
+            <section className="rounded-inner mb-8 border border-stone-200 bg-white/50 p-4 sm:p-5">
               <h2 className="text-brand-secondary mb-4 text-[0.65rem] font-bold tracking-widest uppercase">
                 Osallistuja
               </h2>
@@ -398,7 +398,7 @@ function EditSignup() {
               </section>
             )}
 
-            <div className="surface-muted rounded-control mb-8 border border-stone-200 p-4 sm:p-5">
+            <div className="surface-muted mb-8 p-4 sm:p-5">
               <h2 className="text-brand-dark mb-3 text-sm font-semibold">
                 Ehdot
               </h2>

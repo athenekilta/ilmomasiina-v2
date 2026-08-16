@@ -19,6 +19,8 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
 import { Icon } from "@/components/Icon";
 import { Divider } from "@/components/Divider";
+import { getEventImage } from "@/features/eventCard/eventCardImage";
+import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
 
 type SignupConflictChoice = {
   candidateSignupId: string;
@@ -216,11 +218,11 @@ function Registration({
         </p>
         {isEditingUserData ? (
           <form
-            className="rounded-card mb-3 border border-stone-200 bg-white p-4"
+            className="rounded-inner mb-3 border border-stone-200 bg-white p-4"
             onSubmit={saveUserData}
           >
-            <h3 className="text-brand-secondary text-base font-bold tracking-tight sm:text-lg">
-              Konfiguroi ilmo-identiteettisi
+            <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
+              Täydennä ilmotietosi
             </h3>
             <p className="text-brand-dark mt-1 text-sm">
               Aseta nimi ja sähköposti ennen ilmoittautumista. Huomaa, että voit
@@ -277,12 +279,12 @@ function Registration({
             </div>
           </form>
         ) : (
-          <p className="surface-panel border-l-brand-primary mb-3 border-l-2 px-3 py-2 text-sm text-gray-600">
+          <p className="surface-muted border-l-brand-primary text-brand-dark/80 mb-3 border-l-2 px-3 py-2 text-sm">
             Hei{" "}
             <span className="font-medium text-gray-900">
               {storedUser?.name}
             </span>
-            , olet ilmoomassa sähköpostilla{" "}
+            , olet ilmoamassa sähköpostilla{" "}
             <span className="text-gray-900">{storedUser?.email}</span>.{" "}
             <button
               onClick={() => setIsEditingUserData(true)}
@@ -458,7 +460,7 @@ function Registration({
                         createSignupMutation.variables?.quotaId === quota.id
                       }
                     >
-                      {signupGoesToQueue ? "Ilmoo jonoon" : "Ilmoo"}
+                      {signupGoesToQueue ? "Ilmoa jonoon" : "Ilmoa"}
                     </Button>
                     {showDemoControls && (
                       <Button
@@ -568,6 +570,25 @@ function Registration({
   );
 }
 
+/* Unmounts itself when the file is missing, so the sand background shows
+   through instead of the browser's broken-image glyph. */
+function EventBannerImage({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) return null;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      aria-hidden
+      className="absolute inset-0 h-full w-full object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
@@ -584,36 +605,57 @@ export default function EventPage() {
     },
   );
 
+  // Hype has nothing left to sell once the doors are shut — same rule the
+  // cards on the front page follow.
+  const registrationClosed = event
+    ? RegistrationDate(event).isRegistrationClosed
+    : false;
+
   return (
     <>
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
+          <Link
+            href="/"
+            className="text-brand-secondary hover:text-brand-dark focus-visible:ring-brand-secondary mb-3 flex w-fit min-w-0 items-center gap-2 rounded-full text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
+          >
+            <span className="shrink-0 text-base" aria-hidden>
+              ←
+            </span>
+            <span className="min-w-0">Takaisin etusivulle</span>
+          </Link>
+
           <div
-            className={`w-full min-w-0 p-4 sm:p-5 lg:p-6 ${
+            className={`w-full min-w-0 overflow-hidden ${
               event?.draft
-                ? "rounded-control shadow-soft border border-amber-400 bg-amber-100"
+                ? "rounded-card shadow-soft border border-amber-400 bg-amber-100"
                 : "surface-panel"
             }`}
           >
-            <Link
-              href="/"
-              className="text-brand-secondary hover:text-brand-dark -mx-1 mb-5 flex min-w-0 items-center gap-2 border-b border-stone-200 pb-4 text-sm font-semibold transition-colors sm:mx-0"
-            >
-              <span className="shrink-0 text-base" aria-hidden>
-                ←
-              </span>
-              <span className="min-w-0">Takaisin etusivulle</span>
-            </Link>
+            {/* The same banner the event wears on the front page: full-bleed
+                picture, the card's own sand fading up under the title, and
+                the editorial badge in the corner. Only the proportions
+                differ — this card is far wider, so 2:1 would swallow the
+                screen. */}
+            <div className="bg-brand-sand relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/1]">
+              {event && <EventBannerImage src={getEventImage(event.id)} />}
 
-            {isLoading || !event ? (
-              <div className="flex justify-center py-16">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <>
-                <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex flex-wrap items-center gap-3">
+              {event?.badgeText && !registrationClosed && (
+                <span
+                  className={`shadow-card absolute top-4 right-4 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                >
+                  {event.badgeText}
+                </span>
+              )}
+
+              {event && (
+                <div className="absolute inset-x-0 bottom-0">
+                  <div
+                    className="from-brand-sand/91 h-10 bg-linear-to-t to-transparent"
+                    aria-hidden
+                  />
+                  <div className="bg-brand-sand/91 flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
                     <h1 className="text-brand-dark text-2xl font-extrabold uppercase sm:text-3xl">
                       {event.title}
                     </h1>
@@ -624,53 +666,66 @@ export default function EventPage() {
                       </span>
                     )}
                   </div>
-                  {isAdmin && (
-                    <Button.Link href={`/events/${event.id}/edit`}>
-                      Muokkaa tapahtumaa
-                    </Button.Link>
-                  )}
                 </div>
+              )}
+            </div>
 
-                <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
-                  <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
-                    <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
-                      Tiedot
-                    </h2>
-                    <p>
-                      <span className="text-brand-dark font-semibold">
-                        Ajankohta:{" "}
-                      </span>
-                      {formatEventDateTime(event.date)}
-                    </p>
-                    {event.location && (
+            <div className="min-w-0 p-4 sm:p-5 lg:p-6">
+              {isLoading || !event ? (
+                <div className="flex justify-center py-16">
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <>
+                  {isAdmin && (
+                    <div className="mb-6 flex justify-end">
+                      <Button.Link href={`/events/${event.id}/edit`}>
+                        Muokkaa tapahtumaa
+                      </Button.Link>
+                    </div>
+                  )}
+
+                  <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+                    <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
+                      <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                        Tiedot
+                      </h2>
                       <p>
                         <span className="text-brand-dark font-semibold">
-                          Sijainti:{" "}
+                          Ajankohta:{" "}
                         </span>
-                        {event.location}
+                        {formatEventDateTime(event.date)}
                       </p>
-                    )}
-                    <Divider spacingY="md" />
-                    <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
-                      {event.description}
+                      {event.location && (
+                        <p>
+                          <span className="text-brand-dark font-semibold">
+                            Sijainti:{" "}
+                          </span>
+                          {event.location}
+                        </p>
+                      )}
+                      <Divider spacingY="md" />
+                      <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
+                        {event.description}
+                      </div>
+                    </div>
+
+                    <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
+                      <HydrationZustand>
+                        {event && <Registration event={event} />}
+                      </HydrationZustand>
                     </div>
                   </div>
 
-                  <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
-                    <HydrationZustand>
-                      {event && <Registration event={event} />}
-                    </HydrationZustand>
-                  </div>
-                </div>
-
-                {event.signupsPublic && (
-                  <>
-                    <Divider spacingY="lg" />
-                    <ParticipantsTable event={event} />
-                  </>
-                )}
-              </>
-            )}
+                  {event.signupsPublic && (
+                    <>
+                      <Divider spacingY="lg" />
+                      <ParticipantsTable event={event} />
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </Layout>

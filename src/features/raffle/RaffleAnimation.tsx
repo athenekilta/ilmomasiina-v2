@@ -187,7 +187,7 @@ export function RaffleAnimation({
         ref={canvasRef}
         width={canvasWidth}
         height={800}
-        className="h-auto w-full rounded-lg shadow-lg"
+        className="h-auto w-full rounded-card shadow-lg"
       />
 
       {/* Countdown Overlay */}

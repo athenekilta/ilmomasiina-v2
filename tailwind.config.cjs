@@ -39,6 +39,9 @@ module.exports = {
         /* Cards and other large surfaces — clearly rounded, reads softer
            than the controls sitting inside them */
         card: "0.75rem",
+        /* Boxes nested inside a card: a step tighter than the card itself,
+           so the nesting reads as nesting rather than as two equal cards */
+        inner: "0.5rem",
       },
       colors: {
         ...colors,

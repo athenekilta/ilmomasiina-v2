@@ -49,7 +49,7 @@ export default function DesktopPage() {
               <IdentityPromptCard />
             </HydrationZustand>
 
-            <header className="mb-6 w-full">
+            <header className="mt-2 mb-4 w-full">
               <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 Tapahtumat
               </h1>

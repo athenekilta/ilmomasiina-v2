@@ -38,17 +38,22 @@ export function getEventFill(event: EnrichedEvent): EventFill {
   const countText = `${signupCount} ilmoittautunutta`;
 
   if (capacity === null || capacity === 0) {
+    // No seat count to quote when a quota is unlimited.
     return {
       level: "free",
       signupCount,
       capacity,
       label: `${countText} · tilaa jäljellä`,
       countText,
-      availabilityText: "Paljon paikkoja jäljellä",
+      availabilityText: "Ei paikkarajaa",
     };
   }
 
   const ratio = signupCount / capacity;
+  // Same shape in every state, including a full event at 0/30 — a number
+  // people can compare between cards beats three different phrasings.
+  const seatsLeft = Math.max(0, capacity - signupCount);
+  const seatsText = `${seatsLeft}/${capacity} paikkaa jäljellä`;
 
   if (ratio >= 1) {
     return {
@@ -57,7 +62,7 @@ export function getEventFill(event: EnrichedEvent): EventFill {
       capacity,
       label: `${signupCount}/${capacity} · täynnä, ilmoittautuminen jonoon`,
       countText,
-      availabilityText: "Ei paikkoja jäljellä",
+      availabilityText: seatsText,
     };
   }
 
@@ -68,7 +73,7 @@ export function getEventFill(event: EnrichedEvent): EventFill {
       capacity,
       label: `${signupCount}/${capacity} · täyttymässä`,
       countText,
-      availabilityText: "Vähän paikkoja jäljellä",
+      availabilityText: seatsText,
     };
   }
 
@@ -78,7 +83,7 @@ export function getEventFill(event: EnrichedEvent): EventFill {
     capacity,
     label: `${signupCount}/${capacity} · tilaa jäljellä`,
     countText,
-    availabilityText: "Paljon paikkoja jäljellä",
+    availabilityText: seatsText,
   };
 }
 
