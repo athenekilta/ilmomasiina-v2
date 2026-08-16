@@ -9,6 +9,12 @@ const BRAND_BEIGE = "#F4EEE7";
 const BRAND_DARK = "#333333";
 const BRAND_DANGER = "#E07A5F";
 const BRAND_LIME = "#DDE8B8";
+/* Background colour the event images are drawn on — the card banner fades
+   into this exact value, so the fade reads as part of the image. */
+const BRAND_SAND = "#EDE3D7";
+/* Loud accent, used only for the hype badge. Magenta-leaning rather than
+   warm, so it never gets mistaken for the coral that means "closed". */
+const BRAND_PINK = "#D2497F";
 
 module.exports = {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
@@ -30,6 +36,9 @@ module.exports = {
       borderRadius: {
         /* Shared buttons, inputs, selects — tight, not pill-shaped */
         control: "0.3125rem",
+        /* Cards and other large surfaces — clearly rounded, reads softer
+           than the controls sitting inside them */
+        card: "0.75rem",
       },
       colors: {
         ...colors,
@@ -44,6 +53,8 @@ module.exports = {
           dark: BRAND_DARK,
           danger: BRAND_DANGER,
           lime: BRAND_LIME,
+          sand: BRAND_SAND,
+          pink: BRAND_PINK,
         },
         gray: colors.stone,
         primary: colors.green,

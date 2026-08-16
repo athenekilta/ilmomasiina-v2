@@ -13,6 +13,7 @@
     "start": "next start",
     "prisma-deploy-migrations": "prisma migrate deploy",
     "add-fake-data": "tsx src/scripts/add-fake-data.ts",
+    "add-test-events": "tsx src/scripts/add-test-events.ts",
     "delete-signups": "tsx src/scripts/delete-signups.ts",
     "test:raffle": "tsx src/scripts/test-raffle.ts",
     "test:raffle-simulation": "tsx src/scripts/test-raffle-simulation.ts",

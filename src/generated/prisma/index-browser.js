@@ -190,6 +190,8 @@ exports.Prisma.PasswordChangeTokenScalarFieldEnum = {
 exports.Prisma.EventScalarFieldEnum = {
   id: 'id',
   title: 'title',
+  badgeText: 'badgeText',
+  badgeTone: 'badgeTone',
   date: 'date',
   registrationStartDate: 'registrationStartDate',
   registrationEndDate: 'registrationEndDate',
@@ -285,6 +287,12 @@ exports.Prisma.JsonNullValueFilter = {
 exports.UserRole = exports.$Enums.UserRole = {
   user: 'user',
   admin: 'admin'
+};
+
+exports.BadgeTone = exports.$Enums.BadgeTone = {
+  GREEN: 'GREEN',
+  PINK: 'PINK',
+  DARK: 'DARK'
 };
 
 exports.RaffleStatus = exports.$Enums.RaffleStatus = {

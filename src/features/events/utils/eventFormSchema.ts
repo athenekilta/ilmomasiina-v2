@@ -35,6 +35,10 @@ export const questionSchema = z.object({
 
 export const eventFormSchema = z.object({
   title: z.string().min(1),
+  /* Short by design: the card shows it as a single-line pill, and long
+     text would either wrap over the image or get cut off. */
+  badgeText: z.string().max(30, "Enintään 30 merkkiä").optional(),
+  badgeTone: z.enum(["GREEN", "PINK", "DARK"]).default("GREEN"),
   date: nativeDate.form.schema,
   registrationStartDate: nativeDate.form.schema,
   registrationEndDate: nativeDate.form.schema,

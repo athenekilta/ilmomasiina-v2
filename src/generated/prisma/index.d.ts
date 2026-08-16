@@ -91,6 +91,15 @@ export namespace $Enums {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const BadgeTone: {
+  GREEN: 'GREEN',
+  PINK: 'PINK',
+  DARK: 'DARK'
+};
+
+export type BadgeTone = (typeof BadgeTone)[keyof typeof BadgeTone]
+
+
 export const RaffleStatus: {
   NOT_STARTED: 'NOT_STARTED',
   REGISTRATION_OPEN: 'REGISTRATION_OPEN',
@@ -124,6 +133,10 @@ export type SignupStatus = (typeof SignupStatus)[keyof typeof SignupStatus]
 export type UserRole = $Enums.UserRole
 
 export const UserRole: typeof $Enums.UserRole
+
+export type BadgeTone = $Enums.BadgeTone
+
+export const BadgeTone: typeof $Enums.BadgeTone
 
 export type RaffleStatus = $Enums.RaffleStatus
 
@@ -9564,6 +9577,8 @@ export namespace Prisma {
   export type EventMinAggregateOutputType = {
     id: number | null
     title: string | null
+    badgeText: string | null
+    badgeTone: $Enums.BadgeTone | null
     date: Date | null
     registrationStartDate: Date | null
     registrationEndDate: Date | null
@@ -9587,6 +9602,8 @@ export namespace Prisma {
   export type EventMaxAggregateOutputType = {
     id: number | null
     title: string | null
+    badgeText: string | null
+    badgeTone: $Enums.BadgeTone | null
     date: Date | null
     registrationStartDate: Date | null
     registrationEndDate: Date | null
@@ -9610,6 +9627,8 @@ export namespace Prisma {
   export type EventCountAggregateOutputType = {
     id: number
     title: number
+    badgeText: number
+    badgeTone: number
     date: number
     registrationStartDate: number
     registrationEndDate: number
@@ -9645,6 +9664,8 @@ export namespace Prisma {
   export type EventMinAggregateInputType = {
     id?: true
     title?: true
+    badgeText?: true
+    badgeTone?: true
     date?: true
     registrationStartDate?: true
     registrationEndDate?: true
@@ -9668,6 +9689,8 @@ export namespace Prisma {
   export type EventMaxAggregateInputType = {
     id?: true
     title?: true
+    badgeText?: true
+    badgeTone?: true
     date?: true
     registrationStartDate?: true
     registrationEndDate?: true
@@ -9691,6 +9714,8 @@ export namespace Prisma {
   export type EventCountAggregateInputType = {
     id?: true
     title?: true
+    badgeText?: true
+    badgeTone?: true
     date?: true
     registrationStartDate?: true
     registrationEndDate?: true
@@ -9801,6 +9826,8 @@ export namespace Prisma {
   export type EventGroupByOutputType = {
     id: number
     title: string
+    badgeText: string | null
+    badgeTone: $Enums.BadgeTone
     date: Date
     registrationStartDate: Date
     registrationEndDate: Date
@@ -9843,6 +9870,8 @@ export namespace Prisma {
   export type EventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
+    badgeText?: boolean
+    badgeTone?: boolean
     date?: boolean
     registrationStartDate?: boolean
     registrationEndDate?: boolean
@@ -9870,6 +9899,8 @@ export namespace Prisma {
   export type EventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
+    badgeText?: boolean
+    badgeTone?: boolean
     date?: boolean
     registrationStartDate?: boolean
     registrationEndDate?: boolean
@@ -9893,6 +9924,8 @@ export namespace Prisma {
   export type EventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     title?: boolean
+    badgeText?: boolean
+    badgeTone?: boolean
     date?: boolean
     registrationStartDate?: boolean
     registrationEndDate?: boolean
@@ -9916,6 +9949,8 @@ export namespace Prisma {
   export type EventSelectScalar = {
     id?: boolean
     title?: boolean
+    badgeText?: boolean
+    badgeTone?: boolean
     date?: boolean
     registrationStartDate?: boolean
     registrationEndDate?: boolean
@@ -9936,7 +9971,7 @@ export namespace Prisma {
     raffleStatus?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "badgeText" | "badgeTone" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Questions?: boolean | Event$QuestionsArgs<ExtArgs>
     Quotas?: boolean | Event$QuotasArgs<ExtArgs>
@@ -9956,6 +9991,11 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       title: string
+      /**
+       * Free-form marketing tag shown on the event card, e.g. "Vuoden haippisin"
+       */
+      badgeText: string | null
+      badgeTone: $Enums.BadgeTone
       date: Date
       registrationStartDate: Date
       registrationEndDate: Date
@@ -10402,6 +10442,8 @@ export namespace Prisma {
   interface EventFieldRefs {
     readonly id: FieldRef<"Event", 'Int'>
     readonly title: FieldRef<"Event", 'String'>
+    readonly badgeText: FieldRef<"Event", 'String'>
+    readonly badgeTone: FieldRef<"Event", 'BadgeTone'>
     readonly date: FieldRef<"Event", 'DateTime'>
     readonly registrationStartDate: FieldRef<"Event", 'DateTime'>
     readonly registrationEndDate: FieldRef<"Event", 'DateTime'>
@@ -16637,6 +16679,8 @@ export namespace Prisma {
   export const EventScalarFieldEnum: {
     id: 'id',
     title: 'title',
+    badgeText: 'badgeText',
+    badgeTone: 'badgeTone',
     date: 'date',
     registrationStartDate: 'registrationStartDate',
     registrationEndDate: 'registrationEndDate',
@@ -16828,6 +16872,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BadgeTone'
+   */
+  export type EnumBadgeToneFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BadgeTone'>
+    
+
+
+  /**
+   * Reference to a field of type 'BadgeTone[]'
+   */
+  export type ListEnumBadgeToneFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BadgeTone[]'>
     
 
 
@@ -17341,6 +17399,8 @@ export namespace Prisma {
     NOT?: EventWhereInput | EventWhereInput[]
     id?: IntFilter<"Event"> | number
     title?: StringFilter<"Event"> | string
+    badgeText?: StringNullableFilter<"Event"> | string | null
+    badgeTone?: EnumBadgeToneFilter<"Event"> | $Enums.BadgeTone
     date?: DateTimeFilter<"Event"> | Date | string
     registrationStartDate?: DateTimeFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeFilter<"Event"> | Date | string
@@ -17367,6 +17427,8 @@ export namespace Prisma {
   export type EventOrderByWithRelationInput = {
     id?: SortOrder
     title?: SortOrder
+    badgeText?: SortOrderInput | SortOrder
+    badgeTone?: SortOrder
     date?: SortOrder
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
@@ -17396,6 +17458,8 @@ export namespace Prisma {
     OR?: EventWhereInput[]
     NOT?: EventWhereInput | EventWhereInput[]
     title?: StringFilter<"Event"> | string
+    badgeText?: StringNullableFilter<"Event"> | string | null
+    badgeTone?: EnumBadgeToneFilter<"Event"> | $Enums.BadgeTone
     date?: DateTimeFilter<"Event"> | Date | string
     registrationStartDate?: DateTimeFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeFilter<"Event"> | Date | string
@@ -17422,6 +17486,8 @@ export namespace Prisma {
   export type EventOrderByWithAggregationInput = {
     id?: SortOrder
     title?: SortOrder
+    badgeText?: SortOrderInput | SortOrder
+    badgeTone?: SortOrder
     date?: SortOrder
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
@@ -17453,6 +17519,8 @@ export namespace Prisma {
     NOT?: EventScalarWhereWithAggregatesInput | EventScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Event"> | number
     title?: StringWithAggregatesFilter<"Event"> | string
+    badgeText?: StringNullableWithAggregatesFilter<"Event"> | string | null
+    badgeTone?: EnumBadgeToneWithAggregatesFilter<"Event"> | $Enums.BadgeTone
     date?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     registrationStartDate?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     registrationEndDate?: DateTimeWithAggregatesFilter<"Event"> | Date | string
@@ -18290,6 +18358,8 @@ export namespace Prisma {
 
   export type EventCreateInput = {
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -18316,6 +18386,8 @@ export namespace Prisma {
   export type EventUncheckedCreateInput = {
     id?: number
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -18341,6 +18413,8 @@ export namespace Prisma {
 
   export type EventUpdateInput = {
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18367,6 +18441,8 @@ export namespace Prisma {
   export type EventUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18393,6 +18469,8 @@ export namespace Prisma {
   export type EventCreateManyInput = {
     id?: number
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -18415,6 +18493,8 @@ export namespace Prisma {
 
   export type EventUpdateManyMutationInput = {
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18438,6 +18518,8 @@ export namespace Prisma {
   export type EventUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19191,6 +19273,13 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type EnumBadgeToneFilter<$PrismaModel = never> = {
+    equals?: $Enums.BadgeTone | EnumBadgeToneFieldRefInput<$PrismaModel>
+    in?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    not?: NestedEnumBadgeToneFilter<$PrismaModel> | $Enums.BadgeTone
+  }
+
   export type EnumRaffleStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RaffleStatus | EnumRaffleStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
@@ -19231,6 +19320,8 @@ export namespace Prisma {
   export type EventCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    badgeText?: SortOrder
+    badgeTone?: SortOrder
     date?: SortOrder
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
@@ -19259,6 +19350,8 @@ export namespace Prisma {
   export type EventMaxOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    badgeText?: SortOrder
+    badgeTone?: SortOrder
     date?: SortOrder
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
@@ -19282,6 +19375,8 @@ export namespace Prisma {
   export type EventMinOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
+    badgeText?: SortOrder
+    badgeTone?: SortOrder
     date?: SortOrder
     registrationStartDate?: SortOrder
     registrationEndDate?: SortOrder
@@ -19321,6 +19416,16 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type EnumBadgeToneWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BadgeTone | EnumBadgeToneFieldRefInput<$PrismaModel>
+    in?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    not?: NestedEnumBadgeToneWithAggregatesFilter<$PrismaModel> | $Enums.BadgeTone
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBadgeToneFilter<$PrismaModel>
+    _max?: NestedEnumBadgeToneFilter<$PrismaModel>
   }
 
   export type EnumRaffleStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -19842,6 +19947,10 @@ export namespace Prisma {
     connectOrCreate?: RaffleSimulationCreateOrConnectWithoutEventInput | RaffleSimulationCreateOrConnectWithoutEventInput[]
     createMany?: RaffleSimulationCreateManyEventInputEnvelope
     connect?: RaffleSimulationWhereUniqueInput | RaffleSimulationWhereUniqueInput[]
+  }
+
+  export type EnumBadgeToneFieldUpdateOperationsInput = {
+    set?: $Enums.BadgeTone
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -20395,6 +20504,13 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumBadgeToneFilter<$PrismaModel = never> = {
+    equals?: $Enums.BadgeTone | EnumBadgeToneFieldRefInput<$PrismaModel>
+    in?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    not?: NestedEnumBadgeToneFilter<$PrismaModel> | $Enums.BadgeTone
+  }
+
   export type NestedEnumRaffleStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RaffleStatus | EnumRaffleStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
@@ -20427,6 +20543,16 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumBadgeToneWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BadgeTone | EnumBadgeToneFieldRefInput<$PrismaModel>
+    in?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
+    not?: NestedEnumBadgeToneWithAggregatesFilter<$PrismaModel> | $Enums.BadgeTone
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBadgeToneFilter<$PrismaModel>
+    _max?: NestedEnumBadgeToneFilter<$PrismaModel>
   }
 
   export type NestedEnumRaffleStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -20962,6 +21088,8 @@ export namespace Prisma {
 
   export type EventCreateWithoutQuestionsInput = {
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -20987,6 +21115,8 @@ export namespace Prisma {
   export type EventUncheckedCreateWithoutQuestionsInput = {
     id?: number
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -21049,6 +21179,8 @@ export namespace Prisma {
 
   export type EventUpdateWithoutQuestionsInput = {
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21074,6 +21206,8 @@ export namespace Prisma {
   export type EventUncheckedUpdateWithoutQuestionsInput = {
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21390,6 +21524,8 @@ export namespace Prisma {
 
   export type EventCreateWithoutRaffleSimulationsInput = {
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -21415,6 +21551,8 @@ export namespace Prisma {
   export type EventUncheckedCreateWithoutRaffleSimulationsInput = {
     id?: number
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -21455,6 +21593,8 @@ export namespace Prisma {
 
   export type EventUpdateWithoutRaffleSimulationsInput = {
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21480,6 +21620,8 @@ export namespace Prisma {
   export type EventUncheckedUpdateWithoutRaffleSimulationsInput = {
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21504,6 +21646,8 @@ export namespace Prisma {
 
   export type EventCreateWithoutQuotasInput = {
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -21529,6 +21673,8 @@ export namespace Prisma {
   export type EventUncheckedCreateWithoutQuotasInput = {
     id?: number
     title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
     date: Date | string
     registrationStartDate: Date | string
     registrationEndDate: Date | string
@@ -21637,6 +21783,8 @@ export namespace Prisma {
 
   export type EventUpdateWithoutQuotasInput = {
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -21662,6 +21810,8 @@ export namespace Prisma {
   export type EventUncheckedUpdateWithoutQuotasInput = {
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
     registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string

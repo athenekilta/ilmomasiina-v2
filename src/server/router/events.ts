@@ -215,6 +215,8 @@ export const eventsRouter = router({
     .input(
       z.object({
         title: z.string(),
+        badgeText: z.string().optional(),
+        badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
         date: z.date(),
         registrationStartDate: z.date(),
         registrationEndDate: z.date(),
@@ -237,6 +239,9 @@ export const eventsRouter = router({
       const event = await ctx.prisma.event.create({
         data: {
           title: input.title,
+          // Empty input means "no badge" rather than an empty pill.
+          badgeText: input.badgeText?.trim() || null,
+          badgeTone: input.badgeTone ?? "GREEN",
           date: input.date,
           registrationStartDate: input.registrationStartDate,
           registrationEndDate: input.registrationEndDate,
@@ -280,6 +285,8 @@ export const eventsRouter = router({
       z.object({
         id: z.number(),
         title: z.string(),
+        badgeText: z.string().optional(),
+        badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
         date: z.date(),
         registrationStartDate: z.date(),
         registrationEndDate: z.date(),
@@ -342,6 +349,8 @@ export const eventsRouter = router({
         },
         data: {
           title: input.title,
+          badgeText: input.badgeText?.trim() || null,
+          badgeTone: input.badgeTone ?? "GREEN",
           date: input.date,
           registrationStartDate: input.registrationStartDate,
           registrationEndDate: input.registrationEndDate,

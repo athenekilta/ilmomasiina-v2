@@ -113,6 +113,8 @@ export function EventForm({ editId }: EventFormProps) {
       price: editEvent?.price || "",
       location: editEvent?.location || "",
       title: editEvent?.title || "",
+      badgeText: editEvent?.badgeText || "",
+      badgeTone: editEvent?.badgeTone || "GREEN",
       webpageUrl: editEvent?.webpageUrl || "",
       description: editEvent?.description || "",
       draft: editEvent?.draft ?? true,

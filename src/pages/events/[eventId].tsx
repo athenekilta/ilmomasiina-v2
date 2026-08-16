@@ -14,7 +14,7 @@ import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityFo
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import Link from "next/link";
-import { formatDate, formatRegistration } from "@/utils/format";
+import { formatEventDateTime, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
 import { Icon } from "@/components/Icon";
@@ -330,7 +330,7 @@ export default function EventPage() {
                       <span className="text-brand-dark font-semibold">
                         Ajankohta:{" "}
                       </span>
-                      {formatDate(event.date)}
+                      {formatEventDateTime(event.date)}
                     </p>
                     {event.location && (
                       <p>

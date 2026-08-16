@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { UserRound } from "lucide-react";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { signOut } from "@/server/auth/auth-client";
 import { routes } from "@/utils/routes";
@@ -145,12 +146,16 @@ export function HeaderAccountMenu() {
   if (sessionLoading) {
     return (
       <div
-        className="rounded-control h-9 w-28 shrink-0 bg-white/20 sm:w-36"
+        className="rounded-control h-9 w-9 shrink-0 bg-white/20 sm:w-36"
         aria-hidden
       />
     );
   }
 
+  /* Mobile is the primary target and the header only has room for one of
+     the two: the site title or the name + email lines. So below `sm` the
+     trigger collapses to a single icon (with a dot when an identity is
+     already stored) and the text moves into the panel it opens. */
   return (
     <div className="relative shrink-0">
       <button
@@ -159,9 +164,24 @@ export function HeaderAccountMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="rounded-control focus-visible:ring-offset-brand-primary flex max-w-[min(14rem,46vw)] items-center gap-1 py-1.5 pr-1.5 pl-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:pl-2.5"
+        aria-label={
+          sessionUser || displayLine
+            ? `Ilmoittautumistiedot: ${displayLine ?? subLine ?? ""}`
+            : "Aseta ilmoittautumistiedot"
+        }
+        className="rounded-control focus-visible:ring-offset-brand-primary flex items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
       >
-        <span className="min-w-0 flex-1 text-left">
+        <span className="relative shrink-0 sm:hidden">
+          <UserRound size={24} strokeWidth={2.25} aria-hidden />
+          {displayLine && (
+            <span
+              className="bg-brand-lime ring-brand-primary absolute -top-0.5 -right-0.5 size-2.5 rounded-full ring-2"
+              aria-hidden
+            />
+          )}
+        </span>
+
+        <span className="hidden min-w-0 flex-1 text-left sm:block">
           <span className="block truncate text-xs font-semibold sm:text-sm">
             {triggerLabel}
           </span>
@@ -171,7 +191,7 @@ export function HeaderAccountMenu() {
         </span>
         <Icon
           icon="expand_more"
-          className={`shrink-0 text-white/90 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`hidden shrink-0 text-white/90 transition-transform duration-200 sm:block ${open ? "rotate-180" : ""}`}
           size={20}
         />
       </button>
