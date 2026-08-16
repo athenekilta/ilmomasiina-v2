@@ -3,7 +3,7 @@ import { z } from "zod";
 import { isPast, addDays } from "date-fns";
 import { router } from "../trpc/trpc";
 import { userSignUpSchema } from "@/features/auth/utils/userSignUpSchema";
-import { hashPassword } from "../features/password/password";
+import { hashPassword } from "better-auth/crypto";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 
 export const passwordChangeRouter = router({
@@ -12,7 +12,7 @@ export const passwordChangeRouter = router({
       z.object({
         password: z.string().min(8),
         token: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const token = await ctx.prisma.passwordChangeToken.findFirst({
@@ -37,10 +37,22 @@ export const passwordChangeRouter = router({
 
       const hashedPassword = await hashPassword(input.password);
 
-      await ctx.prisma.user.update({
+      const credentialAccount = await ctx.prisma.account.findFirst({
         where: {
-          email: token.email,
+          providerId: "credential",
+          user: { email: token.email },
         },
+      });
+
+      if (!credentialAccount) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No password login found for this account",
+        });
+      }
+
+      await ctx.prisma.account.update({
+        where: { id: credentialAccount.id },
         data: {
           password: hashedPassword,
         },
@@ -57,7 +69,7 @@ export const passwordChangeRouter = router({
     .input(
       z.object({
         email: userSignUpSchema.shape.email,
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       const user = await ctx.prisma.user.findUnique({
@@ -89,7 +101,9 @@ export const passwordChangeRouter = router({
         encodeURIComponent(token.email),
       ].join("/");
 
-      await (await ctx.mail.templates.passwordChange({ passwordChangeUrl })).send({
+      await (
+        await ctx.mail.templates.passwordChange({ passwordChangeUrl })
+      ).send({
         to: { displayName: user.name ?? undefined, address: user.email },
         from: "DoNotReply@athene.fi",
       });
@@ -98,7 +112,7 @@ export const passwordChangeRouter = router({
     .input(
       z.object({
         token: z.string(),
-      })
+      }),
     )
     .query(async ({ input, ctx }) => {
       const token = await ctx.prisma.passwordChangeToken.findFirst({
