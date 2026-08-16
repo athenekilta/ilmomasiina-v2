@@ -15,7 +15,6 @@ import { EventCard } from "@/features/eventCard/EventCard";
 import {
   eventCardSpanClassName,
   getEventCardSize,
-  getEventEmphasis,
   pickBigEventIds,
 } from "@/features/eventCard/eventCardVariant";
 import { Button } from "@/components/Button";
@@ -41,35 +40,25 @@ export default function DesktopPage() {
     ? adminEventsQuery.isLoading
     : regularEventsQuery.isLoading;
 
-  // Events are sorted by date ascending, so the first one still ahead of us
-  // is the next event coming up — it gets emphasized on the grid.
-  const now = new Date();
-  const nextUpcomingEvent = eventsData?.find((event) => event.date >= now);
   const bigEventIds = eventsData
     ? pickBigEventIds(eventsData)
     : new Set<number>();
-  const topCandidateId = [...bigEventIds][0];
 
   // Rendered in plain chronological order — no reordering to cluster big
   // squares together. The dense grid just plants each big square wherever
   // it naturally falls among the small ones, so multiple big squares land
   // on different sides of the grid instead of piling up on one edge.
-  const sizedEvents = eventsData?.map((event) => {
-    const isBig = bigEventIds.has(event.id);
-    const emphasis = getEventEmphasis(
-      event,
-      event.id === topCandidateId,
-      event.id === nextUpcomingEvent?.id,
-    );
-    return { event, emphasis, size: getEventCardSize(isBig) };
-  });
+  const sizedEvents = eventsData?.map((event) => ({
+    event,
+    size: getEventCardSize(bigEventIds.has(event.id)),
+  }));
 
   return (
     <>
       <PageHead title="Tapahtumat" />
       <Layout>
         {!isLoading && eventsData ? (
-          <div className="flex w-full flex-col pb-4">
+          <div className="flex-col pb-4 sm:mx-15">
             <header className="border-brand-secondary mb-8 w-full border-b-2 pb-4">
               <h1 className="text-brand-dark text-3xl font-bold tracking-tight sm:text-4xl">
                 Tapahtumat
@@ -81,7 +70,7 @@ export default function DesktopPage() {
                 className="mb-8 w-full"
                 aria-label="Hallinnan suodattimet"
               >
-                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
                   Näkymä
                 </h2>
                 <div className="flex flex-wrap gap-3">
@@ -126,25 +115,23 @@ export default function DesktopPage() {
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
-              {/* Fixed 3 equal-width columns — column tracks never resize, only
-                  how many a card spans, capped at 2 columns so a card never
-                  takes over the whole row. `aspect-square` ties each cell's
-                  height to its own column width instead of a guessed rem
-                  value, so cells are actually square at any viewport width —
-                  a 2×2 "hero" square is exactly as tall as it is wide, same
-                  as a 1×1 "standard" square. */}
-              <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 sm:grid-flow-dense sm:grid-cols-3">
-                {sizedEvents?.map(({ event, emphasis, size }) => (
+              {/* Fixed equal-width columns — column tracks never resize,
+                  only how many a card spans, capped at 2 columns (and 2
+                  rows, to match) so a card never takes over the whole
+                  row. Cards stretch to fill their row (the grid default)
+                  — a row's height is set by its tallest card regardless,
+                  so a shorter neighbor must stretch too or the page
+                  background would show through the gap below it. Mobile
+                  stacks to a single column, where cards need a gap
+                  between them instead of relying on the grid's row
+                  boundaries. */}
+              <ul className="grid w-full list-none grid-cols-1 gap-3 p-0 sm:grid-flow-dense sm:grid-cols-3 sm:gap-0">
+                {sizedEvents?.map(({ event, size }) => (
                   <li
                     key={event.id}
-                    className={`min-w-0 sm:aspect-square ${eventCardSpanClassName[size]}`}
+                    className={`min-w-0 ${eventCardSpanClassName[size]}`}
                   >
-                    <EventCard
-                      event={event}
-                      isAdmin={isAdmin}
-                      size={size}
-                      emphasis={emphasis}
-                    />
+                    <EventCard event={event} isAdmin={isAdmin} size={size} />
                   </li>
                 ))}
               </ul>
@@ -152,7 +139,7 @@ export default function DesktopPage() {
 
             {isAdmin && (
               <div className="mt-10 w-full border-t border-stone-300 pt-8">
-                <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
                   Hallinta
                 </h2>
                 <Button.Link

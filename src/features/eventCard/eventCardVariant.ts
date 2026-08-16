@@ -11,16 +11,10 @@ export type EnrichedEvent = Event & {
 };
 
 /**
- * Why an event is being promoted, in priority order — purely informational
- * (drives the badge), independent of card size: an event can be "open" and
- * still render as a small square if it didn't make the big-square cut.
- */
-export type EventEmphasis = "spotlight" | "open" | "next" | null;
-
-/**
- * Card size tier. Only two shapes, both square — no elongated "wide" or
- * "tall" cards. "hero" is a 2×2 block (still leaves a column free so other
- * events stay visible alongside it), "standard" is a single 1×1 cell.
+ * Card size tier. "hero" spans 2 grid columns (still leaves at least one
+ * column free so other events stay visible alongside it), "standard" is a
+ * single column. Both use a square image; a hero card is simply wider,
+ * which makes its image bigger too.
  */
 export type EventCardSize = "hero" | "standard";
 
@@ -74,24 +68,6 @@ export function pickBigEventIds(events: EnrichedEvent[]): Set<number> {
   );
 }
 
-/**
- * Emphasis for a single event — purely for the badge/label, not sizing.
- * The single top-ranked candidate reads as "spotlight", other open
- * registrations as "open", and the next chronological event (when nothing
- * is open) as "next".
- */
-export function getEventEmphasis(
-  event: EnrichedEvent,
-  isTopCandidate: boolean,
-  isNextUpcoming: boolean,
-): EventEmphasis {
-  if (isTopCandidate) return "spotlight";
-  const { isRegistrationOpen } = RegistrationDate(event);
-  if (isRegistrationOpen) return "open";
-  if (isNextUpcoming) return "next";
-  return null;
-}
-
 /** Whether an open event's registration window closes within 48h. */
 export function isClosingSoon(event: EnrichedEvent): boolean {
   const { isRegistrationOpen } = RegistrationDate(event);
@@ -107,12 +83,12 @@ export function getEventCardSize(isBig: boolean): EventCardSize {
 
 /**
  * Static Tailwind classes for each size tier — kept literal for the JIT
- * scanner. The grid is a fixed 3 equal-width columns (see index.tsx), so
- * every span below is a multiple of the same column/row track — size
- * variety comes purely from how many of those equal cells a card eats,
- * capped at 2×2 so a card never spans the full row or dominates the
- * viewport; there's always at least one column left over for another
- * event to stay visible next to the biggest card.
+ * scanner. Every card uses the same image aspect ratio, so a hero card
+ * (2 columns wide) naturally needs about twice the height of a standard
+ * card (1 column) to keep its image proportioned the same way — hence
+ * `row-span-2` here. Without it, the grid would stretch standard cards
+ * in the same row up to the hero's full height, turning them into tall,
+ * mostly-blank rectangles instead of matching boxes.
  */
 export const eventCardSpanClassName: Record<EventCardSize, string> = {
   hero: "sm:col-span-2 sm:row-span-2",
