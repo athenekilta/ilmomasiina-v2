@@ -90,7 +90,7 @@ export function Questions({
     <FieldSet title="Kysymykset">
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuestion()} type="button">
-          Lisää Kysymys
+          Lisää kysymys
         </Button>
       </div>
       <DragDropContext onDragEnd={onDragEndQuestions}>

@@ -1,6 +1,7 @@
 import type { Quota } from "@/generated/prisma";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { Divider } from "@/components/Divider";
 import type { FieldErrorsImpl } from "react-hook-form";
 
 export function QuotaRow({
@@ -16,70 +17,79 @@ export function QuotaRow({
   quotasLength: number;
   errors: FieldErrorsImpl<Quota> | undefined;
 }) {
+  const canDelete = quotasLength >= 2 && quota.signupCount === 0;
+
   return (
-    <div className="my-1 gap-6 rounded-md border-2 border-slate-300 p-3 odd:bg-gray-100 even:bg-slate-100">
-      <div className="mb-3 flex max-w-3/4 flex-col gap-6">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-row items-center gap-2">
-            <label htmlFor="name" className="w-28">
-              Kiintiön nimi:
-            </label>
-            <Input
-              title="Nimi"
-              value={quota.title}
-              onChange={(value) =>
-                onChange({ ...quota, title: value.target.value })
-              }
-              className="w-1/2"
-              error={!!errors?.title}
-              helperText={errors?.title ? errors.title.message : undefined}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-row items-center gap-2">
-            <label htmlFor="size" className="w-28">
-              Kiintiön koko:{" "}
-            </label>
-            <Input
-              value={quota.size || ""}
-              type="number"
-              min={0}
-              onChange={(value) =>
-                onChange({ ...quota, size: value.target.valueAsNumber })
-              }
-              className="w-1/2"
-            />
-          </div>
-          <p className="text-slate-500">
+    <div className="surface-muted flex flex-col gap-5 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+        <label
+          htmlFor={`quota-title-${quota.id}`}
+          className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
+        >
+          Kiintiön nimi
+        </label>
+        <Input
+          id={`quota-title-${quota.id}`}
+          title="Nimi"
+          value={quota.title}
+          onChange={(value) =>
+            onChange({ ...quota, title: value.target.value })
+          }
+          fullWidth
+          error={!!errors?.title}
+          helperText={errors?.title ? errors.title.message : undefined}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+        <label
+          htmlFor={`quota-size-${quota.id}`}
+          className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
+        >
+          Kiintiön koko
+        </label>
+        <div className="flex w-full flex-col gap-1 sm:max-w-xs">
+          <Input
+            id={`quota-size-${quota.id}`}
+            value={quota.size || ""}
+            type="number"
+            min={0}
+            onChange={(value) =>
+              onChange({ ...quota, size: value.target.valueAsNumber })
+            }
+            fullWidth
+          />
+          <p className="text-xs leading-relaxed text-gray-600">
             Jos kiintiön kokoa ei ole rajoitettu, jätä kenttä tyhjäksi.
           </p>
         </div>
-        <div className="mt-4 flex flex-row items-center gap-5">
-          <Button
-            onClick={() => deleteQuota(quota.id)}
-            type="button"
-            disabled={quotasLength < 2 || quota.signupCount > 0}
-            color="danger"
-          >
-            Poista kiintiö
-          </Button>
-          <ul className="text-slate-500">
-            {quota.signupCount > 0 && (
-              <li>
-                Kiintiössä on {quota.signupCount}{" "}
-                {quota.signupCount == 1
-                  ? "ilmoittautuminen"
-                  : "ilmoittautumista"}
-                , joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset
-                toiseen kiintiöön ennen tämän kiintiön poistamista.
-              </li>
-            )}
-            {quotasLength < 2 && (
-              <li>Tapahtuman ainoaa kiintiötä ei voi poistaa.</li>
-            )}
-          </ul>
-        </div>
+      </div>
+
+      <Divider spacingY="none" />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          onClick={() => deleteQuota(quota.id)}
+          type="button"
+          size="small"
+          disabled={!canDelete}
+          color="danger"
+        >
+          Poista kiintiö
+        </Button>
+        {quota.signupCount > 0 && (
+          <p className="text-xs leading-relaxed text-gray-600">
+            Kiintiössä on {quota.signupCount}{" "}
+            {quota.signupCount === 1 ? "ilmoittautuminen" : "ilmoittautumista"}
+            , joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset
+            toiseen kiintiöön ennen tämän kiintiön poistamista.
+          </p>
+        )}
+        {quotasLength < 2 && (
+          <p className="text-xs leading-relaxed text-gray-600">
+            Tapahtuman ainoaa kiintiötä ei voi poistaa.
+          </p>
+        )}
       </div>
     </div>
   );

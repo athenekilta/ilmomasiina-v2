@@ -17,6 +17,8 @@ import Link from "next/link";
 import { formatDate, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
+import { Icon } from "@/components/Icon";
+import { Divider } from "@/components/Divider";
 
 function Registration({
   event,
@@ -277,81 +279,81 @@ export default function EventPage() {
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
-          <div
-            className={`rounded-control shadow-soft w-full min-w-0 border p-4 sm:p-5 lg:p-6 ${
-              event?.draft
-                ? "border-amber-400 bg-amber-100"
-                : "bg-brand-light border-stone-300"
-            }`}
+          <Link
+            href="/"
+            className="text-brand-secondary hover:text-brand-dark mb-6 flex min-w-0 items-center gap-2 text-sm font-semibold transition-colors"
           >
-            <Link
-              href="/"
-              className="text-brand-secondary hover:text-brand-dark -mx-1 mb-5 flex min-w-0 items-center gap-2 border-b border-stone-200 pb-4 text-sm font-semibold transition-colors sm:mx-0"
-            >
-              <span className="shrink-0 text-base" aria-hidden>
-                ←
-              </span>
-              <span className="min-w-0">Takaisin etusivulle</span>
-            </Link>
+            <span className="shrink-0 text-base" aria-hidden>
+              ←
+            </span>
+            <span className="min-w-0">Takaisin etusivulle</span>
+          </Link>
 
-            {isLoading || !event ? (
-              <div className="flex justify-center py-16">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <>
+          {isLoading || !event ? (
+            <div className="flex justify-center py-16">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-brand-dark text-2xl font-extrabold uppercase sm:text-3xl">
+                    {event.title}
+                  </h1>
+                  {event.draft && (
+                    <span className="rounded-control inline-flex items-center border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
+                      <Icon icon="draft" className="mr-1.5 h-3.5 w-3.5" />
+                      Luonnos
+                    </span>
+                  )}
+                </div>
                 {isAdmin && (
-                  <div className="mb-4 flex justify-start">
-                    <Button.Link href={`/events/${event.id}/edit`}>
-                      Muokkaa tapahtumaa
-                    </Button.Link>
-                  </div>
+                  <Button.Link href={`/events/${event.id}/edit`}>
+                    Muokkaa tapahtumaa
+                  </Button.Link>
                 )}
-                <h1 className="text-brand-dark mb-6 text-2xl font-extrabold uppercase sm:text-3xl">
-                  {event.title}
-                </h1>
+              </div>
 
-                <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
-                  <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
-                    <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
-                      Tiedot
-                    </h2>
+              <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
+                <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
+                  <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                    Tiedot
+                  </h2>
+                  <p>
+                    <span className="text-brand-dark font-semibold">
+                      Ajankohta:{" "}
+                    </span>
+                    {formatDate(event.date)}
+                  </p>
+                  {event.location && (
                     <p>
                       <span className="text-brand-dark font-semibold">
-                        Ajankohta:{" "}
+                        Sijainti:{" "}
                       </span>
-                      {formatDate(event.date)}
+                      {event.location}
                     </p>
-                    {event.location && (
-                      <p>
-                        <span className="text-brand-dark font-semibold">
-                          Sijainti:{" "}
-                        </span>
-                        {event.location}
-                      </p>
-                    )}
-                    <hr className="my-4 border-stone-200" />
-                    <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
-                      {event.description}
-                    </div>
-                  </div>
-
-                  <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
-                    <HydrationZustand>
-                      {event && <Registration event={event} />}
-                    </HydrationZustand>
+                  )}
+                  <Divider spacingY="md" />
+                  <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
+                    {event.description}
                   </div>
                 </div>
 
-                {event.signupsPublic && (
-                  <>
-                    <hr className="my-10 border-stone-200" />
-                    <ParticipantsTable event={event} />
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
+                  <HydrationZustand>
+                    {event && <Registration event={event} />}
+                  </HydrationZustand>
+                </div>
+              </div>
+
+              {event.signupsPublic && (
+                <>
+                  <Divider spacingY="lg" />
+                  <ParticipantsTable event={event} />
+                </>
+              )}
+            </>
+          )}
         </div>
       </Layout>
     </>

@@ -32,7 +32,7 @@ export function BasicInfoFields({
   errors,
 }: BasicInfoFieldsProps) {
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <FieldSet title="Nimi">
         <Input
           {...register("title")}
@@ -56,7 +56,7 @@ export function BasicInfoFields({
           />
         </div>
       </FieldSet>
-      <FieldSet title="Registration start time">
+      <FieldSet title="Ilmoittautuminen alkaa">
         <div className="grid w-full grid-cols-1 gap-6">
           <DateInput
             control={control}
@@ -72,7 +72,7 @@ export function BasicInfoFields({
           />
         </div>
       </FieldSet>
-      <FieldSet title="Registration end time">
+      <FieldSet title="Ilmoittautuminen päättyy">
         <div className="grid w-full grid-cols-1 gap-6">
           <DateInput
             control={control}
@@ -121,6 +121,6 @@ export function BasicInfoFields({
           onChange={(value) => setValue("description", value)}
         />
       </FieldSet>
-    </>
+    </div>
   );
 }

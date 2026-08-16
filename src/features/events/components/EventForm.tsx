@@ -13,6 +13,7 @@ import { api } from "@/utils/api";
 import { nativeDate } from "@/utils/nativeDate";
 import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
+import { Divider } from "@/components/Divider";
 import { BasicInfoFields } from "./BasicInfoFields";
 import { Questions } from "./Questions";
 import { Quotas } from "./Quotas";
@@ -185,7 +186,7 @@ export function EventForm({ editId }: EventFormProps) {
   return (
     <form onSubmit={onSubmit} className="relative">
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
-      <div className="flex flex-col gap-4 px-0 sm:px-1">
+      <div className="flex flex-col gap-6 px-0 sm:px-1">
         <div className="flex flex-row flex-wrap items-start justify-between gap-3">
           <h1 className="text-2xl font-semibold text-brand-dark sm:text-3xl">
             {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
@@ -220,6 +221,7 @@ export function EventForm({ editId }: EventFormProps) {
             )}
           </div>
         </div>
+
         <BasicInfoFields
           control={control}
           register={register}
@@ -227,6 +229,9 @@ export function EventForm({ editId }: EventFormProps) {
           setValue={setValue}
           errors={errors}
         />
+
+        <Divider spacingY="none" />
+
         <Quotas
           getValues={getValues}
           setValue={setValue}
@@ -235,6 +240,8 @@ export function EventForm({ editId }: EventFormProps) {
           eventId={editEvent?.id}
           editId={editId}
         />
+
+        <Divider spacingY="none" />
 
         <Questions
           getValues={getValues}
@@ -245,20 +252,28 @@ export function EventForm({ editId }: EventFormProps) {
           signupCount={signups ? signups.length : 0}
         />
 
+        <Divider spacingY="none" />
+
         <FieldSet title="Vahvistusviesti sähköpostiin">
           <TextArea {...register("verificationEmail")} rows={5} />
         </FieldSet>
-        <div title="Ilmoittautuneet">
-          {signups && editId ? (
-            <SignupsTable
-              signups={signups}
-              eventId={editId}
-              eventName={editEvent?.title}
-            />
-          ) : (
-            <p> Ei Ilmoittautuneita</p>
-          )}
-        </div>
+
+        {editId && (
+          <>
+            <Divider spacingY="none" />
+            <FieldSet title="Ilmoittautuneet">
+              {signups && signups.length > 0 ? (
+                <SignupsTable
+                  signups={signups}
+                  eventId={editId}
+                  eventName={editEvent?.title}
+                />
+              ) : (
+                <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
+              )}
+            </FieldSet>
+          </>
+        )}
       </div>
     </form>
   );

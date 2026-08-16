@@ -2,6 +2,7 @@ import type { Question } from "@/generated/prisma";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Switch } from "@/components/Switch";
+import { Divider } from "@/components/Divider";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,10 @@ export function QuestionRow({
   signupCount: number;
   errors: FieldErrorsImpl<Question> | undefined;
 }) {
+  const hasOptions =
+    question.type === questionSchema.shape.type.enum.radio ||
+    question.type === questionSchema.shape.type.enum.checkbox;
+
   const addOption = () => {
     onChange({
       ...question,
@@ -40,36 +45,43 @@ export function QuestionRow({
       options: newOptions,
     });
   };
+
   return (
-    <div className="my-1 gap-6 rounded-md border-2 border-slate-300 p-3 odd:bg-gray-100 even:bg-slate-100">
-      <div className="mb-10 flex max-w-3/4 flex-col gap-6">
-        <div className="flex flex-row items-center gap-2 px-7">
-          <label htmlFor="name" className="w-28">
-            Kysymys:
-          </label>
-          <Input
-            title="Kysymys"
-            value={question.question}
-            fullWidth
-            onChange={(value) =>
-              onChange({ ...question, question: value.target.value })
-            }
-            error={!!errors?.question}
-            helperText={errors?.question ? errors.question.message : undefined}
-          />
-        </div>
+    <div className="surface-muted flex flex-col gap-5 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+        <label
+          htmlFor={`question-text-${question.id}`}
+          className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
+        >
+          Kysymys
+        </label>
+        <Input
+          id={`question-text-${question.id}`}
+          title="Kysymys"
+          value={question.question}
+          fullWidth
+          onChange={(value) =>
+            onChange({ ...question, question: value.target.value })
+          }
+          error={!!errors?.question}
+          helperText={errors?.question ? errors.question.message : undefined}
+        />
       </div>
-      <div className="mt-4 mb-6 flex flex-row items-center gap-6 px-7">
-        <label className="w-32">Tyyppi:</label>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
+        <label className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
+          Tyyppi
+        </label>
         <Select
+          value={question.type}
           onValueChange={(value) => {
             onChange({ ...question, type: value as Question["type"] });
           }}
         >
-          <SelectTrigger className="w-70">
+          <SelectTrigger className="w-full sm:w-70">
             <SelectValue placeholder="Teksti (lyhyt)" />
           </SelectTrigger>
-          <SelectContent className="">
+          <SelectContent>
             <SelectItem value={questionSchema.shape.type.enum.text}>
               Teksti (lyhyt)
             </SelectItem>
@@ -84,32 +96,36 @@ export function QuestionRow({
             </SelectItem>
           </SelectContent>
         </Select>
-        <p>Pakollinen</p>
-        <Switch
-          value={question.required}
-          onChange={(value) => onChange({ ...question, required: value })}
-        />
+      </div>
+
+      <div className="flex flex-wrap gap-6 sm:pl-36">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-brand-dark">Pakollinen</span>
+          <Switch
+            value={question.required}
+            onChange={(value) => onChange({ ...question, required: value })}
+          />
+        </div>
         <div className="flex flex-col gap-1">
-          <div className="flex flex-row items-center gap-2">
-            <p>Julkinen</p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-brand-dark">Julkinen</span>
             <Switch
               value={question.public}
               onChange={(value) => onChange({ ...question, public: value })}
             />
           </div>
-          <p className="max-w-md text-xs leading-snug text-gray-600">
+          <p className="max-w-md text-xs leading-relaxed text-gray-600">
             Julkinen vastaus näkyy tapahtuman{" "}
             <strong>julkisessa osallistujalistassa</strong>, kun
             ilmoittautumiset on merkitty julkisiksi.
           </p>
         </div>
       </div>
-      {question.type === questionSchema.shape.type.enum.radio ||
-      question.type === questionSchema.shape.type.enum.checkbox ? (
-        <div className="mb-7 flex flex-col gap-3 px-7">
+
+      {hasOptions && (
+        <div className="flex flex-col gap-3 sm:pl-36">
           {question.options.map((option, index) => (
-            <div className="flex flex-row items-center gap-5" key={index}>
-              <span>Vaihtoehto:</span>
+            <div className="flex flex-row items-center gap-3" key={index}>
               <Input
                 key={index}
                 title={`Vaihtoehto ${index + 1}`}
@@ -123,6 +139,7 @@ export function QuestionRow({
               />
               <Button
                 type="button"
+                size="small"
                 color="danger"
                 onClick={() => deleteOption(index)}
               >
@@ -130,28 +147,27 @@ export function QuestionRow({
               </Button>
             </div>
           ))}
+          <Button type="button" size="small" onClick={() => addOption()}>
+            Lisää vaihtoehto
+          </Button>
         </div>
-      ) : null}
-      <div className="flex flex-row items-center gap-5">
+      )}
+
+      <Divider spacingY="none" />
+
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           onClick={() => deleteQuestion(question.id)}
           type="button"
+          size="small"
           color="danger"
         >
           Poista kysymys
         </Button>
-        {(question.type === questionSchema.shape.type.enum.radio ||
-          question.type === questionSchema.shape.type.enum.checkbox) && (
-          <Button type="button" onClick={() => addOption()}>
-            Lisää vaihtoehto
-          </Button>
-        )}
         {signupCount > 0 && (
-          <p>
-            <b>
-              HUOM! Kysymyksen poistaminen poistaa myös siihen saadut vastaukset
-              pysyvästi.
-            </b>
+          <p className="text-xs leading-relaxed text-gray-600">
+            <strong>Huom!</strong> Kysymyksen poistaminen poistaa myös siihen
+            saadut vastaukset pysyvästi.
           </p>
         )}
       </div>
