@@ -115,9 +115,7 @@ export function QuestionRow({
             />
           </div>
           <p className="max-w-md text-xs leading-relaxed text-gray-600">
-            Julkinen vastaus näkyy tapahtuman{" "}
-            <strong>julkisessa osallistujalistassa</strong>, kun
-            ilmoittautumiset on merkitty julkisiksi.
+            Julkiset vastaukset näkyvät <strong>julkisessa osallistujalistassa</strong>.
           </p>
         </div>
       </div>

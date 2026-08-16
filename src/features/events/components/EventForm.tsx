@@ -272,7 +272,7 @@ export function EventForm({ editId }: EventFormProps) {
         <Divider spacingY="none" />
 
         <FieldSet title="Vahvistusviesti sähköpostiin">
-          <TextArea {...register("verificationEmail")} rows={5} />
+          <TextArea {...register("verificationEmail")} rows={5} fullWidth />
         </FieldSet>
 
         {editId && (
@@ -285,6 +285,7 @@ export function EventForm({ editId }: EventFormProps) {
                   eventId={editId}
                   eventName={editEvent?.title}
                   quotas={editEvent?.Quotas ?? []}
+                  questions={editEvent?.Questions ?? []}
                 />
               ) : (
                 <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
