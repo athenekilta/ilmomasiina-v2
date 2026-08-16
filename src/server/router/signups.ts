@@ -18,6 +18,36 @@ import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAccept
 
 const DEMO_SIGNUP_EMAIL_PREFIX = "dev-demo-";
 
+type SignupPlacementItem = {
+  id: string;
+  quotaId: string;
+  status: SignupStatus;
+  allocatedAt: Date | null;
+};
+
+function getSignupPlacement(signups: SignupPlacementItem[], signupId: string) {
+  const signup = signups.find((item) => item.id === signupId);
+  if (!signup) throw new Error("Signup not found in quota");
+
+  const isQueued = (item: SignupPlacementItem) =>
+    item.status === SignupStatus.PENDING ||
+    item.status === SignupStatus.WAITLISTED ||
+    (item.status === SignupStatus.IN_PROGRESS && item.allocatedAt === null);
+  const signupIsQueued = isQueued(signup);
+  const position =
+    signups
+      .filter(
+        (item) =>
+          item.quotaId === signup.quotaId && isQueued(item) === signupIsQueued,
+      )
+      .findIndex((item) => item.id === signup.id) + 1;
+
+  return {
+    type: signupIsQueued ? ("QUEUE" as const) : ("QUOTA" as const),
+    position,
+  };
+}
+
 function ensureDevelopment() {
   if (process.env.NODE_ENV !== "development") {
     throw new TRPCError({ code: "NOT_FOUND" });
@@ -106,21 +136,26 @@ export const signupsRouter = router({
         },
       });
 
-      const indexOfSignupInQuota = await ctx.prisma.signup.count({
+      const quotaSignups = await ctx.prisma.signup.findMany({
         where: {
           quotaId: signup.quotaId,
-          createdAt: {
-            lt: signup.createdAt,
-          },
+          registrationIntent: null,
+          status: { not: SignupStatus.REJECTED },
         },
+        select: {
+          id: true,
+          quotaId: true,
+          status: true,
+          allocatedAt: true,
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
-
       return {
         ...signup,
         answers,
         questions,
         event,
-        indexOfSignupInQuota,
+        placement: getSignupPlacement(quotaSignups, signup.id),
       };
     }),
   addDemoSignup: publicProcedure
@@ -205,63 +240,267 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Make sure event registration is open
-      const quota = await ctx.prisma.quota.findUnique({
-        where: {
-          id: input.quotaId,
-        },
-        include: {
-          Event: true,
-        },
+      const normalizedEmail = input.email.trim().toLowerCase();
+      const initialQuota = await ctx.prisma.quota.findUnique({
+        where: { id: input.quotaId },
+        select: { eventId: true },
       });
 
-      if (!quota) {
-        throw new Error("Quota not found");
+      if (!initialQuota) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Quota not found" });
       }
 
-      if (quota.Event.draft) {
-        throw new Error("Event is a draft");
-      }
+      const result = await ctx.prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${initialQuota.eventId})`;
 
-      const { isRegistrationOpen } = RegistrationDate(quota.Event);
-      if (!isRegistrationOpen) {
-        throw new Error("Registration is closed");
-      }
+        const quota = await tx.quota.findUnique({
+          where: { id: input.quotaId },
+          include: { Event: true },
+        });
+        if (!quota) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Quota not found",
+          });
+        }
+        if (quota.Event.draft) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Event is a draft",
+          });
+        }
 
-      // check if email is already signed up for this event
-      const existingSignup = await ctx.prisma.signup.findFirst({
-        where: {
-          Quota: {
-            eventId: quota.eventId,
+        const { isRegistrationOpen } = RegistrationDate(quota.Event);
+        if (!isRegistrationOpen) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration is closed",
+          });
+        }
+
+        const matchingSignups = await tx.signup.findMany({
+          where: {
+            Quota: { eventId: quota.eventId },
+            email: { equals: normalizedEmail, mode: "insensitive" },
           },
-          email: input.email,
-        },
+          include: { Quota: { select: { title: true } } },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        });
+        const existingSignup =
+          matchingSignups.find((signup) => signup.completedAt !== null) ??
+          matchingSignups[0];
+
+        const staleIncompleteSignupIds = matchingSignups
+          .filter(
+            (signup) =>
+              signup.id !== existingSignup?.id && signup.completedAt === null,
+          )
+          .map((signup) => signup.id);
+        if (staleIncompleteSignupIds.length > 0) {
+          await tx.answer.deleteMany({
+            where: { signupId: { in: staleIncompleteSignupIds } },
+          });
+          await tx.signup.deleteMany({
+            where: { id: { in: staleIncompleteSignupIds } },
+          });
+        }
+
+        let response:
+          | { kind: "CREATED"; signupId: string }
+          | { kind: "EXISTING"; signupId: string }
+          | { kind: "CONFLICT" }
+          | {
+              kind: "CHOICE";
+              signupId: string;
+              existingSignupId: string;
+              existingQuotaId: string;
+              existingQuotaTitle: string;
+              existingIsCompleted: boolean;
+              selectedQuotaTitle: string;
+            };
+
+        if (existingSignup?.quotaId === quota.id) {
+          response = existingSignup.completedAt
+            ? { kind: "CONFLICT" }
+            : { kind: "EXISTING", signupId: existingSignup.id };
+        } else {
+          const candidate = await tx.signup.create({
+            data: {
+              quotaId: quota.id,
+              originalQuotaId: quota.id,
+              name: input.name,
+              email: normalizedEmail,
+              status: SignupStatus.IN_PROGRESS,
+            },
+          });
+          response = existingSignup
+            ? {
+                kind: "CHOICE",
+                signupId: candidate.id,
+                existingSignupId: existingSignup.id,
+                existingQuotaId: existingSignup.quotaId,
+                existingQuotaTitle: existingSignup.Quota.title,
+                existingIsCompleted: existingSignup.completedAt !== null,
+                selectedQuotaTitle: quota.title,
+              }
+            : { kind: "CREATED", signupId: candidate.id };
+        }
+
+        const allocation = await reconcileEventAllocations(tx, quota.eventId);
+        const signup =
+          response.kind === "CONFLICT"
+            ? null
+            : await tx.signup.findUniqueOrThrow({
+                where: { id: response.signupId },
+              });
+        const choicePlacements =
+          response.kind === "CHOICE"
+            ? await tx.signup
+                .findMany({
+                  where: {
+                    quotaId: {
+                      in: [quota.id, response.existingQuotaId],
+                    },
+                    registrationIntent: null,
+                    status: { not: SignupStatus.REJECTED },
+                  },
+                  select: {
+                    id: true,
+                    quotaId: true,
+                    status: true,
+                    allocatedAt: true,
+                  },
+                  orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+                })
+                .then((signups) => ({
+                  existing: getSignupPlacement(
+                    signups,
+                    response.existingSignupId,
+                  ),
+                  selected: getSignupPlacement(signups, response.signupId),
+                }))
+            : null;
+
+        return {
+          response,
+          signup,
+          choicePlacements,
+          queueAcceptedNotification: allocation.queueAcceptedNotification,
+        };
       });
 
-      if (existingSignup) {
-        // return the existing event instead of creating a new one
-        if (!existingSignup.completedAt)
-          return { signup: existingSignup, isExistingSignup: true };
+      await sendQueueAcceptedEmails(result.queueAcceptedNotification);
+
+      if (result.response.kind === "CONFLICT") {
+        throw new TRPCError({ code: "CONFLICT" });
+      }
+      if (result.response.kind === "EXISTING") {
+        return { signup: result.signup!, isExistingSignup: true };
+      }
+      if (result.response.kind === "CHOICE") {
+        return {
+          signup: result.signup!,
+          requiresSignupChoice: true,
+          existingSignup: {
+            quotaTitle: result.response.existingQuotaTitle,
+            isCompleted: result.response.existingIsCompleted,
+            placement: result.choicePlacements!.existing,
+          },
+          selectedQuotaTitle: result.response.selectedQuotaTitle,
+          selectedPlacement: result.choicePlacements!.selected,
+        };
+      }
+      return { signup: result.signup! };
+    }),
+
+  resolveSignupConflict: publicProcedure
+    .input(
+      z.object({
+        candidateSignupId: z.string(),
+        choice: z.enum(["NEW", "EXISTING"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const initialCandidate = await ctx.prisma.signup.findUnique({
+        where: { id: input.candidateSignupId },
+        select: { Quota: { select: { eventId: true } } },
+      });
+      if (!initialCandidate) {
         throw new TRPCError({
-          code: "CONFLICT",
+          code: "NOT_FOUND",
+          message: "Signup choice has expired",
         });
       }
 
-      const signup = await ctx.prisma.$transaction(async (tx) => {
-        const created = await tx.signup.create({
-          data: {
-            quotaId: input.quotaId,
-            originalQuotaId: input.quotaId,
-            name: input.name,
-            email: input.email,
-            status: SignupStatus.IN_PROGRESS,
-          },
+      const result = await ctx.prisma.$transaction(async (tx) => {
+        const eventId = initialCandidate.Quota.eventId;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${eventId})`;
+
+        const candidate = await tx.signup.findUnique({
+          where: { id: input.candidateSignupId },
         });
-        await reconcileEventAllocations(tx, quota.eventId);
-        return tx.signup.findUniqueOrThrow({ where: { id: created.id } });
+        if (
+          !candidate ||
+          candidate.completedAt !== null ||
+          candidate.status !== SignupStatus.IN_PROGRESS ||
+          candidate.registrationIntent !== null
+        ) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Signup choice has expired",
+          });
+        }
+
+        const otherSignups = await tx.signup.findMany({
+          where: {
+            id: { not: candidate.id },
+            Quota: { eventId },
+            email: { equals: candidate.email, mode: "insensitive" },
+          },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        });
+        const existingSignup =
+          otherSignups.find((signup) => signup.completedAt !== null) ??
+          otherSignups[0];
+        if (!existingSignup) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "The existing signup no longer exists",
+          });
+        }
+
+        const selectedSignupId =
+          input.choice === "NEW" ? candidate.id : existingSignup.id;
+        const signupIdsToDelete = [candidate, ...otherSignups]
+          .filter((signup) => signup.id !== selectedSignupId)
+          .map((signup) => signup.id);
+
+        await tx.answer.deleteMany({
+          where: { signupId: { in: signupIdsToDelete } },
+        });
+        await tx.signup.deleteMany({
+          where: { id: { in: signupIdsToDelete } },
+        });
+
+        const allocation = await reconcileEventAllocations(tx, eventId);
+        const signup = await tx.signup.findUniqueOrThrow({
+          where: { id: selectedSignupId },
+        });
+
+        return {
+          signup,
+          isExistingSignup: input.choice === "EXISTING",
+          canContinue: signup.completedAt === null,
+          queueAcceptedNotification: allocation.queueAcceptedNotification,
+        };
       });
 
-      return { signup };
+      await sendQueueAcceptedEmails(result.queueAcceptedNotification);
+      return {
+        signup: result.signup,
+        isExistingSignup: result.isExistingSignup,
+        canContinue: result.canContinue,
+      };
     }),
 
   updateSignup: publicProcedure

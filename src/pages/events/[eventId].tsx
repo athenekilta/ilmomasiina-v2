@@ -8,7 +8,7 @@ import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { Input } from "@/components/Input";
-import { FieldSet } from "@/components/FieldSet";
+
 import HydrationZustand from "@/components/HydrationZustand";
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 import type { RouteOutput } from "@/types/types";
@@ -19,6 +19,23 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
 import { Icon } from "@/components/Icon";
 import { Divider } from "@/components/Divider";
+
+type SignupConflictChoice = {
+  candidateSignupId: string;
+  existingSignup: {
+    quotaTitle: string;
+    isCompleted: boolean;
+    placement: {
+      type: "QUEUE" | "QUOTA";
+      position: number;
+    };
+  };
+  selectedQuotaTitle: string;
+  selectedPlacement: {
+    type: "QUEUE" | "QUOTA";
+    position: number;
+  };
+};
 
 const quotaSegmentColors = [
   { className: "bg-brand-primary" },
@@ -48,8 +65,12 @@ function Registration({
     setUser,
   } = useGuestIdentityForm();
   const [isEditingUserData, setIsEditingUserData] = useState(false);
+  const [signupConflict, setSignupConflict] =
+    useState<SignupConflictChoice | null>(null);
 
   const createSignupMutation = api.signups.createSignup.useMutation();
+  const resolveSignupConflictMutation =
+    api.signups.resolveSignupConflict.useMutation();
   const addDemoSignupMutation = api.signups.addDemoSignup.useMutation({
     onError: (error) => alert.error(error.message),
   });
@@ -113,6 +134,38 @@ function Registration({
     }
   });
 
+  const showCompletedSignupWarning = () =>
+    alert.warning(
+      "Tällä sähköpostilla on jo vahvistettu ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
+      { timeoutMs: 10000 },
+    );
+
+  const resolveSignupConflict = async (choice: "NEW" | "EXISTING") => {
+    if (!signupConflict) return;
+
+    try {
+      const result = await resolveSignupConflictMutation.mutateAsync({
+        candidateSignupId: signupConflict.candidateSignupId,
+        choice,
+      });
+      setSignupConflict(null);
+
+      if (!result.canContinue) {
+        showCompletedSignupWarning();
+        return;
+      }
+
+      await router.push(
+        `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
+      );
+    } catch (error) {
+      console.error(error);
+      if (error instanceof Error) {
+        alert.error(error.message, { timeoutMs: 10000 });
+      }
+    }
+  };
+
   const getHandleSignup = (quotaId: string) => {
     return async (data: { name: string; email: string }) => {
       try {
@@ -122,7 +175,17 @@ function Registration({
           email: data.email,
         });
         if (result) {
-          router.push(
+          if ("requiresSignupChoice" in result && result.requiresSignupChoice) {
+            setSignupConflict({
+              candidateSignupId: result.signup.id,
+              existingSignup: result.existingSignup,
+              selectedQuotaTitle: result.selectedQuotaTitle,
+              selectedPlacement: result.selectedPlacement,
+            });
+            return;
+          }
+
+          await router.push(
             `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
           );
         }
@@ -130,10 +193,7 @@ function Registration({
         console.error(error);
         if (error instanceof TRPCClientError && error.data.code === "CONFLICT")
           // TODO: move to separate alert page here which allows to request link again
-          return alert.warning(
-            "Tällä sähköpostilla on jo vahvistettu ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
-            { timeoutMs: 10000 },
-          );
+          return showCompletedSignupWarning();
         if (error instanceof Error)
           return alert.error(`${error.message}`, { timeoutMs: 10000 });
 
@@ -154,7 +214,69 @@ function Registration({
             event.registrationEndDate,
           )}
         </p>
-        {!isEditingUserData && (
+        {isEditingUserData ? (
+          <form
+            className="rounded-card mb-3 border border-stone-200 bg-white p-4"
+            onSubmit={saveUserData}
+          >
+            <h3 className="text-brand-secondary text-base font-bold tracking-tight sm:text-lg">
+              Konfiguroi ilmo-identiteettisi
+            </h3>
+            <p className="text-brand-dark mt-1 text-sm">
+              Aseta nimi ja sähköposti ennen ilmoittautumista. Huomaa, että voit
+              ilmoittautua tapahtumaan vain kerran.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+              {event.signupsPublic && <span>Nimi on julkinen tieto. </span>}
+              Voit halutessasi ilmoittautua salanimellä tapahtumaan.
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <Input
+                {...register("name")}
+                placeholder="Nimi"
+                fullWidth
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
+              <Input
+                {...register("email")}
+                type="email"
+                placeholder="sinä@example.com"
+                fullWidth
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                variant="filled"
+                color="primary"
+                disabled={!isValid || isSubmitting}
+              >
+                Tallenna
+              </Button>
+              {storedUser && (
+                <Button
+                  type="button"
+                  color="neutral"
+                  variant="bordered"
+                  onClick={() => {
+                    reset({
+                      name: storedUser.name ?? "",
+                      email: storedUser.email ?? "",
+                    });
+                    setIsEditingUserData(false);
+                  }}
+                >
+                  Peruuta
+                </Button>
+              )}
+            </div>
+          </form>
+        ) : (
           <p className="surface-panel border-l-brand-primary mb-3 border-l-2 px-3 py-2 text-sm text-gray-600">
             Hei{" "}
             <span className="font-medium text-gray-900">
@@ -263,72 +385,7 @@ function Registration({
             </>
           )}
         </div>
-        {isEditingUserData ? (
-          <form className="space-y-2" onSubmit={saveUserData}>
-            <div className="text-sm">
-              <FieldSet title="Nimi">
-                <p className="mb-2 text-xs leading-relaxed text-gray-600">
-                  {event.signupsPublic ? (
-                    <span>Nimi on julkinen tieto. </span>
-                  ) : null}
-                  Voit halutessasi ilmoittautua salanimellä tapahtumaan.
-                </p>
-                <div className="pb-6">
-                  <Input
-                    {...register("name")}
-                    placeholder="Your name"
-                    fullWidth
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                  />
-                </div>
-              </FieldSet>
-            </div>
-            <div className="text-sm">
-              <FieldSet title="Sähköposti">
-                <div className="pb-6">
-                  <Input
-                    {...register("email")}
-                    type="email"
-                    placeholder="you@example.com"
-                    fullWidth
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                  />
-                </div>
-              </FieldSet>
-            </div>
-
-            <div className="mt-6 flex gap-2">
-              <Button
-                type="submit"
-                className="bg-secondary"
-                disabled={!isValid || isSubmitting}
-              >
-                Tallenna
-              </Button>
-              <Button
-                type="button"
-                className="bg-gray-300 text-black"
-                onClick={() => {
-                  // Cancel editing: if we had stored data, revert to it; otherwise keep editing
-                  if (storedUser) {
-                    reset({
-                      name: storedUser.name ?? "",
-                      email: storedUser.email ?? "",
-                    });
-                    setIsEditingUserData(false);
-                  } else {
-                    // clear form
-                    reset({ name: "", email: "" });
-                  }
-                }}
-              >
-                Peruuta
-              </Button>
-            </div>
-          </form>
-        ) : (
+        {!isEditingUserData && (
           <div className="flex flex-col gap-2">
             {quotas.map((quota) => {
               const signupCount = seatHoldingSignupCount(quota);
@@ -434,6 +491,79 @@ function Registration({
           </div>
         )}
       </div>
+
+      {signupConflict && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="signup-conflict-title"
+        >
+          <div className="surface-panel shadow-card w-full max-w-md p-6">
+            <h3
+              id="signup-conflict-title"
+              className="text-brand-dark text-lg font-bold"
+            >
+              Vaihda kiintiötä?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Löysimme tällä sähköpostilla aiemman{" "}
+              {signupConflict.existingSignup.isCompleted
+                ? "vahvistetun"
+                : "vahvistamattoman"}{" "}
+              ilmoittautumisen.
+            </p>
+            <div className="mt-4 space-y-2 text-sm">
+              <p>
+                <span className="font-medium">Aiempi:</span>{" "}
+                {signupConflict.existingSignup.quotaTitle} —{" "}
+                {signupConflict.existingSignup.placement.type === "QUEUE"
+                  ? "Jonossa"
+                  : "Kiintiössä"}{" "}
+                {signupConflict.existingSignup.placement.position}
+              </p>
+              <p>
+                <span className="font-medium">Uusi:</span>{" "}
+                {signupConflict.selectedQuotaTitle} —{" "}
+                {signupConflict.selectedPlacement.type === "QUEUE"
+                  ? "Jonossa"
+                  : "Kiintiössä"}{" "}
+                {signupConflict.selectedPlacement.position}
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="bordered"
+                color="neutral"
+                className="w-full sm:w-auto"
+                onClick={() => resolveSignupConflict("EXISTING")}
+                disabled={resolveSignupConflictMutation.isPending}
+                loading={
+                  resolveSignupConflictMutation.isPending &&
+                  resolveSignupConflictMutation.variables?.choice === "EXISTING"
+                }
+              >
+                Pidä aiempi ilmo
+              </Button>
+              <Button
+                type="button"
+                color="primary"
+                className="w-full sm:w-auto"
+                onClick={() => resolveSignupConflict("NEW")}
+                disabled={resolveSignupConflictMutation.isPending}
+                loading={
+                  resolveSignupConflictMutation.isPending &&
+                  resolveSignupConflictMutation.variables?.choice === "NEW"
+                }
+              >
+                Valitse uusi kiintiö
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

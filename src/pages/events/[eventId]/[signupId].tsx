@@ -205,9 +205,11 @@ function EditSignup() {
               className="rounded-control mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"
             >
-              Sinulla on jo <strong>vahvistamaton</strong> ilmoittautuminen
-              tähän tapahtumaan. Täydennä tai muokkaa tietoja alla ja vahvista
+              Löysimme jo sinun vahvistamattoman ilmoittautumisen tähän
+              tapahtumaan. Täydennä tai muokkaa tietoja alla ja vahvista
               lopuksi.
+              <br />
+              Väärä kiintiö? Poista ilmo ja tee uusi.
             </div>
           )}
 
@@ -222,11 +224,10 @@ function EditSignup() {
             </div>
             <div className="surface-muted rounded-control border border-stone-200/90 p-4">
               <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
-                Sija
+                {signup.placement.type === "QUEUE" ? "Jonossa" : "Kiintiössä"}
               </p>
               <p className="text-brand-dark mt-1.5 text-base font-semibold tabular-nums">
-                {signup.indexOfSignupInQuota + 1}
-                {signup.Quota.size != null ? ` / ${signup.Quota.size}` : ""}
+                {signup.placement.position}
               </p>
             </div>
           </div>
