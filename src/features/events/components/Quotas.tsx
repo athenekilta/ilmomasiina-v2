@@ -95,11 +95,11 @@ export function Quotas({
       <div className="mb-5 rounded-md bg-blue-50 p-4 text-sm text-blue-900">
         <p>
           Jokaiselle kiintiölle määritetään oma paikkamäärä. Kiintiökohtaisesti
-          valitaan, voiko kiintiö käyttää jaettuja paikkoja heti,
-          ilmoittautumisen päätyttyä vai ei lainkaan.
+          valitaan, voiko kiintiö käyttää jokeripaikkoja heti, ilmoittautumisen
+          päätyttyä vai ei lainkaan.
         </p>
         <div className="mt-4 max-w-xs">
-          <label className="mb-1 block font-semibold">Jaetut paikat</label>
+          <label className="mb-1 block font-semibold">Jokeripaikat</label>
           <Input
             type="number"
             min={0}

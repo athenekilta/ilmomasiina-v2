@@ -50,7 +50,7 @@ export function QuotaRow({
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <label className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
-          Jaetut paikat
+          Jokeripaikat
         </label>
         <div className="flex w-full flex-col gap-1">
           <Select
@@ -67,12 +67,11 @@ export function QuotaRow({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="NEVER">Ei käytä jaettuja paikkoja</SelectItem>
-              <SelectItem value="IMMEDIATE">
-                Käyttää jaettuja paikkoja
-              </SelectItem>
+              <SelectItem value="NEVER">Ei käytä jokeripaikkoja</SelectItem>
+              <SelectItem value="IMMEDIATE">Käyttää jokeripaikkoja</SelectItem>
               <SelectItem value="AFTER_REGISTRATION_CLOSE">
-                Käyttää ylijääneitä jaettuja paikkoja ilmoittautumisen päätyttyä
+                Käyttää jäljelle jääneitä jokeripaikkoja ilmoittautumisen
+                päätyttyä
               </SelectItem>
             </SelectContent>
           </Select>
@@ -80,8 +79,8 @@ export function QuotaRow({
             {quota.sharedPlacesAllocation === "NEVER"
               ? "Paikat jaetaan vain tämän kiintiön paikoista."
               : quota.sharedPlacesAllocation === "IMMEDIATE"
-                ? "Kiintiöpaikkojen täytyttyä käytetään jaettuja paikkoja."
-                : "Kiintiöpaikkojen täytyttyä ilmoittautumiset odottavat jaettujen paikkojen jakoa ilmoittautumisen päättymiseen asti."}
+                ? "Kiintiöpaikkojen täytyttyä käytetään jokeripaikkoja."
+                : "Kiintiöpaikkojen täytyttyä ilmoittautumiset odottavat jokeripaikkojen jakoa ilmoittautumisen päättymiseen asti."}
           </p>
         </div>
       </div>

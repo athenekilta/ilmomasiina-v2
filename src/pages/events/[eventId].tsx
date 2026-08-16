@@ -21,12 +21,12 @@ import { Icon } from "@/components/Icon";
 import { Divider } from "@/components/Divider";
 
 const quotaSegmentColors = [
-  "bg-brand-primary",
-  "bg-brand-secondary",
-  "bg-amber-500",
-  "bg-emerald-600",
-  "bg-sky-600",
-  "bg-violet-600",
+  { className: "bg-brand-primary" },
+  { className: "bg-brand-secondary" },
+  { className: "bg-amber-500" },
+  { className: "bg-emerald-600" },
+  { className: "bg-sky-600" },
+  { className: "bg-violet-600" },
 ];
 
 function Registration({
@@ -88,12 +88,11 @@ function Registration({
   const quotaCapacitySegments = finiteQuotas.map((quota, index) => {
     const signupCount = seatHoldingSignupCount(quota);
     const protectedPlacesUsed = Math.min(signupCount, quota.size);
-    const sharedPlacesUsed = Math.max(signupCount - quota.size, 0);
 
     return {
       quota,
-      protectedPlacesUsed,
-      sharedPlacesUsed,
+      signupCount,
+      reservedPlacesRemaining: quota.size - protectedPlacesUsed,
       color: quotaSegmentColors[index % quotaSegmentColors.length]!,
     };
   });
@@ -155,6 +154,22 @@ function Registration({
             event.registrationEndDate,
           )}
         </p>
+        {!isEditingUserData && (
+          <p className="surface-panel border-l-brand-primary mb-3 border-l-2 px-3 py-2 text-sm text-gray-600">
+            Hei{" "}
+            <span className="font-medium text-gray-900">
+              {storedUser?.name}
+            </span>
+            , olet ilmoomassa sähköpostilla{" "}
+            <span className="text-gray-900">{storedUser?.email}</span>.{" "}
+            <button
+              onClick={() => setIsEditingUserData(true)}
+              className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+            >
+              Vaihda
+            </button>
+          </p>
+        )}
         <div className="surface-muted mb-3 space-y-2 p-3 text-sm">
           {hasUnlimitedQuota ? (
             <>
@@ -181,82 +196,69 @@ function Registration({
                 </span>
               </div>
 
-              <div
-                className="flex h-3 overflow-hidden rounded-full bg-stone-200"
-                role="img"
-                aria-label={`${occupiedPlaces} / ${totalCapacity} paikkaa varattu`}
-              >
-                {quotaCapacitySegments.map(
-                  ({ quota, protectedPlacesUsed, sharedPlacesUsed, color }) => {
-                    const segmentSize = quota.size + sharedPlacesUsed;
-
-                    return (
+              <div>
+                <div
+                  className="flex h-3 overflow-hidden rounded-full bg-stone-200"
+                  role="img"
+                  aria-label={`${occupiedPlaces} / ${totalCapacity} paikkaa varattu`}
+                >
+                  {quotaCapacitySegments
+                    .filter(({ signupCount }) => signupCount > 0)
+                    .map(({ quota, signupCount, color }) => (
                       <div
-                        key={quota.id}
-                        className="flex h-full shrink-0 border-r border-white last:border-r-0"
+                        key={`occupied-${quota.id}`}
+                        className={`h-full shrink-0 border-r border-white last:border-r-0 ${color.className}`}
                         style={{
-                          width: `${(segmentSize / totalCapacity) * 100}%`,
+                          width: `${(signupCount / totalCapacity) * 100}%`,
                         }}
-                        title={`${quota.title}: ${protectedPlacesUsed} / ${quota.size} kiintiöpaikkaa${sharedPlacesUsed ? ` + ${sharedPlacesUsed} jaettua paikkaa` : ""}`}
-                      >
-                        <div
-                          className="h-full bg-stone-200"
-                          style={{
-                            width: `${(quota.size / segmentSize) * 100}%`,
-                          }}
-                        >
-                          <div
-                            className={`h-full ${color}`}
-                            style={{
-                              width: `${(protectedPlacesUsed / quota.size) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        {sharedPlacesUsed > 0 && (
-                          <div
-                            className={`h-full ${color}`}
-                            style={{
-                              width: `${(sharedPlacesUsed / segmentSize) * 100}%`,
-                            }}
-                          />
-                        )}
-                      </div>
-                    );
-                  },
-                )}
-                {event.extraCapacity > 0 && (
+                        title={`${quota.title}: ${signupCount} ilmoittautunutta`}
+                      />
+                    ))}
+                </div>
+                <div className="flex h-0.5 overflow-hidden rounded-full">
                   <div
-                    className="h-full shrink-0 bg-stone-200"
+                    className="h-full shrink-0"
                     style={{
-                      width: `${(sharedPlacesRemaining / totalCapacity) * 100}%`,
+                      width: `${(occupiedPlaces / totalCapacity) * 100}%`,
                     }}
-                    title={`Jaettuja paikkoja jäljellä: ${sharedPlacesRemaining}`}
                   />
-                )}
+                  {quotaCapacitySegments
+                    .filter(
+                      ({ reservedPlacesRemaining }) =>
+                        reservedPlacesRemaining > 0,
+                    )
+                    .map(({ quota, reservedPlacesRemaining, color }) => (
+                      <div
+                        key={`reserved-${quota.id}`}
+                        className={`h-full shrink-0 ${color.className}`}
+                        style={{
+                          width: `${(reservedPlacesRemaining / totalCapacity) * 100}%`,
+                        }}
+                        title={`${quota.title}: ${reservedPlacesRemaining} kiintiöpaikkaa jäljellä`}
+                      />
+                    ))}
+                </div>
               </div>
 
-              <div className="flex items-center gap-3 overflow-x-auto pb-0.5 text-xs text-gray-600">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
                 {quotaCapacitySegments.map(({ quota, color }) => (
                   <span
                     key={quota.id}
                     className="flex shrink-0 items-center gap-1.5"
                   >
                     <span
-                      className={`h-2.5 w-2.5 rounded-sm ${color}`}
+                      className={`h-2.5 w-2.5 rounded-sm ${color.className}`}
                       aria-hidden
                     />
                     {quota.title}
                   </span>
                 ))}
-                {event.extraCapacity > 0 && (
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    <span
-                      className="h-2.5 w-2.5 rounded-sm bg-stone-200"
-                      aria-hidden
-                    />
-                    Jaetut paikat
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="flex h-2.5 w-4 items-end" aria-hidden>
+                    <span className="bg-brand-primary h-0.5 w-full rounded-full" />
                   </span>
-                )}
+                  Kiintiölle varatut paikat
+                </span>
               </div>
             </>
           )}
@@ -331,133 +333,108 @@ function Registration({
             </div>
           </form>
         ) : (
-          <div>
-            <p className="mb-1 text-sm text-gray-600">
-              Hei{" "}
-              <span className="font-medium text-gray-900">
-                {storedUser?.name}
-              </span>
-              , olet ilmoomassa sähköpostilla{" "}
-              <span className="text-gray-900">{storedUser?.email}</span>.{" "}
-              <button
-                onClick={() => setIsEditingUserData(true)}
-                className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
-              >
-                Vaihda
-              </button>
-            </p>
-            <div className="mt-2.5 flex flex-col gap-2">
-              {quotas.map((quota) => {
-                const signupCount = seatHoldingSignupCount(quota);
-                const protectedPlacesAreFull =
-                  quota.size !== null && signupCount >= quota.size;
-                const showExactAvailablePlaces =
-                  quota.size !== null &&
-                  (quota.sharedPlacesAllocation === "NEVER" ||
-                    event.extraCapacity === 0);
-                const signupGoesToQueue =
-                  protectedPlacesAreFull &&
-                  (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
-                    sharedPlacesAreFull);
+          <div className="flex flex-col gap-2">
+            {quotas.map((quota) => {
+              const signupCount = seatHoldingSignupCount(quota);
+              const protectedPlacesAreFull =
+                quota.size !== null && signupCount >= quota.size;
+              const showExactAvailablePlaces =
+                quota.size !== null &&
+                (quota.sharedPlacesAllocation === "NEVER" ||
+                  event.extraCapacity === 0);
+              const signupGoesToQueue =
+                protectedPlacesAreFull &&
+                (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
+                  sharedPlacesAreFull);
 
-                return (
-                  <div
-                    key={quota.id}
-                    className="surface-muted flex items-center justify-between gap-3 p-2 sm:px-3 sm:py-2"
-                  >
-                    <div className="min-w-0">
-                      <h3 className="text-brand-dark truncate text-sm font-semibold">
-                        {quota.title}
-                      </h3>
-                      {showExactAvailablePlaces ? (
-                        signupGoesToQueue ? (
-                          <p className="text-brand-danger text-xs font-medium">
-                            Täynnä – ilmoittaudut jonoon
-                          </p>
-                        ) : (
-                          <p className="text-xs text-gray-600 tabular-nums">
-                            {signupCount} / {quota.size} ilmoittautunutta
-                          </p>
-                        )
-                      ) : (
-                        <p className="text-xs text-gray-600 tabular-nums">
-                          {signupCount} ilmoittautunutta
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {showDemoControls && (
-                        <Button
-                          type="button"
-                          size="small"
-                          className="min-w-8 px-2"
-                          color="neutral"
-                          variant="bordered"
-                          title={`Poista demoilmo kiintiöstä ${quota.title}`}
-                          aria-label={`Poista demoilmo kiintiöstä ${quota.title}`}
-                          onClick={() =>
-                            removeDemoSignupMutation.mutate({
-                              quotaId: quota.id,
-                            })
-                          }
-                          disabled={
-                            addDemoSignupMutation.isPending ||
-                            removeDemoSignupMutation.isPending
-                          }
-                          loading={
-                            removeDemoSignupMutation.isPending &&
-                            removeDemoSignupMutation.variables?.quotaId ===
-                              quota.id
-                          }
-                        >
-                          −1
-                        </Button>
-                      )}
+              return (
+                <div
+                  key={quota.id}
+                  className="surface-muted flex items-center justify-between gap-3 p-2 sm:px-3 sm:py-2"
+                >
+                  <div className="min-w-0">
+                    <h3 className="text-brand-dark truncate text-sm font-semibold">
+                      {quota.title}
+                    </h3>
+                    {showExactAvailablePlaces ? (
+                      <p className="text-xs text-gray-600 tabular-nums">
+                        {signupCount} / {quota.size} ilmoittautunutta
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-600 tabular-nums">
+                        {signupCount} ilmoittautunutta
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {showDemoControls && (
                       <Button
+                        type="button"
                         size="small"
-                        className="shrink-0 px-3"
-                        color="primary"
-                        onClick={handleSubmit(getHandleSignup(quota.id))}
+                        className="min-w-8 px-2"
+                        color="neutral"
+                        variant="bordered"
+                        title={`Poista demoilmo kiintiöstä ${quota.title}`}
+                        aria-label={`Poista demoilmo kiintiöstä ${quota.title}`}
+                        onClick={() =>
+                          removeDemoSignupMutation.mutate({
+                            quotaId: quota.id,
+                          })
+                        }
                         disabled={
-                          !isRegistrationOpen || !isValid || isSubmitting
+                          addDemoSignupMutation.isPending ||
+                          removeDemoSignupMutation.isPending
                         }
                         loading={
-                          isSubmitting &&
-                          createSignupMutation.variables?.quotaId === quota.id
+                          removeDemoSignupMutation.isPending &&
+                          removeDemoSignupMutation.variables?.quotaId ===
+                            quota.id
                         }
                       >
-                        {signupGoesToQueue ? "Ilmoo jonoon" : "Ilmoo"}
+                        −1
                       </Button>
-                      {showDemoControls && (
-                        <Button
-                          type="button"
-                          size="small"
-                          className="min-w-8 px-2"
-                          color="neutral"
-                          variant="bordered"
-                          title={`Lisää demoilmo kiintiöön ${quota.title}`}
-                          aria-label={`Lisää demoilmo kiintiöön ${quota.title}`}
-                          onClick={() =>
-                            addDemoSignupMutation.mutate({ quotaId: quota.id })
-                          }
-                          disabled={
-                            addDemoSignupMutation.isPending ||
-                            removeDemoSignupMutation.isPending
-                          }
-                          loading={
-                            addDemoSignupMutation.isPending &&
-                            addDemoSignupMutation.variables?.quotaId ===
-                              quota.id
-                          }
-                        >
-                          +1
-                        </Button>
-                      )}
-                    </div>
+                    )}
+                    <Button
+                      size="small"
+                      className="shrink-0 px-3"
+                      color="primary"
+                      onClick={handleSubmit(getHandleSignup(quota.id))}
+                      disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                      loading={
+                        isSubmitting &&
+                        createSignupMutation.variables?.quotaId === quota.id
+                      }
+                    >
+                      {signupGoesToQueue ? "Ilmoo jonoon" : "Ilmoo"}
+                    </Button>
+                    {showDemoControls && (
+                      <Button
+                        type="button"
+                        size="small"
+                        className="min-w-8 px-2"
+                        color="neutral"
+                        variant="bordered"
+                        title={`Lisää demoilmo kiintiöön ${quota.title}`}
+                        aria-label={`Lisää demoilmo kiintiöön ${quota.title}`}
+                        onClick={() =>
+                          addDemoSignupMutation.mutate({ quotaId: quota.id })
+                        }
+                        disabled={
+                          addDemoSignupMutation.isPending ||
+                          removeDemoSignupMutation.isPending
+                        }
+                        loading={
+                          addDemoSignupMutation.isPending &&
+                          addDemoSignupMutation.variables?.quotaId === quota.id
+                        }
+                      >
+                        +1
+                      </Button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
