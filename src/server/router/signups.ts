@@ -24,7 +24,7 @@ function ensureDevelopment() {
 }
 
 export const signupsRouter = router({
-  getSignupByEventIds: publicProcedure
+  getSignupByEventIds: adminProcedure
     .input(
       z.object({
         eventId: z.number(),
@@ -52,6 +52,9 @@ export const signupsRouter = router({
         },
         orderBy: {
           createdAt: "asc",
+        },
+        include: {
+          Answers: true,
         },
       });
       return signups;

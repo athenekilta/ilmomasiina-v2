@@ -276,6 +276,7 @@ export function EventForm({ editId }: EventFormProps) {
                   eventId={editId}
                   eventName={editEvent?.title}
                   quotas={editEvent?.Quotas ?? []}
+                  questions={editEvent?.Questions ?? []}
                 />
               ) : (
                 <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
