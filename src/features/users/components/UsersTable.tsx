@@ -4,7 +4,9 @@ import type { User } from "@/generated/prisma";
 import { useSession } from "@/server/auth/auth-client";
 
 export type UsersTableProps = {
-  users: Array<Omit<User, "password" | "image">>;
+  users: Array<
+    Pick<User, "id" | "name" | "email" | "emailVerified" | "role">
+  >;
   handleAction: (userId: string) => void;
 };
 
