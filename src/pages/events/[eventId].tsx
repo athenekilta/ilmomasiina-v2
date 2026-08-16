@@ -265,10 +265,6 @@ function Registration({
         </div>
         {isEditingUserData ? (
           <form className="space-y-2" onSubmit={saveUserData}>
-            <h3 className="text-md">
-              Aseta nimi ja sähköposti ennen ilmoittautumista. Huomaa, että voit
-              ilmoittautua tapahtumaan vain kerran.
-            </h3>
             <div className="text-sm">
               <FieldSet title="Nimi">
                 <p className="mb-2 text-xs leading-relaxed text-gray-600">
