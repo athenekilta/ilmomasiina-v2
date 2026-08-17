@@ -22,8 +22,8 @@ export function ParticipantsTable({
       {event.Quotas.map(
         (quota) =>
           !(quota.id == "queue" && quota.Signups.length == 0) && (
-            <div key={quota.id} className="surface-panel">
-              <div className="text-brand-dark flex items-center justify-between border-b border-stone-200 px-4 py-3 text-base font-semibold">
+            <div key={quota.id} className="surface-muted overflow-hidden">
+              <div className="text-brand-dark flex items-center justify-between border-b border-stone-300/70 px-4 py-3 text-base font-semibold">
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== "queue" ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
@@ -39,7 +39,7 @@ export function ParticipantsTable({
                 {quota.Signups.length > 0 ? (
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="border-b border-stone-200">
+                      <tr className="border-b border-stone-300/70">
                         <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                           Sija
                         </th>
@@ -67,7 +67,7 @@ export function ParticipantsTable({
                         )}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-200">
+                    <tbody className="divide-y divide-stone-300/50">
                       {quota.Signups.map((signup, index) => {
                         const rowStyle = signup.completedAt
                           ? "px-3 py-1.5"

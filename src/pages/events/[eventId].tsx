@@ -217,10 +217,7 @@ function Registration({
           )}
         </p>
         {isEditingUserData ? (
-          <form
-            className="rounded-inner mb-3 border border-stone-200 bg-white p-4"
-            onSubmit={saveUserData}
-          >
+          <form className="surface-muted mb-3 p-4" onSubmit={saveUserData}>
             <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
               Täydennä ilmotietosi
             </h3>

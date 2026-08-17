@@ -236,7 +236,7 @@ function EditSignup() {
             <input type="hidden" {...register("name")} />
             <input type="hidden" {...register("email")} />
 
-            <section className="rounded-inner mb-8 border border-stone-200 bg-white/50 p-4 sm:p-5">
+            <section className="surface-muted mb-8 p-4 sm:p-5">
               <h2 className="text-brand-secondary mb-4 text-[0.65rem] font-bold tracking-widest uppercase">
                 Osallistuja
               </h2>
@@ -275,7 +275,7 @@ function EditSignup() {
                       <legend className="text-brand-dark mb-2 flex flex-wrap items-baseline gap-x-1 text-sm font-semibold">
                         <span>{question.question}</span>
                         {question.required ? (
-                          <span className="text-xs font-bold text-red-600">
+                          <span className="text-danger text-xs font-bold">
                             pakollinen
                           </span>
                         ) : null}
@@ -383,7 +383,7 @@ function EditSignup() {
                               {errors?.answers?.[idx]?.answer?.message ? (
                                 <p
                                   id={`answers.${idx}.error`}
-                                  className="text-sm text-red-600"
+                                  className="text-danger text-sm"
                                 >
                                   {errors.answers[idx].answer.message}
                                 </p>
