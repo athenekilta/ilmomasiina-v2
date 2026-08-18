@@ -13,6 +13,12 @@ type QuotaSeed = {
   size: number | null;
   /** How many signups to generate into this quota. May exceed size (queue). */
   signups: number;
+  /**
+   * Whether this quota may take from the event's jokeripaikat (extraCapacity)
+   * once its own places run out — right away, only after registration closes,
+   * or never. Defaults to NEVER, same as the admin form.
+   */
+  sharedPlaces?: "NEVER" | "IMMEDIATE" | "AFTER_REGISTRATION_CLOSE";
 };
 
 type EventSeed = {
@@ -22,7 +28,8 @@ type EventSeed = {
   date: Date;
   registrationStartDate: Date;
   registrationEndDate: Date;
-  openQuotaSize?: number;
+  /** Jokeripaikat: places outside every quota, shared by the quotas allowed to use them. */
+  extraCapacity?: number;
   description?: string;
   price?: string;
   location?: string;
@@ -32,7 +39,11 @@ type EventSeed = {
   raffleEnabled?: boolean;
   raffleStartTime?: Date;
   raffleEndTime?: Date;
-  raffleStatus?: "NOT_STARTED" | "REGISTRATION_OPEN" | "SIMULATING" | "COMPLETED";
+  raffleStatus?:
+    | "NOT_STARTED"
+    | "REGISTRATION_OPEN"
+    | "SIMULATING"
+    | "COMPLETED";
   quotas: QuotaSeed[];
   questions?: {
     question: string;
@@ -48,8 +59,12 @@ const hours = (n: number) => moment().add(n, "hours").toDate();
 
 /**
  * Nine events covering every state the front page can render: open, opening
- * later, already closed, full with a queue, raffle, long titles, an event
- * that already happened but is still inside the 7 day window, and a draft.
+ * later, already closed, full with a queue, raffle, long titles, and an event
+ * that already happened but is still inside the 7 day window.
+ *
+ * Every date is relative to the moment the script runs, so re-running it is
+ * what refreshes "closes in 3 days" and friends — the rows themselves go
+ * stale as real time passes.
  */
 const eventSeeds: EventSeed[] = [
   {
@@ -59,15 +74,21 @@ const eventSeeds: EventSeed[] = [
     date: days(14),
     registrationStartDate: days(-3),
     registrationEndDate: days(7),
-    openQuotaSize: 5,
+    extraCapacity: 5,
     description:
       "Perinteiset mobiiliesasitsit Smökillä. Sitsilaulut, sillis ja hyvä meininki.",
     price: "15 €",
     location: "Smökki",
     signupsPublic: true,
+    // One event that exercises all three jokeripaikka policies at once.
     quotas: [
-      { title: "Eemil", size: 1, signups: 1 },
-      { title: "ConstantinNopoli", size: 6, signups: 3 },
+      { title: "Eemil", size: 1, signups: 1, sharedPlaces: "IMMEDIATE" },
+      {
+        title: "ConstantinNopoli",
+        size: 6,
+        signups: 3,
+        sharedPlaces: "AFTER_REGISTRATION_CLOSE",
+      },
       { title: "Lukkaristo", size: 4, signups: 0 },
     ],
     questions: [
@@ -87,15 +108,15 @@ const eventSeeds: EventSeed[] = [
     date: days(21),
     registrationStartDate: days(-1),
     registrationEndDate: days(12),
-    openQuotaSize: 10,
+    extraCapacity: 10,
     description: "Kylpylä varattu koko illaksi. Uikkarit mukaan!",
     price: "20 €",
     location: "Hervannan kylpylä",
     signupsPublic: true,
     quotas: [
-      { title: "Limee", size: 12, signups: 1 },
-      { title: "ristokka", size: 6, signups: 36 },
-      { title: "Lukkaristo", size: 4, signups: 69 },
+      { title: "Limee", size: 12, signups: 1, sharedPlaces: "IMMEDIATE" },
+      { title: "ristokka", size: 6, signups: 36, sharedPlaces: "IMMEDIATE" },
+      { title: "Lukkaristo", size: 4, signups: 69, sharedPlaces: "IMMEDIATE" },
       { title: "JEEEJEEJEE", size: 2, signups: 455 },
     ],
   },
@@ -106,7 +127,7 @@ const eventSeeds: EventSeed[] = [
     date: days(9),
     registrationStartDate: days(-20),
     registrationEndDate: days(-2), // ilmo sulkeutunut
-    openQuotaSize: 0,
+    extraCapacity: 0,
     description: "Ilmoittautuminen on jo sulkeutunut, tervetuloa paikalle.",
     price: "12 €",
     location: "Zoom",
@@ -124,14 +145,14 @@ const eventSeeds: EventSeed[] = [
     date: days(30),
     registrationStartDate: days(5), // ilmo aukeaa vasta
     registrationEndDate: days(25),
-    openQuotaSize: 8,
+    extraCapacity: 8,
     description: "Ilmoittautuminen aukeaa myöhemmin. Merkkaa kalenteriin!",
     price: "0 €",
     location: "Flamingo",
     signupsPublic: true,
     quotas: [
-      { title: "Esa", size: 15, signups: 0 },
-      { title: "Prodeko", size: 15, signups: 0 },
+      { title: "Esa", size: 15, signups: 0, sharedPlaces: "IMMEDIATE" },
+      { title: "Prodeko", size: 15, signups: 0, sharedPlaces: "IMMEDIATE" },
       { title: "Lukkaristo", size: 4, signups: 0 },
     ],
   },
@@ -140,7 +161,7 @@ const eventSeeds: EventSeed[] = [
     date: days(3),
     registrationStartDate: days(-30),
     registrationEndDate: days(-10),
-    openQuotaSize: 0,
+    extraCapacity: 0,
     description: "Loppuunmyyty klassikko.",
     price: "18 €",
     location: "Smökki",
@@ -149,12 +170,12 @@ const eventSeeds: EventSeed[] = [
   },
   {
     title: "Arvontasitsit 2026",
-    badgeText: "Arpa ratkaisee",
-    badgeTone: "GREEN",
+    badgeText: "Sattuma suosii",
+    badgeTone: "DARK",
     date: days(18),
     registrationStartDate: days(-2),
     registrationEndDate: days(10),
-    openQuotaSize: 0,
+    extraCapacity: 0,
     description:
       "Paikat arvotaan ilmoittautuneiden kesken. Arvonta alkaa ilmoittautumisajan päätyttyä.",
     price: "25 €",
@@ -175,7 +196,7 @@ const eventSeeds: EventSeed[] = [
     date: days(45),
     registrationStartDate: days(-5),
     registrationEndDate: days(40),
-    openQuotaSize: 3,
+    extraCapacity: 3,
     description:
       "Tapahtuma pitkillä nimillä, jotta korttien tekstin katkaisu tulee testattua.",
     price: "1 000 000 €",
@@ -188,30 +209,39 @@ const eventSeeds: EventSeed[] = [
           "ConstantinNoPolinAppropriateOfCaribbeanRoyalPalaceOfVersaillesinPuutarhanHoitoLaitosHuoltaja",
         size: 6,
         signups: 3,
+        sharedPlaces: "AFTER_REGISTRATION_CLOSE",
       },
       { title: "aitosHuoltaja", size: 4, signups: 0 },
     ],
   },
   {
     title: "Huomisen aamukahvit",
-    badgeText: "Nyt tai ei koskaan",
+    badgeText: "Baristo",
     badgeTone: "DARK",
     date: days(1),
     registrationStartDate: days(-7),
     registrationEndDate: hours(20),
-    openQuotaSize: 5,
-    description: "Ilmo sulkeutuu tänään — hyvä testi 'sulkeutuu pian' -tilalle.",
+    extraCapacity: 5,
+    description:
+      "Ilmo sulkeutuu tänään — hyvä testi 'sulkeutuu pian' -tilalle.",
     price: "",
     location: "Kahvihuone",
     signupsPublic: true,
-    quotas: [{ title: "Kahvinjuojat", size: 25, signups: 18 }],
+    quotas: [
+      {
+        title: "Kahvinjuojat",
+        size: 25,
+        signups: 18,
+        sharedPlaces: "IMMEDIATE",
+      },
+    ],
   },
   {
     title: "Menneet sitsit (3 pv sitten)",
     date: days(-3),
     registrationStartDate: days(-20),
     registrationEndDate: days(-6),
-    openQuotaSize: 0,
+    extraCapacity: 0,
     description:
       "Tapahtuma on jo ollut, mutta näkyy vielä 7 vuorokauden ajan etusivulla.",
     price: "10 €",
@@ -242,7 +272,9 @@ async function addTestEvents() {
       where: { Signup: { quotaId: { in: quotaIds } } },
     });
     await prisma.signup.deleteMany({ where: { quotaId: { in: quotaIds } } });
-    await prisma.question.deleteMany({ where: { eventId: { in: existingIds } } });
+    await prisma.question.deleteMany({
+      where: { eventId: { in: existingIds } },
+    });
     await prisma.quota.deleteMany({ where: { eventId: { in: existingIds } } });
     await prisma.raffleSimulation.deleteMany({
       where: { eventId: { in: existingIds } },
@@ -258,7 +290,7 @@ async function addTestEvents() {
     const event = await prisma.event.create({
       data: {
         ...eventData,
-        openQuotaSize: eventData.openQuotaSize ?? 0,
+        extraCapacity: eventData.extraCapacity ?? 0,
         draft: eventData.draft ?? false,
         verificationEmail: "Kiitos ilmoittautumisesta! Nähdään tapahtumassa.",
       },
@@ -289,6 +321,7 @@ async function addTestEvents() {
           sortId: i + 1,
           title: quotaSeed.title,
           size: quotaSeed.size,
+          sharedPlacesAllocation: quotaSeed.sharedPlaces ?? "NEVER",
         },
       });
 

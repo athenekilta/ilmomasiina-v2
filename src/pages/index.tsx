@@ -14,6 +14,7 @@ import { useState } from "react";
 import { EventCard } from "@/features/eventCard/EventCard";
 import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
 import HydrationZustand from "@/components/HydrationZustand";
+import { groupEventsForList } from "@/features/eventCard/eventOrder";
 import { Button } from "@/components/Button";
 
 export default function DesktopPage() {
@@ -33,6 +34,9 @@ export default function DesktopPage() {
   );
 
   const eventsData = isAdmin ? adminEventsQuery.data : regularEventsQuery.data;
+  const events = eventsData
+    ? groupEventsForList(eventsData)
+    : { open: [], closed: [] };
   const isLoading = isAdmin
     ? adminEventsQuery.isLoading
     : regularEventsQuery.isLoading;
@@ -50,7 +54,7 @@ export default function DesktopPage() {
             </HydrationZustand>
 
             <header className="mt-2 mb-4 w-full">
-              <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
+              <h1 className="text-brand-secondary px-1 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
                 Tapahtumat
               </h1>
             </header>
@@ -113,13 +117,33 @@ export default function DesktopPage() {
                   grid default), so a shorter card still lines up with a
                   taller neighbour. */}
               <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
-                {eventsData.map((event) => (
+                {events.open.map((event) => (
                   <li key={event.id} className="min-w-0">
                     <EventCard event={event} isAdmin={isAdmin} />
                   </li>
                 ))}
               </ul>
             </section>
+
+            {events.closed.length > 0 && (
+              /* Own section, smaller heading: these are not competing for
+                 attention with the events you can still sign up to. */
+              <section className="mt-14 w-full" aria-labelledby="closed-events">
+                <h2
+                  id="closed-events"
+                  className="text-brand-dark mb-4 px-1 text-lg font-extrabold tracking-tight uppercase sm:text-xl"
+                >
+                  Ilmo päättynyt
+                </h2>
+                <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
+                  {events.closed.map((event) => (
+                    <li key={event.id} className="min-w-0">
+                      <EventCard event={event} isAdmin={isAdmin} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {isAdmin && (
               <div className="mt-10 w-full border-t border-stone-300 pt-8">

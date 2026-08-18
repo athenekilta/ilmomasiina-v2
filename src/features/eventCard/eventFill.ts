@@ -9,7 +9,7 @@ export type EventFill = {
   capacity: number | null;
   /** Short human label, used as the icon's accessible name and tooltip. */
   label: string;
-  /** "12 ilmoittautunutta" — quota names are not shown on the card. */
+  /** "12 ilmonnutta" — quota names are not shown on the card. */
   countText: string;
   /** "Paljon paikkoja jäljellä" and friends. */
   availabilityText: string;
@@ -30,12 +30,15 @@ export function getEventFill(event: EnrichedEvent): EventFill {
 
   const hasUnlimitedQuota = event.Quotas.some((quota) => quota.size == null);
 
+  // Quota places plus jokeripaikat — the shared places that sit outside every
+  // quota. `openQuotaSize` is the legacy field this replaced; the event page
+  // counts `extraCapacity` too, so the card has to agree with it.
   const capacity = hasUnlimitedQuota
     ? null
     : event.Quotas.reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
-      event.openQuotaSize;
+      event.extraCapacity;
 
-  const countText = `${signupCount} ilmoittautunutta`;
+  const countText = `${signupCount} ilmonnutta`;
 
   if (capacity === null || capacity === 0) {
     // No seat count to quote when a quota is unlimited.
@@ -60,7 +63,7 @@ export function getEventFill(event: EnrichedEvent): EventFill {
       level: "full",
       signupCount,
       capacity,
-      label: `${signupCount}/${capacity} · täynnä, ilmoittautuminen jonoon`,
+      label: `${signupCount}/${capacity} · täynnä, ilmo jonoon`,
       countText,
       availabilityText: seatsText,
     };

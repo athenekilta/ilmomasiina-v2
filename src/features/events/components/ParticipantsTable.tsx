@@ -27,7 +27,7 @@ export function ParticipantsTable({
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== "queue" ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.Signups.length} ilmoittautunutta
+                    {quota.Signups.length} ilmonnutta
                   </span>
                 ) : (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">

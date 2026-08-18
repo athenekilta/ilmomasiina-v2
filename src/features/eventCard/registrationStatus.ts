@@ -44,7 +44,7 @@ export function getRegistrationStatus(event: EnrichedEvent): RegistrationStatus 
   if (end.getTime() < now) {
     return {
       state: "closed",
-      headline: "Ilmoittautuminen sulkeutunut",
+      headline: "Ilmo sulkeutunut",
       detail: `Päättyi ${at(end)}`,
       urgent: false,
     };

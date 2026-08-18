@@ -117,7 +117,7 @@ function EditSignup() {
         signupId: signupId!,
         answers: canonicalAnswers,
       });
-      alerts.success("Ilmoittautuminen onnistui");
+      alerts.success("Ilmo onnistui");
       router.push(`/events/${eventId}`);
     } catch (error) {
       if (error instanceof Error) {
@@ -132,7 +132,7 @@ function EditSignup() {
       await deleteMutation.mutateAsync({
         signupId: signupId!,
       });
-      alerts.success("Ilmoittautuminen onnistui");
+      alerts.success("Ilmo onnistui");
       router.push(`/events/${eventId}`);
     } catch (error) {
       console.error(error);
@@ -142,7 +142,7 @@ function EditSignup() {
   if (isLoading) {
     return (
       <>
-        <PageHead title="Ilmoittautuminen" />
+        <PageHead title="Ilmo" />
         <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
           <div className="surface-panel flex justify-center py-20 sm:py-24">
             <LoadingSpinner />
@@ -155,11 +155,11 @@ function EditSignup() {
   if (isError || !signup) {
     return (
       <>
-        <PageHead title="Ilmoittautuminen" />
+        <PageHead title="Ilmo" />
         <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
           <div className="surface-panel p-8 text-center sm:p-10">
             <p className="text-brand-dark text-base font-medium">
-              Ilmoittautumista ei löytynyt tai sen lataus epäonnistui.
+              Ilmoa ei löytynyt tai sen lataus epäonnistui.
             </p>
             {eventId != null && (
               <Button.Link
@@ -193,7 +193,7 @@ function EditSignup() {
 
           <header className="mb-6">
             <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
-              Viimeistele ilmoittautuminen
+              Viimeistele ilmo
             </h1>
             <p className="text-brand-primary mt-2 text-sm font-semibold sm:text-base">
               {signup.event.title}
@@ -205,8 +205,7 @@ function EditSignup() {
               className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"
             >
-              Löysimme jo sinun vahvistamattoman ilmoittautumisen tähän
-              tapahtumaan. Täydennä tai muokkaa tietoja alla ja vahvista
+              Löysimme jo sinun vahvistamattoman ilmosi tähän tapahtumaan. Täydennä tai muokkaa tietoja alla ja vahvista
               lopuksi.
               <br />
               Väärä kiintiö? Poista ilmo ja tee uusi.
@@ -426,7 +425,7 @@ function EditSignup() {
                 className="w-full py-2.5 text-[0.95rem]"
                 loading={updateMutation.isPending}
               >
-                Vahvista ilmoittautuminen
+                Vahvista ilmo
               </Button>
               <p className="text-center text-xs text-stone-500 sm:text-left">
                 <button
@@ -439,7 +438,7 @@ function EditSignup() {
                 >
                   {deleteMutation.isPending
                     ? "Poistetaan…"
-                    : "Poista ilmoittautuminen"}
+                    : "Poista ilmo"}
                 </button>
               </p>
             </div>
@@ -448,7 +447,7 @@ function EditSignup() {
           {showDeleteConfirm && (
             <ConfirmationDialog
               title="Poista ilmoittautuminen?"
-              message="Haluatko varmasti poistaa ilmoittautumisesi? Tätä ei voi perua."
+              message="Haluatko varmasti poistaa ilmosi? Tätä ei voi perua."
               confirmLabel="Poista ilmo"
               onConfirmAction={handleDelete}
               onCancelAction={() => setShowDeleteConfirm(false)}

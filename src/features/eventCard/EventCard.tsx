@@ -16,8 +16,9 @@ import { getRegistrationStatus } from "./registrationStatus";
    leftover flex space — the image itself never stretches to fill a
    taller row (the card as a whole does, via `h-full`/`flex-1` below, so
    its white background — not the image — absorbs any extra height).
-   2:1 matches the banner crops the images ship in. */
-const BANNER_ASPECT = "aspect-[2/1]";
+   5:2 — flatter than the images' own 2:1 crop, which cost the card too
+   much height for a picture that is mostly backdrop. */
+const BANNER_ASPECT = "aspect-[5/2]";
 
 /* Unmounts itself when the file is missing, so the gradient behind it
    shows through instead of the browser's broken-image glyph. */
@@ -192,9 +193,15 @@ export function EventCard({
                 added noise, and showing one of five quotas told you less
                 than the totals do. The event page still lists them. */}
             {event.Quotas.length > 0 && (
+              /* The figures pill is about deciding whether to hurry, so a
+                 closed event only keeps the headcount — one line instead of
+                 three, which is what lets these cards sit quietly at the
+                 bottom of the page. */
               <div className="mt-3 min-w-0">
-                <EventFillIndicator fill={fill} />
-                <p className="mt-1.5 truncate text-sm text-gray-500">
+                {!isClosed && <EventFillIndicator fill={fill} />}
+                <p
+                  className={`truncate text-sm text-gray-500 ${isClosed ? "" : "mt-1.5"}`}
+                >
                   {fill.countText}
                 </p>
               </div>

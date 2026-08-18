@@ -222,12 +222,12 @@ function Registration({
               Täydennä ilmotietosi
             </h3>
             <p className="text-brand-dark mt-1 text-sm">
-              Aseta nimi ja sähköposti ennen ilmoittautumista. Huomaa, että voit
-              ilmoittautua tapahtumaan vain kerran.
+              Aseta nimi ja sähköposti ennen ilmoa. Huomaa, että voit ilmota
+              tapahtumaan vain kerran.
             </p>
             <p className="mt-2 text-xs leading-relaxed text-gray-600">
               {event.signupsPublic && <span>Nimi on julkinen tieto. </span>}
-              Voit halutessasi ilmoittautua salanimellä tapahtumaan.
+              Voit halutessasi ilmota salanimellä tapahtumaan.
             </p>
 
             <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -301,7 +301,7 @@ function Registration({
                 {quotas.map((quota) => (
                   <li key={quota.id}>
                     {quota.title}: {seatHoldingSignupCount(quota)}{" "}
-                    ilmoittautunutta
+                    ilmonnutta
                   </li>
                 ))}
               </ul>
@@ -332,7 +332,7 @@ function Registration({
                         style={{
                           width: `${(signupCount / totalCapacity) * 100}%`,
                         }}
-                        title={`${quota.title}: ${signupCount} ilmoittautunutta`}
+                        title={`${quota.title}: ${signupCount} ilmonnutta`}
                       />
                     ))}
                 </div>
@@ -410,11 +410,11 @@ function Registration({
                     </h3>
                     {showExactAvailablePlaces ? (
                       <p className="text-xs text-gray-600 tabular-nums">
-                        {signupCount} / {quota.size} ilmoittautunutta
+                        {signupCount} / {quota.size} ilmonnutta
                       </p>
                     ) : (
                       <p className="text-xs text-gray-600 tabular-nums">
-                        {signupCount} ilmoittautunutta
+                        {signupCount} ilmonnutta
                       </p>
                     )}
                   </div>
@@ -510,7 +510,7 @@ function Registration({
               {signupConflict.existingSignup.isCompleted
                 ? "vahvistetun"
                 : "vahvistamattoman"}{" "}
-              ilmoittautumisen.
+              ilmon.
             </p>
             <div className="mt-4 space-y-2 text-sm">
               <p>
@@ -633,9 +633,8 @@ export default function EventPage() {
             {/* The same banner the event wears on the front page: full-bleed
                 picture, the card's own sand fading up under the title, and
                 the editorial badge in the corner. Only the proportions
-                differ — this card is far wider, so 2:1 would swallow the
-                screen. */}
-            <div className="bg-brand-sand relative aspect-[2/1] w-full overflow-hidden sm:aspect-[3/1]">
+                banner keeps the same 5:2 proportions as the cards. */}
+            <div className="bg-brand-sand relative aspect-[5/2] w-full overflow-hidden">
               {event && <EventBannerImage src={getEventImage(event.id)} />}
 
               {event?.badgeText && !registrationClosed && (
