@@ -6,22 +6,25 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 
 - Event management and registration
 - Raffle system for event spots
-- Real-time updates with Pusher
+
 - Modern UI with Tailwind CSS
 - Authentication system
 
 ## Postgres
+
 If you have docker installed, postgres can be easily run with the following command:
+
 ```
 docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18
 ```
 
 After the container has been created, you can start/stop the container with the following docker commands.
+
 ```bash
 # Start
 docker start ilmomasiina-v2-dev-db
 
-# Stop 
+# Stop
 docker stop ilmomasiina-v2-dev-db
 ```
 
@@ -43,7 +46,7 @@ Update DATABASE_URL in your .env to match the password & user.
 4. Set up the database:
    ```bash
    npx prisma generate
-   npx prisma db push 
+   npx prisma db push
    ```
 5. Run the development server:
    ```bash
@@ -53,20 +56,27 @@ Update DATABASE_URL in your .env to match the password & user.
 After this you can go and create yourself an account in the ui at [http://localhost:3000]. If you want to test admin features, set your role to admin in prisma studio. More info about prisma studio at the end of the README.md.
 
 If you have modified the schema, you can update the database tables with
-   ```bash
-   npx prisma generate
-   npx prisma migrate deploy 
-   ```
-
-## Raffle Worker
-
-The system includes a raffle worker that automatically processes event raffles. To run the worker:
 
 ```bash
-npm run raffle-worker
+npx prisma generate
+npx prisma migrate deploy
 ```
 
-The worker checks every minute for events with raffles that need to be started and processes them automatically.
+## Scheduled task worker
+
+The worker processes scheduled raffles, removes expired signup reservations, and finalizes allocations once per minute. Run it alongside the web server:
+
+```bash
+npm run worker
+```
+
+Docker Compose starts the `app` and `worker` services automatically:
+
+```bash
+docker compose up --build
+```
+
+Only one worker instance should run at a time.
 
 ## Available Scripts
 
@@ -84,9 +94,9 @@ The worker checks every minute for events with raffles that need to be started a
 - Tailwind CSS
 - tRPC
 - NextAuth.js
-- Pusher (Real-time updates) 
 
 ## Prisma studio
-To modify data manually, for example to add admins, you can use the prisma studio. 
+
+To modify data manually, for example to add admins, you can use the prisma studio.
 
 Run `npm run studio`

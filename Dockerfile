@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install Prisma Client - remove if not using Prisma
 
-COPY prisma ./
+COPY prisma ./prisma
 
 # Install dependencies based on the preferred package manager
 
@@ -46,7 +46,7 @@ ENV NODE_ENV production
 
 ENV NEXT_TELEMETRY_DISABLED 1
 
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 
@@ -57,3 +57,18 @@ EXPOSE 3000
 ENV PORT 3000
 
 CMD ["server.js"]
+
+##### WORKER
+
+FROM --platform=linux/amd64 node:20-alpine AS worker
+RUN apk add --no-cache libc6-compat openssl
+WORKDIR /app
+
+ENV NODE_ENV production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+
+CMD ["./node_modules/.bin/tsx", "src/server/worker.ts"]

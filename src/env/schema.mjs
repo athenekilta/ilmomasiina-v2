@@ -27,10 +27,6 @@ export const serverSchema = z.object({
     process.env.VERCEL ? z.string() : z.string().url(),
   ),
   MAIL_API_KEY: z.string().default(""),
-  PUSHER_APP_ID: z.string(),
-  PUSHER_KEY: z.string(),
-  PUSHER_SECRET: z.string(),
-  PUSHER_CLUSTER: z.string(),
 });
 
 /**
@@ -44,8 +40,6 @@ export const clientSchema = z.object({
     .optional()
     .default("error")
     .catch("error"),
-  NEXT_PUBLIC_PUSHER_KEY: z.string(),
-  NEXT_PUBLIC_PUSHER_CLUSTER: z.string(),
 });
 
 /**
@@ -58,6 +52,4 @@ export const clientEnv = {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   NEXT_PUBLIC_DEV_TRPC_LOG: process.env.NEXT_PUBLIC_DEV_TRPC_LOG,
-  NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
-  NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
 };

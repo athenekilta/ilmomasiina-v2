@@ -1,5 +1,4 @@
 import { PrismaClient } from "@/generated/prisma/client";
-import cron from "node-cron";
 
 const prisma = new PrismaClient();
 
@@ -22,6 +21,4 @@ async function deleteUncompletedSignups() {
   }
 }
 
-cron.schedule("* * * * *", () => {
-  deleteUncompletedSignups();
-});
+void deleteUncompletedSignups();

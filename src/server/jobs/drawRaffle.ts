@@ -1,28 +1,20 @@
-import type { PrismaClient} from "@/generated/prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 import { RaffleStatus } from "@/generated/prisma/client";
 import { addMilliseconds } from "date-fns";
-import Pusher from "pusher";
 
 import { simulateRaffle } from "../features/raffle/simulateRaffle";
 import { generateRaffleSeed } from "../../utils/raffleUtils";
 import { emailTemplates } from "../../features/emailTemplates/emailTemplates";
 
-// Initialize Pusher with environment variables directly
-const pusher = new Pusher({
-  appId: process.env.PUSHER_APP_ID!,
-  key: process.env.PUSHER_KEY!,
-  secret: process.env.PUSHER_SECRET!,
-  cluster: process.env.PUSHER_CLUSTER!,
-  useTLS: true,
-});
-
-// Helper to update status and trigger Pusher event
-async function updateRaffleStatus(prisma: PrismaClient, eventId: number, status: RaffleStatus) {
+async function updateRaffleStatus(
+  prisma: PrismaClient,
+  eventId: number,
+  status: RaffleStatus,
+) {
   await prisma.event.update({
     where: { id: eventId },
     data: { raffleStatus: status },
   });
-  await pusher.trigger(`raffle-${eventId}`, "status-update", {});
 }
 
 export async function drawRaffle(prisma: PrismaClient, eventId: number) {
@@ -34,8 +26,8 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
         include: {
           Signups: {
             where: {
-              registrationIntent: { not: null }
-            }
+              registrationIntent: { not: null },
+            },
           },
         },
       },
@@ -65,7 +57,7 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
   if (now < startTime) {
     const timeToStart = startTime.getTime() - now.getTime();
     console.log(`Waiting ${timeToStart}ms until start time...`);
-    await new Promise(resolve => setTimeout(resolve, timeToStart));
+    await new Promise((resolve) => setTimeout(resolve, timeToStart));
   }
 
   // Set status to REGISTRATION_OPEN
@@ -76,7 +68,7 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
   const timeToEnd = endTime.getTime() - Date.now();
   if (timeToEnd > 0) {
     console.log(`Waiting ${timeToEnd}ms until end time...`);
-    await new Promise(resolve => setTimeout(resolve, timeToEnd));
+    await new Promise((resolve) => setTimeout(resolve, timeToEnd));
   }
 
   // Set status to SIMULATING
@@ -86,13 +78,13 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
   // Get final list of participants
   const signups = await prisma.signup.findMany({
     where: {
-      quotaId: event.Quotas[0]?.id
-    }
+      quotaId: event.Quotas[0]?.id,
+    },
   });
 
-  const participants = signups.map(signup => ({
+  const participants = signups.map((signup) => ({
     id: signup.id,
-    name: signup.name
+    name: signup.name,
   }));
 
   console.log("Participants:", participants);
@@ -110,12 +102,12 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
 
   const ANIMATION_DURATION = 20000; // 20 seconds total
   console.log(`Waiting ${ANIMATION_DURATION}ms for animation...`);
-  await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION));
+  await new Promise((resolve) => setTimeout(resolve, ANIMATION_DURATION));
 
   // Update signups based on winners
   await Promise.all(
     simulation.finalPositions.map(async (result, position) => {
-      const signup = signups.find(s => s.id === result.id);
+      const signup = signups.find((s) => s.id === result.id);
       if (!signup) return;
 
       const quota = event.Quotas[0];
@@ -129,8 +121,8 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
         data: {
           status: isConfirmed ? "CONFIRMED" : "REJECTED",
           createdAt: newTime,
-          completedAt: newTime
-        }
+          completedAt: newTime,
+        },
       });
 
       // Send appropriate email based on status
@@ -139,23 +131,27 @@ export async function drawRaffle(prisma: PrismaClient, eventId: number) {
       const editUrl = `${nextAuthUrl}events/${eventId}/${signup.id}`;
 
       if (isConfirmed) {
-        await (await emailTemplates.eventSignup({
-          eventName: event.title,
-          editUrl
-        })).send({
+        await (
+          await emailTemplates.eventSignup({
+            eventName: event.title,
+            editUrl,
+          })
+        ).send({
           to: { displayName: signup.name, address: signup.email },
           from: "DoNotReply@athene.fi",
         });
       } else {
-        await (await emailTemplates.eventQueue({
-          eventName: event.title,
-          editUrl
-        })).send({
+        await (
+          await emailTemplates.eventQueue({
+            eventName: event.title,
+            editUrl,
+          })
+        ).send({
           to: { displayName: signup.name, address: signup.email },
           from: "DoNotReply@athene.fi",
         });
       }
-    })
+    }),
   );
 
   // Set status to COMPLETED

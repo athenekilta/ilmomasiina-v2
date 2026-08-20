@@ -2,16 +2,18 @@ import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { z } from "zod";
 import { generateRaffleSeed } from "@/utils/raffleUtils";
-import { pusher } from "../external/pusher";
-import type { RaffleResult } from '@/types/raffle';
+
+import type { RaffleResult } from "@/types/raffle";
 import { RaffleStatus } from "@/generated/prisma/client";
 
 export const raffleRouter = router({
   getRaffleStatus: publicProcedure
-    .input(z.object({
-      eventId: z.number(),
-      quotaId: z.string()
-    }))
+    .input(
+      z.object({
+        eventId: z.number(),
+        quotaId: z.string(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
       const event = await ctx.prisma.event.findUnique({
         where: { id: input.eventId },
@@ -29,12 +31,12 @@ export const raffleRouter = router({
                   id: true,
                   name: true,
                   email: true,
-                  registrationIntent: true
-                }
-              }
-            }
-          }
-        }
+                  registrationIntent: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!event?.raffleEnabled || !event.Quotas?.[0]?.Signups) {
@@ -42,13 +44,17 @@ export const raffleRouter = router({
       }
 
       const signups = event.Quotas[0].Signups;
-      
+
       if (signups.length > 0) {
         const seed = generateRaffleSeed(signups);
         return {
           phase: event.raffleStatus,
           seed,
-          participants: signups.map(s => ({ id: s.id, name: s.name, email: s.email }))
+          participants: signups.map((s) => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+          })),
         };
       }
 
@@ -56,12 +62,14 @@ export const raffleRouter = router({
     }),
 
   registerForRaffle: publicProcedure
-    .input(z.object({
-      eventId: z.number(),
-      quotaId: z.string(),
-      name: z.string(),
-      email: z.string()
-    }))
+    .input(
+      z.object({
+        eventId: z.number(),
+        quotaId: z.string(),
+        name: z.string(),
+        email: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const signup = await ctx.prisma.signup.create({
         data: {
@@ -70,41 +78,40 @@ export const raffleRouter = router({
           name: input.name,
           email: input.email,
           registrationIntent: new Date(),
-          status: "PENDING"
-        }
+          status: "PENDING",
+        },
       });
-
-      // Trigger status update via Pusher
-      await pusher.trigger(`raffle-${input.eventId}`, 'status-update', {});
 
       return signup;
     }),
 
   getRaffleResults: publicProcedure
-    .input(z.object({
-      eventId: z.number(),
-      quotaId: z.string()
-    }))
+    .input(
+      z.object({
+        eventId: z.number(),
+        quotaId: z.string(),
+      }),
+    )
     .query(async ({ ctx, input }): Promise<RaffleResult[]> => {
       const signups = await ctx.prisma.signup.findMany({
         where: {
           quotaId: input.quotaId,
-          status: { in: ['CONFIRMED', 'REJECTED'] }
+          status: { in: ["CONFIRMED", "REJECTED"] },
         },
         select: {
           id: true,
           name: true,
-          status: true
+          status: true,
         },
         orderBy: {
-          createdAt: 'asc'
-        }
+          createdAt: "asc",
+        },
       });
 
-      return signups.map(signup => ({
+      return signups.map((signup) => ({
         id: signup.id,
         name: signup.name,
-        status: signup.status as 'CONFIRMED' | 'REJECTED' // Safe because of the where clause
+        status: signup.status as "CONFIRMED" | "REJECTED", // Safe because of the where clause
       }));
     }),
 });

@@ -5,7 +5,6 @@ import { useUser } from "@/features/auth/hooks/useUser";
 import { RaffleAnimation } from "./RaffleAnimation";
 import type { RaffleResult } from "@/types/raffle";
 import { RaffleStatus } from "@/generated/prisma";
-import { pusherClient } from "@/utils/pusher";
 
 interface RaffleSignupProps {
   eventId: number;
@@ -32,7 +31,7 @@ export function RaffleSignup({
     { eventId, quotaId },
     {
       enabled: true,
-      refetchInterval: false, // Don't poll, rely on Pusher and manual refetches
+      refetchInterval: 5_000,
       staleTime: 0,
       gcTime: 0,
     },
@@ -128,29 +127,6 @@ export function RaffleSignup({
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   }, []);
 
-  // Listen for raffle events
-  useEffect(() => {
-    const channel = pusherClient.subscribe(`raffle-${eventId}`);
-
-    // Listen for status updates
-    channel.bind("status-update", () => {
-      console.log("Received status update");
-      statusQuery.refetch();
-      resultQuery.refetch();
-    });
-
-    // Listen for simulation complete
-    channel.bind("simulation-complete", () => {
-      console.log("Simulation complete");
-      statusQuery.refetch();
-      resultQuery.refetch();
-    });
-
-    return () => {
-      pusherClient.unsubscribe(`raffle-${eventId}`);
-    };
-  }, [eventId, statusQuery, resultQuery]);
-
   // Registration mutation
   const registerMutation = api.signups.createRaffleSignup.useMutation({
     onSuccess: () => {
@@ -217,7 +193,7 @@ export function RaffleSignup({
   const renderContent = () => {
     if (statusQuery.data?.phase === RaffleStatus.NOT_STARTED) {
       return (
-        <div className="mb-4 rounded-card bg-blue-50 p-6">
+        <div className="rounded-card mb-4 bg-blue-50 p-6">
           <h3 className="text-lg font-semibold text-blue-900">
             Raffle Registration Opens In
           </h3>
@@ -230,7 +206,7 @@ export function RaffleSignup({
 
     if (statusQuery.data?.phase === RaffleStatus.REGISTRATION_OPEN) {
       return (
-        <div className="mb-4 rounded-card bg-green-50 p-6">
+        <div className="rounded-card mb-4 bg-green-50 p-6">
           <h3 className="text-lg font-semibold text-green-900">
             Registration Open!
           </h3>
@@ -299,7 +275,7 @@ export function RaffleSignup({
           </div>
 
           {resultQuery.data && (
-            <div className="mb-4 rounded-card bg-gray-50 p-6">
+            <div className="rounded-card mb-4 bg-gray-50 p-6">
               <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Raffle Results
               </h3>
