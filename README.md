@@ -6,7 +6,6 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 
 - Event management and registration
 - Raffle system for event spots
-
 - Modern UI with Tailwind CSS
 - Authentication system
 
@@ -88,7 +87,7 @@ Only one worker instance should run at a time.
 
 ## Tech Stack
 
-- Next.js 15
+- Next.js 16
 - TypeScript
 - Prisma (Database ORM)
 - Tailwind CSS

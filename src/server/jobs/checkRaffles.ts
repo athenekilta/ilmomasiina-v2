@@ -1,5 +1,5 @@
 import { PrismaClient, RaffleStatus } from "@/generated/prisma/client";
-import { drawRaffle } from "../server/jobs/drawRaffle";
+import { drawRaffle } from "./drawRaffle";
 
 export async function checkRaffles(prisma: PrismaClient) {
   try {

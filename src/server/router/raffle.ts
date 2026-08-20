@@ -61,29 +61,6 @@ export const raffleRouter = router({
       return { phase: event.raffleStatus };
     }),
 
-  registerForRaffle: publicProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-        quotaId: z.string(),
-        name: z.string(),
-        email: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const signup = await ctx.prisma.signup.create({
-        data: {
-          quotaId: input.quotaId,
-          originalQuotaId: input.quotaId,
-          name: input.name,
-          email: input.email,
-          registrationIntent: new Date(),
-          status: "PENDING",
-        },
-      });
-
-      return signup;
-    }),
 
   getRaffleResults: publicProcedure
     .input(

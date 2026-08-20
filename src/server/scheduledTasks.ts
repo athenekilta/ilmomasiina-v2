@@ -1,5 +1,5 @@
 import { prisma } from "@/server/external/prisma";
-import { checkRaffles } from "../scripts/raffle-worker";
+import { checkRaffles } from "./jobs/checkRaffles";
 
 import {
   cleanupExpiredInProgressSignups,
