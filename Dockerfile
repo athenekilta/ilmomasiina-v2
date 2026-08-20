@@ -1,74 +1,44 @@
-##### DEPENDENCIES
+FROM node:24-trixie-slim AS base
 
-FROM --platform=linux/amd64 node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install Prisma Client - remove if not using Prisma
+FROM base AS dependencies
 
+COPY package.json package-lock.json ./
 COPY prisma ./prisma
+RUN npm ci
 
-# Install dependencies based on the preferred package manager
+FROM base AS builder
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml\* ./
-
-RUN \
-    if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then npm ci; \
-    elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && pnpm i; \
-    else echo "Lockfile not found." && exit 1; \
-    fi
-
-##### BUILDER
-
-FROM --platform=linux/amd64 node:20-alpine AS builder
-ARG DATABASE_URL
-ARG NEXT_PUBLIC_CLIENTVAR
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+COPY --from=dependencies /app/src/generated ./src/generated
+RUN SKIP_ENV_VALIDATION=1 npm run build
 
-ENV NEXT_TELEMETRY_DISABLED 1
+FROM base AS runner
 
-RUN \
-    if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \
-    elif [ -f package-lock.json ]; then SKIP_ENV_VALIDATION=1 npm run build; \
-    elif [ -f pnpm-lock.yaml ]; then npm install -g pnpm && SKIP_ENV_VALIDATION=1 pnpm run build; \
-    else echo "Lockfile not found." && exit 1; \
-    fi
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
 
-##### RUNNER
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
-FROM --platform=linux/amd64 gcr.io/distroless/nodejs20-debian12 AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-ENV NEXT_TELEMETRY_DISABLED 1
-
-COPY --from=builder /app/next.config.mjs ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
+USER node
 EXPOSE 3000
-ENV PORT 3000
+CMD ["node", "server.js"]
 
-CMD ["server.js"]
+FROM base AS worker
 
-##### WORKER
+ENV NODE_ENV=production
 
-FROM --platform=linux/amd64 node:20-alpine AS worker
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
+COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node package.json tsconfig.json prisma.config.ts ./
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node src ./src
+COPY --from=dependencies --chown=node:node /app/src/generated ./src/generated
 
-ENV NODE_ENV production
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-
+USER node
 CMD ["./node_modules/.bin/tsx", "src/server/worker.ts"]

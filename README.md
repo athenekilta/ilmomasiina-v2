@@ -14,7 +14,7 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 If you have docker installed, postgres can be easily run with the following command:
 
 ```
-docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18
+docker run -e POSTGRES_PASSWORD=secret -e POSTGRES_USER=postgres -p 127.0.0.1:5432:5432 -v ilmomasiina-postgres:/var/lib/postgresql --name ilmomasiina-v2-dev-db postgres:18-trixie
 ```
 
 After the container has been created, you can start/stop the container with the following docker commands.
@@ -76,6 +76,33 @@ docker compose up --build
 ```
 
 Only one worker instance should run at a time.
+
+## Prisma commands in Docker
+
+The worker image includes the Prisma CLI, configuration, schema, and migrations. Rebuild it after changing these files:
+
+```bash
+docker compose build worker
+```
+
+Apply committed migrations:
+
+```bash
+docker compose run --rm worker npm run prisma-deploy-migrations
+```
+
+Push the schema directly during development:
+
+```bash
+docker compose run --rm worker npm run prisma-db-push
+```
+
+Create migrations on the host so the generated files remain in the working tree, then apply them through Docker:
+
+```bash
+npx prisma migrate dev --name migration_name
+docker compose run --rm worker npm run prisma-deploy-migrations
+```
 
 ## Available Scripts
 

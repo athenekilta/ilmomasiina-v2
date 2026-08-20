@@ -12,6 +12,7 @@
     "lint:fix": "eslint --fix .",
     "start": "next start",
     "worker": "tsx src/server/worker.ts",
+    "prisma-db-push": "prisma db push",
     "prisma-deploy-migrations": "prisma migrate deploy",
     "add-fake-data": "tsx src/scripts/add-fake-data.ts",
     "add-test-events": "tsx src/scripts/add-test-events.ts",

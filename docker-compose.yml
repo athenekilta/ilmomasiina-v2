@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       target: runner
     restart: unless-stopped
+    init: true
     ports:
       - "127.0.0.1:3000:3000"
     env_file:
@@ -20,6 +21,7 @@ services:
       dockerfile: Dockerfile
       target: worker
     restart: unless-stopped
+    init: true
     env_file:
       - .env
     environment:
@@ -28,7 +30,7 @@ services:
       db:
         condition: service_healthy
   db:
-    image: postgres:18
+    image: postgres:18-trixie
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
