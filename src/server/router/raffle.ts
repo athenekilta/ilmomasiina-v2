@@ -66,6 +66,7 @@ export const raffleRouter = router({
       const signup = await ctx.prisma.signup.create({
         data: {
           quotaId: input.quotaId,
+          originalQuotaId: input.quotaId,
           name: input.name,
           email: input.email,
           registrationIntent: new Date(),

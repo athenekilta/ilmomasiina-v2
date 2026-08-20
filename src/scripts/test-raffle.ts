@@ -135,6 +135,7 @@ async function setupRaffleTest() {
         const signup = await prisma.signup.create({
           data: {
             quotaId: quota.id,
+            originalQuotaId: quota.id,
             name: faker.person.fullName(),
             email: faker.internet.email(),
             registrationIntent: registrationTime,

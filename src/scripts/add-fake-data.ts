@@ -84,9 +84,11 @@ async function createFakeData() {
       const signup = await prisma.signup.create({
         data: {
           quotaId: quota.id, // Link to the correct quota ID
+          originalQuotaId: quota.id,
           name: faker.person.fullName(),
           email: faker.internet.email(),
           completedAt: moment().subtract(1, "minutes").toDate(),
+          status: "CONFIRMED",
         },
       });
 
