@@ -7,6 +7,7 @@ import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
 import { useUser } from "@/features/auth/hooks/useUser";
+import { UserRole } from "@/generated/prisma";
 import { Input } from "@/components/Input";
 
 import HydrationZustand from "@/components/HydrationZustand";
@@ -300,8 +301,7 @@ function Registration({
               <ul className="space-y-0.5 text-xs text-gray-600">
                 {quotas.map((quota) => (
                   <li key={quota.id}>
-                    {quota.title}: {seatHoldingSignupCount(quota)}{" "}
-                    ilmonnutta
+                    {quota.title}: {seatHoldingSignupCount(quota)} ilmonnutta
                   </li>
                 ))}
               </ul>
@@ -591,7 +591,9 @@ export default function EventPage() {
   const eventId = Number(router.query.eventId);
 
   const loginUser = useUser();
-  const isAdmin = loginUser.data?.role === "admin";
+  const canEditEvent =
+    loginUser.data?.role === UserRole.event_editor ||
+    loginUser.data?.role === UserRole.superadmin;
 
   const { data: event, isLoading } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
@@ -673,7 +675,7 @@ export default function EventPage() {
                 </div>
               ) : (
                 <>
-                  {isAdmin && (
+                  {canEditEvent && (
                     <div className="mb-6 flex justify-end">
                       <Button.Link href={`/events/${event.id}/edit`}>
                         Muokkaa tapahtumaa

@@ -5,7 +5,7 @@ import { PageHead } from "@/features/layout/PageHead";
 
 export default function CreateEvent() {
   return (
-    <ProtectedRoute adminOnly={true}>
+    <ProtectedRoute eventEditorOnly>
       <PageHead title="Create event" />
       <Layout>
         <div className="surface-panel mx-auto mt-4 w-full max-w-3xl sm:mt-6">

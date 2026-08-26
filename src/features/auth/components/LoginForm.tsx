@@ -18,6 +18,7 @@ const formschema = z.object({
 
 export function LoginForm() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [loginError, setLoginError] = useState<string>();
   const { error: queryError } = useQueryParams();
 
   const {
@@ -33,13 +34,25 @@ export function LoginForm() {
   });
 
   const handleSubmit = createHandleSubmit(async (values) => {
-    await signIn.email(values);
+    setLoginError(undefined);
+
+    try {
+      const result = await signIn.email(values);
+      if (result.error) {
+        setLoginError("Invalid email or password.");
+      }
+    } catch {
+      setLoginError("Login failed. Please try again.");
+    }
   });
 
-  const errorMessages = queryError;
+  const errorMessage = loginError ?? queryError;
 
   return (
-    <form onSubmit={handleSubmit} className="relative flex w-full flex-col gap-6">
+    <form
+      onSubmit={handleSubmit}
+      className="relative flex w-full flex-col gap-6"
+    >
       <div className="flex flex-col gap-6">
         <Input
           {...register("email")}
@@ -54,6 +67,7 @@ export function LoginForm() {
           fullWidth
           type={isPasswordVisible ? "text" : "password"}
           startIcon={<Icon icon="lock" />}
+          placeholder="Password"
           endIcon={
             <IconButton
               tabIndex={-1}
@@ -73,7 +87,11 @@ export function LoginForm() {
         <Button type="submit" color="primary" loading={isSubmitting}>
           Login
         </Button>
-        {errorMessages && <p className="text-danger-700">{errorMessages}</p>}
+        {errorMessage && (
+          <p role="alert" aria-live="polite" className="text-danger-700">
+            {errorMessage}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-between text-black">

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
-import { adminProcedure } from "../trpc/procedures/adminProcedure";
+import { eventEditorProcedure } from "../trpc/procedures/eventEditorProcedure";
 import {
   normalizeQuestionOptions,
   quotaSchema,
@@ -42,7 +42,7 @@ export const eventsRouter = router({
     return enrichedEvents;
   }),
 
-  getEventsAdmin: adminProcedure
+  getEventsAdmin: eventEditorProcedure
     .input(
       z.object({
         includeDrafts: z.boolean().optional().default(false),
@@ -82,7 +82,7 @@ export const eventsRouter = router({
 
       return enrichedEvents;
     }),
-  getEventEditId: adminProcedure
+  getEventEditId: eventEditorProcedure
     .input(
       z.object({
         eventId: z.number(),
@@ -198,7 +198,7 @@ export const eventsRouter = router({
 
       return filteredEvent;
     }),
-  createEvent: adminProcedure
+  createEvent: eventEditorProcedure
     .input(
       z.object({
         title: z.string(),
@@ -270,7 +270,7 @@ export const eventsRouter = router({
       return event;
     }),
 
-  updateEvent: adminProcedure
+  updateEvent: eventEditorProcedure
     .input(
       z.object({
         id: z.number(),
@@ -416,7 +416,7 @@ export const eventsRouter = router({
       await sendQueueAcceptedEmails(queueAcceptedNotification);
       return updatedEvent;
     }),
-  startRaffle: adminProcedure
+  startRaffle: eventEditorProcedure
     .input(
       z.object({
         eventId: z.number(),

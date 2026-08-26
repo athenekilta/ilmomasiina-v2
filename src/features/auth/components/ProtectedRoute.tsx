@@ -1,15 +1,16 @@
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSession } from "@/server/auth/auth-client";
 import { useUser } from "../hooks/useUser";
-import { useWrapRef } from "@/hooks/useWrapRef";
 import type { RouteOutput } from "@/types/types";
 import { routes } from "@/utils/routes";
+import { UserRole } from "@/generated/prisma";
 
 export type ProtectedRouteProps = {
   children?: React.ReactNode;
   unauthenticatedOnly?: boolean;
-  adminOnly?: boolean;
+  eventEditorOnly?: boolean;
+  superadminOnly?: boolean;
   /**
    * By default, users are only denied access after the session has loaded. By
    * setting this to true, you can deny users access even when their session
@@ -19,26 +20,25 @@ export type ProtectedRouteProps = {
 };
 
 export function ProtectedRoute(props: ProtectedRouteProps) {
-  const propsRef = useWrapRef(props);
+  const {
+    unauthenticatedOnly,
+    eventEditorOnly,
+    superadminOnly,
+    denyAccessOnLoading,
+  } = props;
   const user = useUser();
   const session = useSession();
 
-  const [redirect, setRedirect] = useState(
-    getRedirectIfAccessBlocked({
-      isLoading: session.isPending || user.isLoading,
-      user: user.data,
-      options: propsRef.current,
-    })
-  );
-  useEffect(() => {
-    setRedirect(
-      getRedirectIfAccessBlocked({
-        isLoading: session.isPending || user.isLoading,
-        user: user.data,
-        options: propsRef.current,
-      })
-    );
-  }, [setRedirect, propsRef, user, session]);
+  const redirect = getRedirectIfAccessBlocked({
+    isLoading: session.isPending || user.isLoading,
+    user: user.data,
+    options: {
+      unauthenticatedOnly,
+      eventEditorOnly,
+      superadminOnly,
+      denyAccessOnLoading,
+    },
+  });
 
   const router = useRouter();
   useEffect(() => {
@@ -76,8 +76,14 @@ function getRedirectIfAccessBlocked({
     return routes.landingPage;
   }
 
-  // Deny if admin only is true and user is not an admin.
-  if (options.adminOnly && !user.role.includes("admin")) {
+  const canEditEvents =
+    user.role === UserRole.event_editor || user.role === UserRole.superadmin;
+
+  if (options.eventEditorOnly && !canEditEvents) {
+    return routes.landingPage;
+  }
+
+  if (options.superadminOnly && user.role !== UserRole.superadmin) {
     return routes.landingPage;
   }
 }
