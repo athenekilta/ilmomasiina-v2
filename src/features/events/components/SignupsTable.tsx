@@ -1,4 +1,5 @@
 import { Button } from "@/components/Button";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import { decodeCheckboxAnswer } from "@/features/events/utils/questionAnswers";
 import type { Answer, Question, Quota, Signup } from "@/generated/prisma";
 import { api } from "@/utils/api";
 import { formatDateTime } from "@/utils/format";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 type SignupWithAnswers = Signup & { Answers: Answer[] };
@@ -53,16 +54,33 @@ export function SignupsTable({
   questions: Question[];
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [signupToDelete, setSignupToDelete] = useState<SignupWithAnswers | null>(
+    null,
+  );
   const [expandedSignupIds, setExpandedSignupIds] = useState<Set<string>>(
     new Set(),
   );
   const alert = useAlert();
+  const apiContext = api.useContext();
   const sortedQuestions = useMemo(
     () => [...questions].sort((a, b) => a.sortId - b.sortId),
     [questions],
   );
   const moveSignup = api.signups.moveSignupToQuota.useMutation({
     onSuccess: () => alert.success("Ilmoittautuminen siirretty"),
+    onError: (error) => alert.error(error.message),
+  });
+  const deleteSignup = api.signups.deleteSignupAsAdmin.useMutation({
+    onSuccess: (deletedSignup) => {
+      setSignupToDelete(null);
+      setExpandedSignupIds((current) => {
+        const next = new Set(current);
+        next.delete(deletedSignup.id);
+        return next;
+      });
+      void apiContext.signups.getSignupByEventIds.invalidate({ eventId });
+      alert.success("Ilmoittautuminen poistettu");
+    },
     onError: (error) => alert.error(error.message),
   });
   const csvExport = api.signups.exportSignupsCsv.useQuery(
@@ -126,6 +144,7 @@ export function SignupsTable({
             <col className="hidden w-[19%] md:table-column" />
             <col className="w-[42%] sm:w-[34%] md:w-[24%]" />
             <col className="hidden w-[20%] md:table-column" />
+            <col className="w-12" />
           </colgroup>
           <thead className="border-b border-stone-200 bg-stone-100">
             <tr>
@@ -162,6 +181,9 @@ export function SignupsTable({
               >
                 Ilmoittautumisaika
               </th>
+              <th scope="col" className="px-2 py-2">
+                <span className="sr-only">Toiminnot</span>
+              </th>
             </tr>
           </thead>
           <tbody className="bg-brand-light divide-y divide-stone-200">
@@ -181,17 +203,32 @@ export function SignupsTable({
                   quotas={quotas}
                   questions={sortedQuestions}
                   isMoving={moveSignup.isPending}
+                  isDeleting={deleteSignup.isPending}
                   onToggle={() => toggleSignup(signup.id)}
                   onMove={(targetQuotaId) => {
                     if (targetQuotaId === signup.quotaId) return;
                     moveSignup.mutate({ signupId: signup.id, targetQuotaId });
                   }}
+                  onDelete={() => setSignupToDelete(signup)}
                 />
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {signupToDelete && (
+        <ConfirmationDialog
+          title="Poista ilmoittautuminen?"
+          message={`Haluatko varmasti poistaa käyttäjän ${signupToDelete.name} ilmoittautumisen? Tätä ei voi perua.`}
+          confirmLabel="Poista ilmoittautuminen"
+          pending={deleteSignup.isPending}
+          onCancelAction={() => setSignupToDelete(null)}
+          onConfirmAction={() =>
+            deleteSignup.mutate({ signupId: signupToDelete.id, eventId })
+          }
+        />
+      )}
     </div>
   );
 }
@@ -205,8 +242,10 @@ function SignupTableRows({
   quotas,
   questions,
   isMoving,
+  isDeleting,
   onToggle,
   onMove,
+  onDelete,
 }: {
   signup: SignupWithAnswers;
   index: number;
@@ -216,8 +255,10 @@ function SignupTableRows({
   quotas: Quota[];
   questions: Question[];
   isMoving: boolean;
+  isDeleting: boolean;
   onToggle: () => void;
   onMove: (quotaId: string) => void;
+  onDelete: () => void;
 }) {
   return (
     <>
@@ -295,11 +336,25 @@ function SignupTableRows({
             timeStyle: "short",
           })}
         </td>
+        <td
+          className="px-2 py-2 align-middle"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="text-danger rounded-control focus-visible:ring-danger flex size-8 cursor-pointer items-center justify-center hover:bg-red-50 focus-visible:ring-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={`Poista käyttäjän ${signup.name} ilmoittautuminen`}
+            disabled={isDeleting}
+            onClick={onDelete}
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+          </button>
+        </td>
       </tr>
 
       {expanded && (
         <tr id={detailId} className="bg-stone-50">
-          <td colSpan={6} className="px-4 py-4 sm:px-6">
+          <td colSpan={7} className="px-4 py-4 sm:px-6">
             <div className="mb-4 grid gap-3 text-sm sm:grid-cols-2 md:hidden">
               <DetailItem label="Tila" value={status.label} />
               <DetailItem

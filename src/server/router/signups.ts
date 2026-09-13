@@ -3,8 +3,10 @@ import { router } from "../trpc/trpc";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { superadminProcedure } from "../trpc/procedures/superadminProcedure";
+import { eventEditorProcedure } from "../trpc/procedures/eventEditorProcedure";
 import { TRPCError } from "@trpc/server";
 import { SignupStatus } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import {
   getChoiceConfigurationIssues,
   validateAndCanonicalizeSignupAnswers,
@@ -54,8 +56,32 @@ function ensureDevelopment() {
   }
 }
 
+async function deleteSignupAndReconcile(
+  tx: Prisma.TransactionClient,
+  signupId: string,
+  eventId?: number,
+) {
+  const signup = await tx.signup.findFirst({
+    where: {
+      id: signupId,
+      ...(eventId === undefined ? {} : { Quota: { eventId } }),
+    },
+    include: { Quota: { include: { Event: true } } },
+  });
+
+  if (!signup) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Signup not found" });
+  }
+
+  await tx.answer.deleteMany({ where: { signupId } });
+  await tx.signup.delete({ where: { id: signupId } });
+  const allocation = await reconcileEventAllocations(tx, signup.Quota.Event.id);
+
+  return { signup, allocation };
+}
+
 export const signupsRouter = router({
-  getSignupByEventIds: superadminProcedure
+  getSignupByEventIds: eventEditorProcedure
     .input(
       z.object({
         eventId: z.number(),
@@ -723,35 +749,32 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // First get the signup and event details
-      const signup = await ctx.prisma.signup.findUnique({
-        where: { id: input.signupId },
-        include: {
-          Quota: {
-            include: {
-              Event: true,
-              Signups: {
-                orderBy: {
-                  createdAt: "asc",
-                },
-              },
-            },
-          },
-        },
-      });
+      const result = await ctx.prisma.$transaction((tx) =>
+        deleteSignupAndReconcile(tx, input.signupId),
+      );
 
-      if (!signup) {
-        throw new Error("Signup not found");
-      }
+      await sendQueueAcceptedEmails(
+        result.allocation.queueAcceptedNotification,
+      );
+      return result.signup;
+    }),
 
-      const allocation = await ctx.prisma.$transaction(async (tx) => {
-        await tx.answer.deleteMany({ where: { signupId: input.signupId } });
-        await tx.signup.delete({ where: { id: input.signupId } });
-        return reconcileEventAllocations(tx, signup.Quota.Event.id);
-      });
+  deleteSignupAsAdmin: eventEditorProcedure
+    .input(
+      z.object({
+        signupId: z.string(),
+        eventId: z.number(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.prisma.$transaction((tx) =>
+        deleteSignupAndReconcile(tx, input.signupId, input.eventId),
+      );
 
-      await sendQueueAcceptedEmails(allocation.queueAcceptedNotification);
-      return signup;
+      await sendQueueAcceptedEmails(
+        result.allocation.queueAcceptedNotification,
+      );
+      return result.signup;
     }),
 
   moveSignupToQuota: superadminProcedure
