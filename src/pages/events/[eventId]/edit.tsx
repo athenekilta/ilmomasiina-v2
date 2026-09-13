@@ -8,7 +8,7 @@ export default function EditEventPage() {
   const { eventId, isReady } = useQueryParams();
 
   return (
-    <ProtectedRoute adminOnly>
+    <ProtectedRoute eventEditorOnly>
       <PageHead title="Edit event" />
       <Layout>
         <div className="surface-panel mx-auto mt-4 w-full max-w-3xl sm:mt-6">

@@ -33,10 +33,10 @@ test(
     });
     const { eventsRouter } = await import("@/server/router/events");
     const user = await prisma.user.create({
-      data: { id: randomUUID(), role: "admin" },
+      data: { id: randomUUID(), role: "event_editor" },
     });
     const other = await prisma.user.create({
-      data: { id: randomUUID(), role: "admin" },
+      data: { id: randomUUID(), role: "event_editor" },
     });
     const caller = eventsRouter.createCaller({
       prisma,

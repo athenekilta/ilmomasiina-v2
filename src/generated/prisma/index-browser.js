@@ -299,7 +299,8 @@ exports.Prisma.JsonNullValueFilter = {
 };
 exports.UserRole = exports.$Enums.UserRole = {
   user: 'user',
-  admin: 'admin'
+  event_editor: 'event_editor',
+  superadmin: 'superadmin'
 };
 
 exports.EventImageState = exports.$Enums.EventImageState = {

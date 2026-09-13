@@ -14,7 +14,7 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
@@ -38,6 +38,11 @@ export function Quotas({
   editId,
   seatHoldingSignupCounts,
 }: QuotasProps) {
+  const extraCapacity = watch("extraCapacity");
+  const [extraCapacityInput, setExtraCapacityInput] = useState<string | null>(
+    null,
+  );
+
   const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
     const id = cuid();
@@ -204,13 +209,13 @@ export function Quotas({
           <Input
             type="number"
             min={0}
-            value={watch("extraCapacity")}
-            onChange={(event) =>
-              setValue(
-                "extraCapacity",
-                event.target.value === "" ? 0 : event.target.valueAsNumber,
-              )
-            }
+            value={extraCapacityInput ?? extraCapacity}
+            onBlur={() => setExtraCapacityInput(null)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setExtraCapacityInput(value);
+              setValue("extraCapacity", value === "" ? 0 : event.target.valueAsNumber);
+            }}
             error={!!errors.extraCapacity}
             helperText={errors.extraCapacity?.message}
           />
@@ -218,7 +223,7 @@ export function Quotas({
         <p className="mt-3 font-semibold">
           Paikkoja yhteensä:{" "}
           {watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
-            watch("extraCapacity")}
+            extraCapacity}
         </p>
       </div>
     </FieldSet>

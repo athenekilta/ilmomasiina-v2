@@ -8,17 +8,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import Link from "next/link";
 import { Check, RefreshCw, UserRound } from "lucide-react";
-import { useUser } from "@/features/auth/hooks/useUser";
-import { signOut } from "@/server/auth/auth-client";
-import { routes } from "@/utils/routes";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 
-function AccountDropdownPanel({
+function HeaderDropdownPanel({
   open,
   onClose,
   titleId,
@@ -37,8 +33,8 @@ function AccountDropdownPanel({
 }) {
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -46,10 +42,10 @@ function AccountDropdownPanel({
 
   useEffect(() => {
     if (!open) return;
-    const onPointer = (e: Event) => {
-      const t = e.target as Node;
-      if (panelRef.current?.contains(t)) return;
-      if (triggerRef.current?.contains(t)) return;
+    const onPointer = (event: Event) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target)) return;
+      if (triggerRef.current?.contains(target)) return;
       onClose();
     };
     document.addEventListener("mousedown", onPointer);
@@ -80,7 +76,7 @@ function AccountDropdownPanel({
         <button
           type="button"
           onClick={onClose}
-          className="text-brand-dark rounded-control focus-visible:ring-brand-secondary shrink-0 p-1 transition-colors hover:bg-stone-200 focus-visible:ring-2 focus-visible:outline-hidden"
+          className="text-brand-dark rounded-control focus-visible:ring-brand-secondary shrink-0 cursor-pointer p-1 transition-colors hover:bg-stone-200 focus-visible:ring-2 focus-visible:outline-hidden"
           aria-label="Sulje"
         >
           <Icon icon="close" className="block text-xl!" size={22} />
@@ -95,10 +91,6 @@ export function HeaderAccountMenu() {
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  const userQuery = useUser();
-  const sessionUser = userQuery.data;
-  const sessionLoading = userQuery.isLoading;
 
   const {
     register,
@@ -125,51 +117,25 @@ export function HeaderAccountMenu() {
   };
 
   const displayLine =
-    sessionUser?.name?.trim() ||
-    sessionUser?.email?.split("@")[0] ||
-    storedUser?.name?.trim() ||
-    storedUser?.email?.split("@")[0] ||
-    null;
+    storedUser?.name?.trim() || storedUser?.email?.split("@")[0] || null;
+  const subLine = storedUser?.email ?? null;
+  const triggerLabel = displayLine ?? "Ilmotiedot";
+  const triggerSub = subLine ?? "Nimi ja sähköposti puuttuvat";
 
-  const subLine = sessionUser?.email ?? storedUser?.email ?? null;
-
-  const triggerLabel = sessionUser
-    ? (displayLine ?? "Tili")
-    : displayLine
-      ? displayLine
-      : "Ilmotiedot";
-
-  const triggerSub = sessionUser
-    ? subLine
-    : (subLine ?? "Nimi ja sähköposti puuttuvat");
-
-  if (sessionLoading) {
-    return (
-      <div
-        className="rounded-control h-9 w-9 shrink-0 bg-white/20 sm:w-36"
-        aria-hidden
-      />
-    );
-  }
-
-  /* Mobile is the primary target and the header only has room for one of
-     the two: the site title or the name + email lines. So below `sm` the
-     trigger collapses to a single icon (with a check badge when an identity
-     is already stored) and the text moves into the panel it opens. */
   return (
     <div className="relative shrink-0">
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen((isOpen) => !isOpen)}
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={
-          sessionUser || displayLine
+          displayLine
             ? `Ilmotiedot: ${displayLine ?? subLine ?? ""}`
             : "Aseta ilmotiedot"
         }
-        className="rounded-control focus-visible:ring-offset-brand-primary flex items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
+        className="rounded-control focus-visible:ring-offset-brand-primary flex cursor-pointer items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
       >
         <span className="relative shrink-0 sm:hidden">
           <UserRound size={24} strokeWidth={2.25} aria-hidden />
@@ -198,14 +164,12 @@ export function HeaderAccountMenu() {
         />
       </button>
 
-      <AccountDropdownPanel
+      <HeaderDropdownPanel
         open={open}
         onClose={closePanel}
         titleId={titleId}
         title={
-          sessionUser ? (
-            "Tilin tiedot"
-          ) : storedUser?.email ? (
+          storedUser?.email ? (
             <span className="flex items-center gap-1.5">
               <Check
                 size={16}
@@ -222,108 +186,55 @@ export function HeaderAccountMenu() {
         panelRef={panelRef}
         triggerRef={triggerRef}
       >
-        {sessionUser ? (
-          <>
-            <div className="text-brand-dark space-y-3 text-sm">
-              {sessionUser.name ? (
-                <p>
-                  <span className="font-semibold">Nimi:</span>{" "}
-                  {sessionUser.name}
-                </p>
-              ) : null}
-              <p>
-                <span className="font-semibold">Sähköposti:</span>{" "}
-                {sessionUser.email}
-              </p>
-            </div>
-            <div className="mt-5 flex flex-col gap-2">
-              <Button.Link
-                href={routes.app.settings.user}
-                variant="filled"
-                color="primary"
-                className="w-full justify-center"
-                onClick={closePanel}
-              >
-                Asetukset
-              </Button.Link>
-              <Button
-                type="button"
-                variant="filled"
-                color="secondary"
-                className="w-full justify-center"
-                onClick={() => {
-                  void signOut();
-                  closePanel();
-                }}
-              >
-                Kirjaudu ulos
-              </Button>
-            </div>
-          </>
-        ) : (
-          <form onSubmit={saveGuest} className="flex flex-col gap-3">
-            <div>
-              <label className="text-brand-dark mb-1 block text-xs font-semibold">
-                Nimi
-              </label>
-              <Input
-                {...register("name")}
-                placeholder="Nimi"
-                fullWidth
-                error={!!errors.name}
-                helperText={errors.name?.message}
-              />
-            </div>
-            <div>
-              <label className="text-brand-dark mb-1 block text-xs font-semibold">
-                Sähköposti
-              </label>
-              <Input
-                {...register("email")}
-                type="email"
-                placeholder="sinä@example.com"
-                fullWidth
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            </div>
-            <div className="mt-2 flex flex-col gap-2">
-              {/* Disabled until something actually changes: with the
-                  stored values already in the fields, a live button would
-                  promise an update it has nothing to make. It enables on
-                  the first keystroke. */}
-              <Button
-                type="submit"
-                variant="filled"
-                color="primary"
-                disabled={!isDirty}
-                startIcon={<RefreshCw size={18} strokeWidth={2.25} />}
-                className="w-full justify-center"
-              >
-                Päivitä
-              </Button>
-              <Button
-                type="button"
-                variant="bordered"
-                color="neutral"
-                className="w-full justify-center"
-                onClick={clearGuest}
-              >
-                Tyhjennä tiedot
-              </Button>
-              <p className="mt-2 border-t border-stone-200 pt-3 text-center text-[0.65rem] text-stone-500 sm:text-xs">
-                <Link
-                  href={routes.auth.login}
-                  onClick={closePanel}
-                  className="text-brand-secondary focus-visible:ring-brand-secondary font-medium underline-offset-2 hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:outline-hidden"
-                >
-                  Kirjaudu sisään
-                </Link>
-              </p>
-            </div>
-          </form>
-        )}
-      </AccountDropdownPanel>
+        <form onSubmit={saveGuest} className="flex flex-col gap-3">
+          <div>
+            <label className="text-brand-dark mb-1 block text-xs font-semibold">
+              Nimi
+            </label>
+            <Input
+              {...register("name")}
+              placeholder="Nimi"
+              fullWidth
+              error={!!errors.name}
+              helperText={errors.name?.message}
+            />
+          </div>
+          <div>
+            <label className="text-brand-dark mb-1 block text-xs font-semibold">
+              Sähköposti
+            </label>
+            <Input
+              {...register("email")}
+              type="email"
+              placeholder="sinä@example.com"
+              fullWidth
+              error={!!errors.email}
+              helperText={errors.email?.message}
+            />
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            <Button
+              type="submit"
+              variant="filled"
+              color="primary"
+              disabled={!isDirty}
+              startIcon={<RefreshCw size={18} strokeWidth={2.25} />}
+              className="w-full cursor-pointer justify-center"
+            >
+              Päivitä
+            </Button>
+            <Button
+              type="button"
+              variant="bordered"
+              color="neutral"
+              className="w-full cursor-pointer justify-center"
+              onClick={clearGuest}
+            >
+              Tyhjennä tiedot
+            </Button>
+          </div>
+        </form>
+      </HeaderDropdownPanel>
     </div>
   );
 }

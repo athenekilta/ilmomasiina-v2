@@ -90,7 +90,8 @@ export type Quota = $Result.DefaultSelection<Prisma.$QuotaPayload>
 export namespace $Enums {
   export const UserRole: {
   user: 'user',
-  admin: 'admin'
+  event_editor: 'event_editor',
+  superadmin: 'superadmin'
 };
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]

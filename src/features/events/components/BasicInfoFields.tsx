@@ -54,10 +54,7 @@ export function BasicInfoFields({
             {...register("badgeText")}
             placeholder="esim. Vuoden haippisin"
             error={!!errors.badgeText}
-            helperText={
-              errors.badgeText?.message ??
-              "Näkyy tapahtumakortin kuvan päällä. Jätä tyhjäksi jos et halua badgea."
-            }
+            helperText={errors.badgeText?.message}
           />
           <Select
             value={watch("badgeTone") ?? "GREEN"}

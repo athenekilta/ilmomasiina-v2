@@ -45,7 +45,8 @@ model User {
 
 enum UserRole {
   user
-  admin
+  event_editor
+  superadmin
 }
 
 model Account {

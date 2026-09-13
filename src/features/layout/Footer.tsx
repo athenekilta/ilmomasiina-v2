@@ -2,6 +2,8 @@ import { routes } from "@/utils/routes";
 import Link from "next/link";
 import { useUser } from "../auth/hooks/useUser";
 import { c } from "@/utils/classnames";
+import { AdminMenu } from "./AdminMenu";
+import { useIsClient } from "@/hooks/useIsClient";
 
 const linkClass = c(
   "rounded-sm px-2 py-1 text-sm text-stone-100 transition-colors",
@@ -10,21 +12,33 @@ const linkClass = c(
 );
 
 export function Footer() {
+  const isClient = useIsClient();
   const user = useUser();
-  const isLoggedIn = user.data !== undefined;
+  const isLoggedIn = isClient && !!user.data;
 
   return (
-    <footer className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2 bg-brand-dark px-3 py-3 text-center text-white sm:py-4">
-      <Link href={isLoggedIn ? routes.app.admin : routes.auth.login} className={linkClass}>
+    <footer className="bg-brand-dark flex flex-wrap items-center justify-center gap-x-1 gap-y-2 px-3 py-3 text-center text-white sm:py-4">
+      <Link
+        href={isLoggedIn ? routes.app.admin : routes.auth.login}
+        className={linkClass}
+      >
         Hallinta
       </Link>
-      <span className="select-none text-stone-500" aria-hidden>
+      {isLoggedIn && (
+        <>
+          <span className="text-stone-500 select-none" aria-hidden>
+            ·
+          </span>
+          <AdminMenu />
+        </>
+      )}
+      <span className="text-stone-500 select-none" aria-hidden>
         ·
       </span>
       <a href="https://athene.fi/hallinto/materiaalit/" className={linkClass}>
         Tietosuoja
       </a>
-      <span className="select-none text-stone-500" aria-hidden>
+      <span className="text-stone-500 select-none" aria-hidden>
         ·
       </span>
       <a href="https://athene.fi" className={linkClass}>

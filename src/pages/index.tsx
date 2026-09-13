@@ -16,28 +16,33 @@ import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
 import HydrationZustand from "@/components/HydrationZustand";
 import { groupEventsForList } from "@/features/eventCard/eventOrder";
 import { Button } from "@/components/Button";
+import { UserRole } from "@/generated/prisma";
 
 export default function DesktopPage() {
   const [includeDrafts, setIncludeDrafts] = useState(false);
   const [includeOlderEvents, setIncludeOlderEvents] = useState(false);
 
   const user = useUser();
-  const isAdmin = user.data?.role === "admin";
+  const canEditEvents =
+    user.data?.role === UserRole.event_editor ||
+    user.data?.role === UserRole.superadmin;
 
   const regularEventsQuery = api.events.getEvents.useQuery(undefined, {
-    enabled: !isAdmin,
+    enabled: !canEditEvents,
   });
 
   const adminEventsQuery = api.events.getEventsAdmin.useQuery(
     { includeDrafts, includeOlderEvents },
-    { enabled: isAdmin },
+    { enabled: canEditEvents },
   );
 
-  const eventsData = isAdmin ? adminEventsQuery.data : regularEventsQuery.data;
+  const eventsData = canEditEvents
+    ? adminEventsQuery.data
+    : regularEventsQuery.data;
   const events = eventsData
     ? groupEventsForList(eventsData)
     : { open: [], closed: [] };
-  const isLoading = isAdmin
+  const isLoading = canEditEvents
     ? adminEventsQuery.isLoading
     : regularEventsQuery.isLoading;
 
@@ -59,7 +64,7 @@ export default function DesktopPage() {
               </h1>
             </header>
 
-            {isAdmin && (
+            {canEditEvents && (
               <section
                 className="mb-8 w-full"
                 aria-label="Hallinnan suodattimet"
@@ -109,6 +114,11 @@ export default function DesktopPage() {
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
+              {events.open.length === 0 && events.closed.length === 0 && (
+                <p className="text-brand-dark px-1 text-sm">
+                  Tyhjää täynnä. Ei tulevia tapahtumia.
+                </p>
+              )}
               {/* Every card is the same size. Columns are added only once
                   the previous count would leave cards uncomfortably wide:
                   two from `md` (768px), three from `xl` (1280px) — below
@@ -119,7 +129,7 @@ export default function DesktopPage() {
               <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
                 {events.open.map((event) => (
                   <li key={event.id} className="min-w-0">
-                    <EventCard event={event} isAdmin={isAdmin} />
+                    <EventCard event={event} isAdmin={canEditEvents} />
                   </li>
                 ))}
               </ul>
@@ -138,14 +148,14 @@ export default function DesktopPage() {
                 <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
                   {events.closed.map((event) => (
                     <li key={event.id} className="min-w-0">
-                      <EventCard event={event} isAdmin={isAdmin} />
+                      <EventCard event={event} isAdmin={canEditEvents} />
                     </li>
                   ))}
                 </ul>
               </section>
             )}
 
-            {isAdmin && (
+            {canEditEvents && (
               <div className="mt-10 w-full border-t border-stone-300 pt-8">
                 <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
                   Hallinta
