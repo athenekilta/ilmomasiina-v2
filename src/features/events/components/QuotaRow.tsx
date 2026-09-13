@@ -195,7 +195,7 @@ export function QuotaRow({
         {signupCount > 0 && (
           <p className="text-xs leading-relaxed text-gray-600">
             Kiintiössä on {signupCount}{" "}
-            {signupCount === 1 ? "ilmoittautuminen" : "ilmoittautumista"},
+            {signupCount === 1 ? "ilmo" : "ilmoittautumista"},
             joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset
             toiseen kiintiöön ennen tämän kiintiön poistamista.
           </p>

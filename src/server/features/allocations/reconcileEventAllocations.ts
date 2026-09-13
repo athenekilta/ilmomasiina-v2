@@ -247,6 +247,7 @@ export async function reconcileEventAllocations(
       id: signup.id,
       name: signup.name,
       email: signup.identity.email,
+      quotaName: quota.title,
     })),
   );
 
@@ -258,6 +259,7 @@ export async function reconcileEventAllocations(
     queueAcceptedNotification: {
       eventId: event.id,
       eventName: event.title,
+      eventDate: event.date,
       signups: queueAcceptedSignups,
     },
   };

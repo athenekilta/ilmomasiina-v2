@@ -1,13 +1,16 @@
-import { Container, Heading } from "@react-email/components";
+import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
+import {
+  EventSignupDetails,
+  type EventSignupDetailsProps,
+} from "./components/EventSignupDetails";
 
-export type EventSignupAccessEmailProps = {
-  eventName: string;
+export type EventSignupAccessEmailProps = EventSignupDetailsProps & {
   editUrl: string;
 };
 
 function getSubject(props: EventSignupAccessEmailProps) {
-  return `Signup access: ${props.eventName}`;
+  return `Muokkaa ilmoasi: ${props.eventName}`;
 }
 
 const EventSignupAccessEmail = Object.assign(
@@ -15,26 +18,23 @@ const EventSignupAccessEmail = Object.assign(
     return (
       <Email
         title={getSubject(props)}
-        preview={`Continue or edit your signup for ${props.eventName}`}
+        preview={`Linkki tapahtuman ${props.eventName} ilmoosi`}
       >
-        <Heading as="h1" className="text-4xl font-bold">
-          Your signup link
+        <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
+          Ilmolinkkisi
         </Heading>
-        <Container className="py-8">
-          <Heading as="h2" className="text-2xl font-bold">
-            {props.eventName}
-          </Heading>
-          <Container className="pt-4">
-            <Heading as="h3" className="text-lg font-bold">
-              Continue or edit your signup using the link below:
-            </Heading>
-            <Container className="py-4">
-              <a href={props.editUrl} className="text-blue-600 underline">
-                {props.editUrl}
-              </a>
-            </Container>
-          </Container>
-        </Container>
+        <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
+          Avaa ilmosi alta olevasta painikkeesta.
+        </Text>
+
+        <EventSignupDetails {...props} />
+
+        <Button
+          className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
+          href={props.editUrl}
+        >
+          Muokkaa ilmoa
+        </Button>
       </Email>
     );
   },

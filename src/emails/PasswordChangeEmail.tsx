@@ -1,75 +1,53 @@
-import {
-  Button,
-  Container,
-  Heading,
-  Hr,
-  Link,
-  Text,
-} from "@react-email/components";
+import { Button, Heading, Hr, Text } from "@react-email/components";
 import { Email } from "./components/Email";
 
 export type PasswordChangeEmailProps = {
   passwordChangeUrl?: string;
 };
 
-const defautlProps: PasswordChangeEmailProps =
-  process.env.NODE_ENV === "development"
-    ? {
-      passwordChangeUrl: "http://localhost:3000/auth/password/change",
-    }
-    : {
-      passwordChangeUrl: "",
-    };
+const defaultProps: PasswordChangeEmailProps = {
+  passwordChangeUrl: "http://localhost:3000/auth/password/change",
+};
 
 function getSubject() {
-  return `🔒 Change your password`;
+  return "Vaihda salasanasi";
 }
 
 export const PasswordChangeEmail = Object.assign(
   function PasswordChangeEmail(originalProps: PasswordChangeEmailProps) {
-    const props = { ...defautlProps, ...originalProps };
+    const props = { ...defaultProps, ...originalProps };
 
     return (
       <Email
         title={getSubject()}
-        preview="A password change request has been made"
+        preview="Ilmomasiina-tilillesi pyydettiin salasanan vaihtoa"
       >
-        <Heading as="h1" className="text-4xl font-bold">
-          Change your password
+        <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
+          Salasanan vaihto
         </Heading>
+        <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
+          Ilmomasiina-tilillesi pyydettiin salasanan vaihtoa. Voit asettaa uuden
+          salasanan alla olevasta painikkeesta.
+        </Text>
 
-        <Container className="py-8">
-          <Text className="text-base leading-relaxed text-black/70">
-            A password change link was requested for your account. You can
-            change your password from the link below or by opening the link{" "}
-            <Link className="underline" href={props.passwordChangeUrl}>
-              {props.passwordChangeUrl}
-            </Link>{" "}
-            directly.
-          </Text>
-
-          <div className="h-8" />
-
+        {props.passwordChangeUrl && (
           <Button
-            className="rounded-lg bg-brand px-6 py-4 font-semibold text-white"
+            className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
             href={props.passwordChangeUrl}
           >
-            Change your password
+            Vaihda salasana
           </Button>
-        </Container>
+        )}
 
-        <Hr />
-
-        <Text className="pt-8 text-black/60">
-          This link is active for 7 days, after which it will stop working. If
-          the link expires, you can get a new link by visiting the application.
+        <Hr className="border-brand-sand mt-8 mb-0" />
+        <Text className="text-brand-dark mt-6 mb-0 text-sm leading-6">
+          Linkki on voimassa seitsemän päivää. Jos et pyytänyt salasanan
+          vaihtoa, voit jättää tämän viestin huomiotta.
         </Text>
       </Email>
     );
   },
-  {
-    getSubject,
-  }
+  { getSubject },
 );
 
 export default PasswordChangeEmail;

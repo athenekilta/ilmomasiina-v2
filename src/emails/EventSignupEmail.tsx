@@ -1,24 +1,25 @@
-import { Container, Heading } from "@react-email/components";
+import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
+import {
+  EventSignupDetails,
+  type EventSignupDetailsProps,
+} from "./components/EventSignupDetails";
 
-export type EventSignupEmailProps = {
-  eventName: string;
+export type EventSignupEmailProps = EventSignupDetailsProps & {
   editUrl?: string;
 };
 
-const defaultProps: EventSignupEmailProps =
-  process.env.NODE_ENV === "development"
-    ? {
-      eventName: "Test Event",
-      editUrl: "http://localhost:3000/events/123/456",
-    }
-    : {
-      eventName: "",
-      editUrl: "",
-    };
+const defaultProps: EventSignupEmailProps = {
+  eventName: "Esimerkkitapahtuma",
+  eventDate: new Date("2026-09-14T15:00:00Z"),
+  signupName: "Matti Meikäläinen",
+  signupEmail: "matti@example.com",
+  quotaName: "Jäsenet",
+  editUrl: "http://localhost:3000/events/123/456",
+};
 
 function getSubject(props: EventSignupEmailProps) {
-  return `✅ Signup confirmed: ${props.eventName}`;
+  return `Ilmosi on vahvistettu: ${props.eventName}`;
 }
 
 const EventSignupEmail = Object.assign(
@@ -28,34 +29,29 @@ const EventSignupEmail = Object.assign(
     return (
       <Email
         title={getSubject(props)}
-        preview={`Your signup for ${props.eventName} has been confirmed`}
+        preview={`Ilmosi tapahtumaan ${props.eventName} on vahvistettu`}
       >
-        <Heading as="h1" className="text-4xl font-bold">
-          Signup Confirmed
+        <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
+          Ilmo vahvistettu
         </Heading>
-        <Container className="py-8">
-          <Heading as="h2" className="text-2xl font-bold">
-            {props.eventName}
-          </Heading>
-          <Container className="pt-4">
-            <Container className="py-4">
-              <Heading as="h3" className="text-lg font-bold">
-                You can edit your signup using the link below:
-              </Heading>
-            </Container>
-            <Container className="py-4">
-              <a href={props.editUrl} className="text-blue-600 underline">
-                {props.editUrl}
-              </a>
-            </Container>
-          </Container>
-        </Container>
+        <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
+          Olet saanut paikan tapahtumasta. Ilmosi tiedot ovat alla.
+        </Text>
+
+        <EventSignupDetails {...props} />
+
+        {props.editUrl && (
+          <Button
+            className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
+            href={props.editUrl}
+          >
+            Muokkaa ilmoa
+          </Button>
+        )}
       </Email>
     );
   },
-  {
-    getSubject,
-  }
+  { getSubject },
 );
 
-export default EventSignupEmail; 
+export default EventSignupEmail;
