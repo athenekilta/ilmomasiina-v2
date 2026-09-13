@@ -28,7 +28,7 @@ export function Email(props: EmailProps) {
         </Head>
         <Preview>{props.preview}</Preview>
         <Body className="bg-brand-beige text-brand-dark m-0 px-4 py-8 font-sans">
-          <Container className="border-brand-sand bg-brand-light mx-auto max-w-xl overflow-hidden rounded-xl border border-solid">
+          <Container className="border-brand-sand bg-white mx-auto max-w-xl overflow-hidden rounded-xl border border-solid">
             <Section className="bg-brand-primary h-2" />
             <Section className="px-6 py-8 sm:px-10">{props.children}</Section>
           </Container>
