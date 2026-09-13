@@ -39,7 +39,7 @@ export const emailVerificationRouter = router({
         });
       }
 
-      await ctx.prisma.user.update({
+      await ctx.prisma.managementUser.update({
         where: {
           email: input.email,
         },

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "@/server/auth/auth-client";
+import { managementSignIn } from "@/server/auth/management-auth-client";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { Icon } from "@/components/Icon";
 import { Input } from "@/components/Input";
@@ -37,7 +37,7 @@ export function LoginForm() {
     setLoginError(undefined);
 
     try {
-      const result = await signIn.email(values);
+      const result = await managementSignIn.email(values);
       if (result.error) {
         setLoginError("Invalid email or password.");
       }

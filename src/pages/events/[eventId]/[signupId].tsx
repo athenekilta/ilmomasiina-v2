@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/Input";
 import { TextArea } from "@/components/TextArea";
 import { Button } from "@/components/Button";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerDraft } from "@/features/events/hooks/useServerDraft";
 import { signupDraftSnapshot } from "@/features/events/utils/signupDraft";
 import { DraftChangeNotice } from "@/features/events/components/DraftChangeNotice";
@@ -34,6 +34,9 @@ function EditSignup() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [needsReload, setNeedsReload] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
+  const [accessReady, setAccessReady] = useState(false);
+  const [accessError, setAccessError] = useState(false);
+  const accessRedemptionStarted = useRef(false);
   const operationPending = useRef(false);
   const utils = api.useUtils();
 
@@ -41,13 +44,40 @@ function EditSignup() {
 
   const isExistingSignup = existing === "true";
 
+  useEffect(() => {
+    if (!router.isReady || accessRedemptionStarted.current) return;
+    accessRedemptionStarted.current = true;
+
+    const token = new URLSearchParams(window.location.hash.slice(1)).get(
+      "token",
+    );
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (!token) {
+      setAccessReady(true);
+      return;
+    }
+
+    void fetch("/api/token/redeem", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Invalid link");
+        setAccessReady(true);
+      })
+      .catch(() => setAccessError(true));
+  }, [router.isReady]);
+
   const signupQuery = api.signups.getSignupByID.useQuery(
     {
       signupId: signupId!,
       eventId: eventId!,
     },
     {
-      enabled: !!eventId && !!signupId && deleteMutation.isIdle,
+      enabled:
+        accessReady && !!eventId && !!signupId && deleteMutation.isIdle,
     },
   );
 
@@ -195,7 +225,11 @@ function EditSignup() {
     }
   };
 
-  if (isLoading || (!draft.baseline && signup && !error)) {
+  if (
+    (!accessReady && !accessError) ||
+    isLoading ||
+    (!draft.baseline && signup && !error)
+  ) {
     return (
       <>
         <PageHead title="Ilmo" />
@@ -208,17 +242,24 @@ function EditSignup() {
     );
   }
 
-  if (isUnavailableError(error) || !signup || deleteMutation.isSuccess) {
+  if (
+    accessError ||
+    isUnavailableError(error) ||
+    !signup ||
+    deleteMutation.isSuccess
+  ) {
     return (
       <>
         <PageHead title="Ilmo" />
         <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
           <div className="surface-panel p-8 text-center sm:p-10">
             <p className="text-brand-dark text-base font-medium">
-              {error?.data?.code === "FORBIDDEN" ||
-              error?.data?.code === "UNAUTHORIZED"
-                ? "Sinulla ei ole oikeutta nähdä tätä ilmoa."
-                : "Ilmoa ei löytynyt, se on poistettu tai sen lataus epäonnistui. Tallentamattomia vastauksia ei lähetetty."}
+              {accessError
+                ? "Ilmoittautumislinkki ei ole voimassa."
+                : error?.data?.code === "FORBIDDEN" ||
+                    error?.data?.code === "UNAUTHORIZED"
+                  ? "Sinulla ei ole oikeutta nähdä tätä ilmoa."
+                  : "Ilmoa ei löytynyt, se on poistettu tai sen lataus epäonnistui. Tallentamattomia vastauksia ei lähetetty."}
             </p>
             {!deleteMutation.isSuccess && (
               <Button
@@ -261,14 +302,14 @@ function EditSignup() {
 
           <header className="mb-6">
             <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
-              Viimeistele ilmo
+              {signup.completedAt === null ? "Viimeistele ilmo" : "Muokkaa ilmoa"}
             </h1>
             <p className="text-brand-primary mt-2 text-sm font-semibold sm:text-base">
               {signup.event.title}
             </p>
           </header>
 
-          {isExistingSignup && (
+          {isExistingSignup && signup.completedAt === null && (
             <div
               className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"

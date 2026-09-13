@@ -9,11 +9,11 @@ import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
 import { useNow } from "@/hooks/useNow";
 import { isUnavailableError } from "@/features/events/utils/draftSync";
-import { useUser } from "@/features/auth/hooks/useUser";
-import { UserRole } from "@/generated/prisma";
+import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
+import { ManagementRole } from "@/generated/prisma";
 import { Input } from "@/components/Input";
 
-import HydrationZustand from "@/components/HydrationZustand";
+
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -60,6 +60,7 @@ function Registration({
   now: number | null;
 }) {
   const router = useRouter();
+  const apiContext = api.useContext();
   const { isRegistrationOpen } = RegistrationDate(event, now ?? undefined);
 
   const alert = useAlert();
@@ -70,6 +71,7 @@ function Registration({
     handleSubmit,
     reset,
     storedUser,
+    isIdentityLoading,
     setUser,
   } = useGuestIdentityForm();
   const [isEditingUserData, setIsEditingUserData] = useState(false);
@@ -77,12 +79,11 @@ function Registration({
     useState<SignupConflictChoice | null>(null);
 
   const createSignupMutation = api.signups.createSignup.useMutation();
-  const signupStatusQuery = api.signups.getSignupStatusByEventAndEmail.useQuery(
-    {
-      eventId: event.id,
-      email: storedUser?.email ?? "",
-    },
-    { enabled: !!storedUser?.email },
+  const sendSignupAccessEmailMutation =
+    api.signups.sendMySignupAccessEmail.useMutation();
+  const signupStatusQuery = api.signups.getMySignupStatus.useQuery(
+    { eventId: event.id },
+    { enabled: !isIdentityLoading },
   );
 
   const resolveSignupConflictMutation =
@@ -95,7 +96,9 @@ function Registration({
   });
   const showDemoControls = process.env.NODE_ENV === "development";
   const signupStatus = signupStatusQuery.data;
-  const hasExistingSignup = signupStatus !== null && signupStatus !== undefined;
+  const hasExistingSignup =
+    signupStatusQuery.isPending ||
+    (signupStatus !== null && signupStatus !== undefined);
 
   const quotas = event.Quotas.filter((quota) => quota.id !== "queue");
   const finiteQuotas = quotas.filter(
@@ -135,25 +138,44 @@ function Registration({
 
   // if no stored user, start in editing mode
   useEffect(() => {
-    if (!storedUser) {
+    if (!isIdentityLoading && !storedUser) {
       setIsEditingUserData(true);
     }
-  }, [storedUser]);
+  }, [isIdentityLoading, storedUser]);
 
   const saveUserData = handleSubmit(async (data) => {
     try {
-      setUser({ name: data.name, email: data.email });
+      await setUser({ name: data.name, email: data.email });
+      await apiContext.signups.getMySignupStatus.invalidate({
+        eventId: event.id,
+      });
       setIsEditingUserData(false);
     } catch (e) {
-      console.error("Failed to save user data to store", e);
+      console.error("Failed to save user session identity", e);
     }
   });
 
   const showCompletedSignupWarning = () =>
     alert.warning(
-      "Tällä sähköpostilla on jo vahvistettu ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
+      "Tällä sähköpostilla on jo ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
       { timeoutMs: 10000 },
     );
+
+  const requestSignupAccessEmail = async () => {
+    try {
+      await sendSignupAccessEmailMutation.mutateAsync({ eventId: event.id });
+      alert.success(
+        "Ilmon muokkauslinkki lähetetty sähköpostiin",
+        { timeoutMs: 10000 },
+      );
+    } catch (error) {
+      console.error(error);
+      alert.error("Linkin lähettäminen epäonnistui. Yritä uudelleen.", {
+        timeoutMs: 10000,
+      });
+    }
+  };
+
 
   const resolveSignupConflict = async (choice: "NEW" | "EXISTING") => {
     if (!signupConflict) return;
@@ -170,9 +192,7 @@ function Registration({
         return;
       }
 
-      await router.push(
-        `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
-      );
+      await router.push(`/events/${event.id}/${result.signup.id}`);
     } catch (error) {
       console.error(error);
       if (error instanceof Error) {
@@ -190,6 +210,7 @@ function Registration({
           email: data.email,
         });
         if (result) {
+          await apiContext.userSession.getIdentity.invalidate();
           if ("requiresSignupChoice" in result && result.requiresSignupChoice) {
             setSignupConflict({
               candidateSignupId: result.signup.id,
@@ -294,13 +315,33 @@ function Registration({
             role="status"
           >
             <p>
-              <span className="font-medium text-gray-900">Ilmo kunnossa!</span><br/>
+              <span className="font-medium text-gray-900">Ilmo kunnossa!</span>
+              <br />
               Olet ilmonnut sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
-              Muokkaa ilmoa sieltä löytyvällä linkillä.
+              {!signupStatus.canEditDirectly &&
+                " Muokkaa ilmoa sähköpostista löytyvällä linkillä."}
             </p>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-
+              {signupStatus.canEditDirectly && signupStatus.id ? (
+                <Link
+                  href={`/events/${event.id}/${signupStatus.id}`}
+                  className="text-brand-primary hover:underline"
+                >
+                  Muokkaa ilmoa
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={requestSignupAccessEmail}
+                  disabled={sendSignupAccessEmailMutation.isPending}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                >
+                  {sendSignupAccessEmailMutation.isPending
+                    ? "Lähetetään linkkiä…"
+                    : "Lähetä muokkauslinkki sähköpostiin"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setIsEditingUserData(true)}
@@ -316,17 +357,31 @@ function Registration({
             role="status"
           >
             <p>
-              <span className="font-medium text-gray-900">Ilmo kesken!</span><br/>
+              <span className="font-medium text-gray-900">Ilmo kesken!</span>
+              <br />
               Sinulla on keskeneräinen ilmoittautuminen sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
             </p>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              <Link
-                href={`/events/${event.id}/${signupStatus.id}?existing=true`}
-                className="text-brand-primary hover:underline"
-              >
-                Viimeistele ilmo
-                  </Link>
+              {signupStatus.canEditDirectly && signupStatus.id ? (
+                <Link
+                  href={`/events/${event.id}/${signupStatus.id}`}
+                  className="text-brand-primary hover:underline"
+                >
+                  Viimeistele ilmo
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={requestSignupAccessEmail}
+                  disabled={sendSignupAccessEmailMutation.isPending}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                >
+                  {sendSignupAccessEmailMutation.isPending
+                    ? "Lähetetään linkkiä…"
+                    : "Lähetä muokkauslinkki"}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -511,7 +566,7 @@ function Registration({
                         className="shrink-0 px-3"
                         color="primary"
                         onClick={handleSubmit(getHandleSignup(quota.id))}
-                        disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                        disabled={!isRegistrationOpen || isSubmitting}
                         loading={
                           isSubmitting &&
                           createSignupMutation.variables?.quotaId === quota.id
@@ -658,10 +713,10 @@ export default function EventPage() {
   const router = useRouter();
   const eventId = Number(router.query.eventId);
 
-  const loginUser = useUser();
+  const loginUser = useManagementUser();
   const canEditEvent =
-    loginUser.data?.role === UserRole.event_editor ||
-    loginUser.data?.role === UserRole.superadmin;
+    loginUser.data?.role === ManagementRole.event_editor ||
+    loginUser.data?.role === ManagementRole.superadmin;
 
   const { data: event, isLoading, error, refetch } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
@@ -795,9 +850,9 @@ export default function EventPage() {
                     </div>
 
                     <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
-                      <HydrationZustand>
-                        {event && <Registration key={event.id} event={event} now={now} />}
-                      </HydrationZustand>
+                      {event && (
+                        <Registration key={event.id} event={event} now={now} />
+                      )}
                     </div>
                   </div>
 

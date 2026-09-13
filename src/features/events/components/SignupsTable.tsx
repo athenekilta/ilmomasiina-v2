@@ -16,7 +16,7 @@ import { draftSignature } from "../utils/draftSync";
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-type SignupWithAnswers = Signup & { Answers: Answer[] };
+type SignupWithAnswers = Signup & { Answers: Answer[]; email: string };
 
 const signupStatuses = {
   CONFIRMED: {

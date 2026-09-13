@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { userSignUpSchema } from "../utils/userSignUpSchema";
 import { useRouter } from "next/router";
-import { useUser } from "../hooks/useUser";
+import { useManagementUser } from "../hooks/useManagementUser";
 import { api } from "@/utils/api";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { routes } from "@/utils/routes";
@@ -23,7 +23,7 @@ export function RequestEmailVerificationForm(
   props: RequestChangePasswordFormProps
 ) {
   const router = useRouter();
-  const user = useUser();
+  const user = useManagementUser();
   const requestMutation = api.auth.passwordChange.request.useMutation();
   const queryParams = useQueryParams();
   const email = props.fixedEail || queryParams.email || user.data?.email || "";

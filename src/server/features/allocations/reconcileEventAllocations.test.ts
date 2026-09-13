@@ -9,12 +9,11 @@ import { reconcileEventAllocations } from "./reconcileEventAllocations";
 type TestSignup = {
   id: string;
   name: string;
-  email: string;
+  identity: { email: string };
   status: SignupStatus;
   completedAt: Date | null;
   createdAt: Date;
   allocatedAt: Date | null;
-  registrationIntent: Date | null;
 };
 
 type TestQuota = {
@@ -32,12 +31,11 @@ const signup = (
 ): TestSignup => ({
   id,
   name: id,
-  email: `${id}@example.com`,
+  identity: { email: `${id}@example.com` },
   status,
   completedAt: new Date(2026, 0, 1, 12, order),
   createdAt: new Date(2026, 0, 1, 12, order),
   allocatedAt: status === SignupStatus.CONFIRMED ? new Date() : null,
-  registrationIntent: null,
 });
 
 async function allocate({

@@ -1,11 +1,11 @@
 "use client";
 
-import { UserRole, type User } from "@/generated/prisma";
-import { useSession } from "@/server/auth/auth-client";
+import { ManagementRole, type ManagementUser } from "@/generated/prisma";
+import { useManagementSession } from "@/server/auth/management-auth-client";
 
 export type UsersTableProps = {
-  users: Array<Pick<User, "id" | "name" | "email" | "role">>;
-  onUpdateRole: (userId: string, role: UserRole) => void;
+  users: Array<Pick<ManagementUser, "id" | "name" | "email" | "role">>;
+  onUpdateRole: (userId: string, role: ManagementRole) => void;
   isUpdating?: boolean;
 };
 
@@ -14,8 +14,8 @@ export function UsersTable({
   onUpdateRole,
   isUpdating = false,
 }: UsersTableProps) {
-  const session = useSession();
-  const currentUserId = session.data?.user?.id;
+  const managementSession = useManagementSession();
+  const currentUserId = managementSession.data?.user?.id;
 
   return (
     <div className="overflow-x-auto">
@@ -57,11 +57,11 @@ export function UsersTable({
                           : "Valitse käyttäjän rooli"
                       }
                       onChange={(event) => {
-                        const newRole = event.target.value as UserRole;
+                        const newRole = event.target.value as ManagementRole;
                         const roleLabel =
-                          newRole === UserRole.superadmin
+                          newRole === ManagementRole.superadmin
                             ? "Pääkäyttäjä"
-                            : newRole === UserRole.event_editor
+                            : newRole === ManagementRole.event_editor
                               ? "Tapahtumamuokkaaja"
                               : "Uusi käyttäjä";
 
@@ -74,13 +74,13 @@ export function UsersTable({
                         }
                       }}
                     >
-                      <option value={UserRole.user}>
+                      <option value={ManagementRole.user}>
                         Uusi käyttäjä (Ei oikeuksia)
                       </option>
-                      <option value={UserRole.event_editor}>
+                      <option value={ManagementRole.event_editor}>
                         Tapahtumamuokkaaja
                       </option>
-                      <option value={UserRole.superadmin}>
+                      <option value={ManagementRole.superadmin}>
                         Pääkäyttäjä (Superadmin)
                       </option>
                     </select>

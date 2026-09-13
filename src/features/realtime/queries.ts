@@ -19,7 +19,7 @@ const eventLists = new Set(["events.getEvents", "events.getEventsAdmin"]);
 const eventDetails = new Set(["events.getEventByID", "events.getEventEditId"]);
 const signupQueries = new Set([
   "signups.getSignupByEventIds",
-  "signups.getSignupStatusByEventAndEmail",
+  "signups.getMySignupStatus",
   "signups.getSignupByID",
   "signups.exportSignupsCsv",
 ]);
@@ -40,7 +40,7 @@ export function isEventId(value: unknown): value is number {
 }
 
 // tRPC v11 keys are [[router, procedure], { input, type }]. Never serialize
-// the full key into a subscription: signup keys can contain email addresses.
+// the full key into a subscription: signup keys can contain private IDs.
 export function describeQuery(queryKey: readonly unknown[]) {
   const [path, options] = queryKey;
   if (!Array.isArray(path) || !path.every((part) => typeof part === "string")) {

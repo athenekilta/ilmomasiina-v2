@@ -6,10 +6,10 @@ import { protectedProcedure } from "../trpc/procedures/protectedProcedure";
 
 export const profileRouter = router({
   get: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.session?.user?.id) return null;
+    if (!ctx.managementSession?.user?.id) return null;
 
-    return ctx.prisma.user.findUnique({
-      where: { id: ctx.session.user.id },
+    return ctx.prisma.managementUser.findUnique({
+      where: { id: ctx.managementSession.user.id },
       select: {
         id: true,
         name: true,
@@ -28,9 +28,9 @@ export const profileRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.user.update({
+      return ctx.prisma.managementUser.update({
         where: {
-          id: ctx.user?.id,
+          id: ctx.managementUser?.id,
         },
         data: {
           name: input.name,

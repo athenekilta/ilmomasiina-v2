@@ -32,16 +32,16 @@ test(
       adapter: new PrismaPg({ connectionString: url }),
     });
     const { eventsRouter } = await import("@/server/router/events");
-    const user = await prisma.user.create({
+    const user = await prisma.managementUser.create({
       data: { id: randomUUID(), role: "event_editor" },
     });
-    const other = await prisma.user.create({
+    const other = await prisma.managementUser.create({
       data: { id: randomUUID(), role: "event_editor" },
     });
     const caller = eventsRouter.createCaller({
       prisma,
-      user,
-      session: { user: { id: user.id } },
+      managementUser: user,
+      managementSession: { user: { id: user.id } },
     } as Context);
     const pending = async (uploaderId = user.id, expired = false) => {
       const id = randomUUID();
@@ -342,7 +342,7 @@ test(
       await prisma.eventImage.deleteMany({
         where: { uploaderId: { in: [user.id, other.id] } },
       });
-      await prisma.user.deleteMany({
+      await prisma.managementUser.deleteMany({
         where: { id: { in: [user.id, other.id] } },
       });
       await prisma.$disconnect();

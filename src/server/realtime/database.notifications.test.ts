@@ -221,7 +221,7 @@ test(
     }
 
     await t.test(
-      "event visibility, meaningful updates, raffle exclusions and deletion",
+      "event visibility, meaningful updates and deletion",
       async () => {
         await addEvent(1);
         await addEvent(2, true);
@@ -231,12 +231,7 @@ test(
           [],
         );
         await change(
-          `UPDATE "Event" SET "raffleEnabled" = true, "raffleStartTime" = now(),
-         "raffleEndTime" = now(), "raffleStatus" = 'COMPLETED', "updatedAt" = now()`,
-          [],
-        );
-        await change(
-          'UPDATE "Event" SET title = \'Changed private title\', "raffleEnabled" = false WHERE id = 1',
+          'UPDATE "Event" SET title = \'Changed private title\' WHERE id = 1',
           [eventChange(1)],
         );
         await change('UPDATE "Event" SET draft = true WHERE id = 1', [

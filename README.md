@@ -5,7 +5,7 @@ A modern event registration system built with Next.js, TypeScript, and Prisma.
 ## Features
 
 - Event management and registration
-- Raffle system for event spots
+
 - Modern UI with Tailwind CSS
 - Authentication system
 
@@ -94,7 +94,7 @@ npx prisma migrate deploy
 
 ## Scheduled task worker
 
-The worker processes scheduled raffles, removes expired signup reservations, and finalizes allocations once per minute. Run it alongside the web server:
+The worker removes expired signup reservations and finalizes allocations once per minute. Run it alongside the web server:
 
 ```bash
 npm run worker

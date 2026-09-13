@@ -30,7 +30,6 @@ export function eventDraftValues(event?: EditEvent, now = new Date()): EventForm
     signupsPublic: event?.signupsPublic ?? true,
     verificationEmail: event?.verificationEmail ?? "",
     extraCapacity: event?.extraCapacity ?? 0,
-    raffleEnabled: event?.raffleEnabled ?? false,
     Quotas: (event?.Quotas ?? []).map(({ id, title, size, sharedPlacesAllocation, sortId, eventId }) => ({
       id, title, size, sharedPlacesAllocation, sortId, eventId,
     })),

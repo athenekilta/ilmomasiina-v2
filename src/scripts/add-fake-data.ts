@@ -48,7 +48,7 @@ async function createFakeData() {
 
   const quotaRecords = await prisma.quota.createMany({ data: quotas });
   console.log("Quota records", quotaRecords);
-  
+
   const questionRecords = await prisma.question.createMany({
     data: [
       {
@@ -81,12 +81,19 @@ async function createFakeData() {
     const size = quota.size || 0;
 
     for (let i = 0; i < size; i++) {
+      const name = faker.person.fullName();
+      const email = faker.internet.email().trim().toLowerCase();
+      const identity = await prisma.identity.upsert({
+        where: { email },
+        update: {},
+        create: { email, name },
+      });
       const signup = await prisma.signup.create({
         data: {
           quotaId: quota.id, // Link to the correct quota ID
           originalQuotaId: quota.id,
-          name: faker.person.fullName(),
-          email: faker.internet.email(),
+          name,
+          identityId: identity.id,
           completedAt: moment().subtract(1, "minutes").toDate(),
           status: "CONFIRMED",
         },

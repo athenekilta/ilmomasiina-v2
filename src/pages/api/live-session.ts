@@ -1,5 +1,5 @@
 import { fromNodeHeaders } from "better-auth/node";
-import { getServerAuthSession } from "@/server/common/get-server-auth-session";
+import { getServerManagementSession } from "@/server/common/get-server-management-session";
 import { prisma } from "@/server/external/prisma";
 import { createLiveSessionHandler } from "@/server/realtime/bootstrap";
 
@@ -11,20 +11,20 @@ export default createLiveSessionHandler({
     secret: process.env.NEXTAUTH_SECRET,
   }),
   identity: async (req) => {
-    const session = await getServerAuthSession({
+    const managementSession = await getServerManagementSession({
       headers: fromNodeHeaders(req.headers),
     });
-    if (!session) return null;
+    if (!managementSession) return null;
     // Use the current database role, not potentially stale session claims.
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const user = await prisma.managementUser.findUnique({
+      where: { id: managementSession.user.id },
       select: { id: true, role: true },
     });
     if (!user) return null;
     return {
       userId: user.id,
       role: user.role,
-      expiresAt: new Date(session.session.expiresAt).getTime(),
+      expiresAt: new Date(managementSession.session.expiresAt).getTime(),
     };
   },
 });

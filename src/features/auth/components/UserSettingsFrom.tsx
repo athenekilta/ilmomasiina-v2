@@ -1,4 +1,4 @@
-import { useUser } from "../hooks/useUser";
+import { useManagementUser } from "../hooks/useManagementUser";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { api } from "@/utils/api";
 import { FieldSet } from "@/components/FieldSet";
@@ -115,7 +115,7 @@ function NameForm({
 }
 
 export function UserSettingsForm() {
-  const user = useUser();
+  const user = useManagementUser();
   const alert = useAlert();
   const updateInformationMutation = api.profile.update.useMutation();
   const requestPasswordChangeMutation =

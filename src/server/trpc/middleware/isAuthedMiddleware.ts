@@ -10,7 +10,11 @@ export const isAuthedMiddleware = (
 ) =>
   trpcMiddleware(async ({ ctx, next }) => {
     // Ensure authentication
-    if (!ctx.session || !ctx.session.user || !ctx.user) {
+    if (
+      !ctx.managementSession ||
+      !ctx.managementSession.user ||
+      !ctx.managementUser
+    ) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
 
@@ -22,9 +26,12 @@ export const isAuthedMiddleware = (
 
     return next({
       ctx: {
-        // infers the `session` and `user` as non-nullable
-        user: ctx.user,
-        session: { ...ctx.session, user: ctx.session.user },
+        // Infers management authentication as non-nullable downstream.
+        managementUser: ctx.managementUser,
+        managementSession: {
+          ...ctx.managementSession,
+          user: ctx.managementSession.user,
+        },
       },
     });
   });

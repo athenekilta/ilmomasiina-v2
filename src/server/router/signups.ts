@@ -16,6 +16,15 @@ import {
   reconcileEventAllocations,
 } from "../features/allocations/reconcileEventAllocations";
 import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
+import {
+  canAccessSignup,
+  createSignupEditUrl,
+  getUserSession,
+  grantCreatedSignup,
+  requireUserSignupAccess,
+  setUserSessionIdentity,
+} from "../features/userSession/service";
+import { normalizeEmail } from "../features/userSession/request";
 
 const DEMO_SIGNUP_EMAIL_PREFIX = "dev-demo-";
 
@@ -111,22 +120,25 @@ export const signupsRouter = router({
         },
         include: {
           Answers: true,
+          identity: { select: { email: true } },
         },
       });
-      return signups;
+      return signups.map(({ identity, ...signup }) => ({
+        ...signup,
+        email: identity.email,
+      }));
     }),
-  getSignupStatusByEventAndEmail: publicProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-        email: z.string().email(),
-      }),
-    )
+  getMySignupStatus: publicProcedure
+    .input(z.object({ eventId: z.number() }))
     .query(async ({ ctx, input }) => {
+      const userSession = await getUserSession(ctx.prisma, ctx.userSession);
+      if (!userSession?.email) return null;
+      const email = userSession.email;
+
       const signups = await ctx.prisma.signup.findMany({
         where: {
           Quota: { eventId: input.eventId },
-          email: { equals: input.email.trim(), mode: "insensitive" },
+          identity: { email: { equals: email, mode: "insensitive" } },
           status: { not: SignupStatus.REJECTED },
         },
         select: {
@@ -135,60 +147,71 @@ export const signupsRouter = router({
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
+      const matches = await Promise.all(
+        signups.map(async (signup) => ({
+          ...signup,
+          canEditDirectly: await canAccessSignup(
+            ctx.prisma,
+            ctx.userSession,
+            signup,
+          ),
+        })),
+      );
       const signup =
-        signups.find((item) => item.completedAt !== null) ?? signups[0];
+        matches.find(
+          (item) => item.canEditDirectly && item.completedAt !== null,
+        ) ??
+        matches.find(
+          (item) => item.canEditDirectly && item.completedAt === null,
+        ) ??
+        matches.find((item) => item.completedAt !== null) ??
+        matches[0];
 
       if (!signup) return null;
 
       return {
-        id: signup.id,
+        ...(signup.canEditDirectly ? { id: signup.id } : {}),
         state: signup.completedAt === null ? "IN_PROGRESS" : "COMPLETED",
+        canEditDirectly: signup.canEditDirectly,
       };
     }),
 
-  resendSignupEmail: publicProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-        email: z.string().email(),
-      }),
-    )
+
+  sendMySignupAccessEmail: publicProcedure
+    .input(z.object({ eventId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const signup = await ctx.prisma.signup.findFirst({
-        where: {
-          Quota: { eventId: input.eventId },
-          email: { equals: input.email.trim(), mode: "insensitive" },
-          status: { not: SignupStatus.REJECTED },
-          completedAt: { not: null },
-        },
-        include: {
-          Quota: { include: { Event: true } },
-        },
-        orderBy: [{ completedAt: "desc" }, { createdAt: "asc" }, { id: "asc" }],
-      });
+      const userSession = await getUserSession(ctx.prisma, ctx.userSession);
+      const signup = userSession?.email
+        ? await ctx.prisma.signup.findFirst({
+            where: {
+              Quota: { eventId: input.eventId },
+              identity: {
+                email: { equals: userSession.email, mode: "insensitive" },
+              },
+              status: { not: SignupStatus.REJECTED },
+            },
+            include: {
+              Quota: { include: { Event: true } },
+              identity: { select: { email: true } },
+            },
+            orderBy: [
+              { completedAt: "desc" },
+              { createdAt: "asc" },
+              { id: "asc" },
+            ],
+          })
+        : null;
 
-      if (!signup) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Signup not found",
-        });
-      }
-
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-      const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-      const editUrl = `${nextAuthUrl}events/${input.eventId}/${signup.id}`;
-      const template =
-        signup.status === SignupStatus.CONFIRMED
-          ? ctx.mail.templates.eventSignup
-          : ctx.mail.templates.eventQueue;
+      // Deliberately return the same response whether a matching signup exists.
+      if (!signup) return;
 
       await (
-        await template({
+        await ctx.mail.templates.eventSignupAccess({
           eventName: signup.Quota.Event.title,
-          editUrl,
+          editUrl: await createSignupEditUrl(signup.id),
         })
       ).send({
-        to: { displayName: signup.name, address: signup.email },
+        to: { displayName: signup.name, address: signup.identity.email },
         from: "DoNotReply@athene.fi",
       });
     }),
@@ -201,9 +224,6 @@ export const signupsRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // TODO: Make sure it's your own signup
-      // Make sure singups are public
-
       const event = await ctx.prisma.event.findUnique({
         where: {
           id: input.eventId,
@@ -214,18 +234,22 @@ export const signupsRouter = router({
         throw new Error("Event not found");
       }
 
-      const signup = await ctx.prisma.signup.findUnique({
+      const signup = await ctx.prisma.signup.findFirst({
         where: {
           id: input.signupId,
+          Quota: { eventId: input.eventId },
         },
         include: {
           Quota: true,
+          identity: { select: { email: true } },
         },
       });
 
       if (!signup) {
         throw new Error("Signup not found");
       }
+
+      await requireUserSignupAccess(ctx.prisma, ctx.userSession, signup);
 
       const questions = await ctx.prisma.question.findMany({
         where: {
@@ -242,7 +266,6 @@ export const signupsRouter = router({
       const quotaSignups = await ctx.prisma.signup.findMany({
         where: {
           quotaId: signup.quotaId,
-          registrationIntent: null,
           status: { not: SignupStatus.REJECTED },
         },
         select: {
@@ -253,8 +276,10 @@ export const signupsRouter = router({
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
+      const { identity, ...signupData } = signup;
       return {
-        ...signup,
+        ...signupData,
+        email: identity.email,
         answers,
         questions,
         event,
@@ -279,12 +304,19 @@ export const signupsRouter = router({
         }
 
         const demoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const name = `Demoilmoittautuja ${demoId.slice(-4)}`;
+        const email = `${DEMO_SIGNUP_EMAIL_PREFIX}${demoId}@example.invalid`;
+        const identity = await tx.identity.upsert({
+          where: { email },
+          update: {},
+          create: { email, name },
+        });
         const signup = await tx.signup.create({
           data: {
             quotaId: input.quotaId,
             originalQuotaId: input.quotaId,
-            name: `Demoilmoittautuja ${demoId.slice(-4)}`,
-            email: `${DEMO_SIGNUP_EMAIL_PREFIX}${demoId}@example.invalid`,
+            name,
+            identityId: identity.id,
             completedAt: new Date(),
             status: SignupStatus.IN_PROGRESS,
           },
@@ -315,7 +347,7 @@ export const signupsRouter = router({
         const signup = await tx.signup.findFirst({
           where: {
             quotaId: input.quotaId,
-            email: { startsWith: DEMO_SIGNUP_EMAIL_PREFIX },
+            identity: { email: { startsWith: DEMO_SIGNUP_EMAIL_PREFIX } },
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         });
@@ -343,7 +375,7 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const normalizedEmail = input.email.trim().toLowerCase();
+      const normalizedEmail = normalizeEmail(input.email);
       const initialQuota = await ctx.prisma.quota.findUnique({
         where: { id: input.quotaId },
         select: { eventId: true },
@@ -353,6 +385,10 @@ export const signupsRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Quota not found" });
       }
 
+      const accessSession = await setUserSessionIdentity(ctx.userSession, {
+        name: input.name,
+        email: normalizedEmail,
+      });
       const result = await ctx.prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(${initialQuota.eventId})`;
 
@@ -384,7 +420,9 @@ export const signupsRouter = router({
         const matchingSignups = await tx.signup.findMany({
           where: {
             Quota: { eventId: quota.eventId },
-            email: { equals: normalizedEmail, mode: "insensitive" },
+            identity: {
+              email: { equals: normalizedEmail, mode: "insensitive" },
+            },
           },
           include: { Quota: { select: { title: true } } },
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -392,21 +430,6 @@ export const signupsRouter = router({
         const existingSignup =
           matchingSignups.find((signup) => signup.completedAt !== null) ??
           matchingSignups[0];
-
-        const staleIncompleteSignupIds = matchingSignups
-          .filter(
-            (signup) =>
-              signup.id !== existingSignup?.id && signup.completedAt === null,
-          )
-          .map((signup) => signup.id);
-        if (staleIncompleteSignupIds.length > 0) {
-          await tx.answer.deleteMany({
-            where: { signupId: { in: staleIncompleteSignupIds } },
-          });
-          await tx.signup.deleteMany({
-            where: { id: { in: staleIncompleteSignupIds } },
-          });
-        }
 
         let response:
           | { kind: "CREATED"; signupId: string }
@@ -422,20 +445,32 @@ export const signupsRouter = router({
               selectedQuotaTitle: string;
             };
 
+        const canAccessExisting = existingSignup
+          ? await canAccessSignup(tx, ctx.userSession, existingSignup)
+          : false;
         if (existingSignup?.quotaId === quota.id) {
-          response = existingSignup.completedAt
-            ? { kind: "CONFLICT" }
-            : { kind: "EXISTING", signupId: existingSignup.id };
+          response =
+            canAccessExisting && existingSignup.completedAt === null
+              ? { kind: "EXISTING", signupId: existingSignup.id }
+              : { kind: "CONFLICT" };
+        } else if (existingSignup && !canAccessExisting) {
+          response = { kind: "CONFLICT" };
         } else {
+          const identity = await tx.identity.upsert({
+            where: { email: normalizedEmail },
+            update: {},
+            create: { email: normalizedEmail, name: input.name },
+          });
           const candidate = await tx.signup.create({
             data: {
               quotaId: quota.id,
               originalQuotaId: quota.id,
               name: input.name,
-              email: normalizedEmail,
+              identityId: identity.id,
               status: SignupStatus.IN_PROGRESS,
             },
           });
+          await grantCreatedSignup(tx, accessSession, candidate.id);
           response = existingSignup
             ? {
                 kind: "CHOICE",
@@ -464,7 +499,6 @@ export const signupsRouter = router({
                     quotaId: {
                       in: [quota.id, response.existingQuotaId],
                     },
-                    registrationIntent: null,
                     status: { not: SignupStatus.REJECTED },
                   },
                   select: {
@@ -541,12 +575,12 @@ export const signupsRouter = router({
 
         const candidate = await tx.signup.findUnique({
           where: { id: input.candidateSignupId },
+          include: { identity: { select: { email: true } } },
         });
         if (
           !candidate ||
           candidate.completedAt !== null ||
-          candidate.status !== SignupStatus.IN_PROGRESS ||
-          candidate.registrationIntent !== null
+          candidate.status !== SignupStatus.IN_PROGRESS
         ) {
           throw new TRPCError({
             code: "NOT_FOUND",
@@ -554,11 +588,15 @@ export const signupsRouter = router({
           });
         }
 
+        await requireUserSignupAccess(tx, ctx.userSession, candidate);
+
         const otherSignups = await tx.signup.findMany({
           where: {
             id: { not: candidate.id },
             Quota: { eventId },
-            email: { equals: candidate.email, mode: "insensitive" },
+            identity: {
+              email: { equals: candidate.identity.email, mode: "insensitive" },
+            },
           },
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         });
@@ -571,6 +609,7 @@ export const signupsRouter = router({
             message: "The existing signup no longer exists",
           });
         }
+        await requireUserSignupAccess(tx, ctx.userSession, existingSignup);
 
         const selectedSignupId =
           input.choice === "NEW" ? candidate.id : existingSignup.id;
@@ -629,6 +668,7 @@ export const signupsRouter = router({
                   Event: { include: { Questions: true } },
                 },
               },
+              identity: { select: { email: true } },
             },
           });
 
@@ -638,6 +678,8 @@ export const signupsRouter = router({
               message: "Signup not found",
             });
           }
+
+          await requireUserSignupAccess(tx, ctx.userSession, currentSignup);
 
           const questions = currentSignup.Quota.Event.Questions;
           const hasInvalidChoiceConfiguration = questions.some((question) => {
@@ -692,6 +734,7 @@ export const signupsRouter = router({
           );
           const newSignup = await tx.signup.findUniqueOrThrow({
             where: { id: input.signupId },
+            include: { identity: { select: { email: true } } },
           });
 
           return {
@@ -709,9 +752,6 @@ export const signupsRouter = router({
       await sendQueueAcceptedEmails(queueAcceptedNotification);
 
       // Only send confirmation email if this is the first time being confirmed
-      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-      const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-      const editUrl = `${nextAuthUrl}events/${currentSignup.Quota.eventId}/${currentSignup.id}`;
       if (
         currentSignup.status !== SignupStatus.CONFIRMED &&
         newSignup.status === SignupStatus.CONFIRMED
@@ -720,20 +760,26 @@ export const signupsRouter = router({
         await (
           await ctx.mail.templates.eventSignup({
             eventName: currentSignup.Quota.Event.title,
-            editUrl,
+            editUrl: await createSignupEditUrl(currentSignup.id),
           })
         ).send({
-          to: { displayName: newSignup.name, address: newSignup.email },
+          to: {
+            displayName: newSignup.name,
+            address: newSignup.identity.email,
+          },
           from: "DoNotReply@athene.fi",
         });
       } else if (!wasCompletedBefore) {
         await (
           await ctx.mail.templates.eventQueue({
             eventName: currentSignup.Quota.Event.title,
-            editUrl,
+            editUrl: await createSignupEditUrl(currentSignup.id),
           })
         ).send({
-          to: { displayName: newSignup.name, address: newSignup.email },
+          to: {
+            displayName: newSignup.name,
+            address: newSignup.identity.email,
+          },
           from: "DoNotReply@athene.fi",
         });
       }
@@ -748,9 +794,20 @@ export const signupsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const result = await ctx.prisma.$transaction((tx) =>
-        deleteSignupAndReconcile(tx, input.signupId),
-      );
+      const result = await ctx.prisma.$transaction(async (tx) => {
+        const signup = await tx.signup.findUnique({
+          where: { id: input.signupId },
+          select: { id: true },
+        });
+        if (!signup) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Signup not found",
+          });
+        }
+        await requireUserSignupAccess(tx, ctx.userSession, signup);
+        return deleteSignupAndReconcile(tx, input.signupId);
+      });
 
       await sendQueueAcceptedEmails(
         result.allocation.queueAcceptedNotification,
@@ -830,79 +887,6 @@ export const signupsRouter = router({
   deleteUnconfirmedSignups: publicProcedure.mutation(async ({ ctx }) => {
     await cleanupExpiredInProgressSignups(ctx.prisma);
   }),
-  // server/router/signups.ts
-  // Add to existing signupsRouter:
-
-  createRaffleSignup: publicProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-        quotaId: z.string(),
-        name: z.string(),
-        email: z.string().email(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      // Verify raffle is active
-      const event = await ctx.prisma.event.findUnique({
-        where: { id: input.eventId },
-        select: {
-          raffleEnabled: true,
-          raffleStartTime: true,
-          raffleEndTime: true,
-        },
-      });
-
-      if (
-        !event?.raffleEnabled ||
-        !event.raffleStartTime ||
-        !event.raffleEndTime
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Raffle is not active for this event",
-        });
-      }
-
-      const now = new Date();
-      if (now < event.raffleStartTime || now > event.raffleEndTime) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration window is not open",
-        });
-      }
-
-      // Check for existing registration
-      const existing = await ctx.prisma.signup.findFirst({
-        where: {
-          Quota: {
-            eventId: input.eventId,
-          },
-          email: input.email,
-        },
-      });
-
-      if (existing) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "You have already registered for this event",
-        });
-      }
-
-      // Create the signup
-      const signup = await ctx.prisma.signup.create({
-        data: {
-          quotaId: input.quotaId,
-          originalQuotaId: input.quotaId,
-          name: input.name,
-          email: input.email,
-          registrationIntent: now,
-          status: "PENDING",
-        },
-      });
-
-      return signup;
-    }),
 
   exportSignupsCsv: eventEditorProcedure
     .input(

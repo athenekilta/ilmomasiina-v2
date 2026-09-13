@@ -14,9 +14,8 @@ test("scope follows real enabled observers, including function-valued enabled", 
     defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
   const options = {
-    queryKey: key("signups.getSignupStatusByEventAndEmail", {
+    queryKey: key("signups.getMySignupStatus", {
       eventId: 7,
-      email: "private@example.com",
     }),
     queryFn: () => Promise.resolve(null),
     initialData: null,

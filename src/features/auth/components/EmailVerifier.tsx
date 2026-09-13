@@ -1,4 +1,4 @@
-import { useUser } from "../hooks/useUser";
+import { useManagementUser } from "../hooks/useManagementUser";
 import { useEffect, useState } from "react";
 import { api } from "@/utils/api";
 import { useQueryParams } from "@/hooks/useQueryParams";
@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { routes } from "@/utils/routes";
 
 export function EmailVerifier() {
-  const user = useUser();
+  const user = useManagementUser();
   const apiContext = api.useContext();
 
   const queryParams = useQueryParams();

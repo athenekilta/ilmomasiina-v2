@@ -33,7 +33,6 @@ export async function cleanupExpiredInProgressSignups(prisma: PrismaClient) {
             some: {
               completedAt: null,
               createdAt: { lte: expiresBefore },
-              registrationIntent: null,
             },
           },
         },
@@ -50,7 +49,6 @@ export async function cleanupExpiredInProgressSignups(prisma: PrismaClient) {
           Quota: { eventId: event.id },
           completedAt: null,
           createdAt: { lte: expiresBefore },
-          registrationIntent: null,
         },
       });
       return reconcileEventAllocations(tx, event.id);
@@ -98,9 +96,9 @@ export async function reconcileEventAllocations(
           Signups: {
             where: {
               status: { not: SignupStatus.REJECTED },
-              registrationIntent: null,
             },
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            include: { identity: { select: { email: true } } },
           },
         },
       },
@@ -248,7 +246,7 @@ export async function reconcileEventAllocations(
     ).map((signup) => ({
       id: signup.id,
       name: signup.name,
-      email: signup.email,
+      email: signup.identity.email,
     })),
   );
 

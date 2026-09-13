@@ -1,24 +1,24 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "@/server/auth/auth-client";
+import { useManagementSession } from "@/server/auth/management-auth-client";
 import { api } from "@/utils/api";
 import { clearRealtimeData, startRealtime } from "./client";
 import { describeQuery, isRealtimeQuery, profileIdentity } from "./queries";
 
 export function Realtime() {
   const client = useQueryClient();
-  const session = useSession();
+  const managementSession = useManagementSession();
   const [disconnected, setDisconnected] = useState(false);
   const previousSession = useRef<string | undefined>(undefined);
 
-  // Keep an authoritative profile observer even when the page has no useUser.
+  // Keep an authoritative profile observer even when the page has no useManagementUser.
   // A failed/refreshed socket ticket alone is not evidence of a role downgrade.
   api.profile.get.useQuery(undefined, { retry: 1 });
 
-  const userId = session.data?.user.id ?? null;
-  const sessionId = session.data?.session.id ?? null;
+  const userId = managementSession.data?.user.id ?? null;
+  const sessionId = managementSession.data?.session.id ?? null;
   // Object identity and sliding expiry updates must not rotate the connection.
-  const sessionKey = session.isPending
+  const sessionKey = managementSession.isPending
     ? undefined
     : JSON.stringify([userId, sessionId]);
 

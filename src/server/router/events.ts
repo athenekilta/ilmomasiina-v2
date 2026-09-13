@@ -9,7 +9,7 @@ import {
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
-import { RaffleStatus, SignupStatus } from "@/generated/prisma/client";
+import { SignupStatus } from "@/generated/prisma/client";
 import { reconcileEventAllocations } from "../features/allocations/reconcileEventAllocations";
 import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
@@ -266,7 +266,6 @@ export const eventsRouter = router({
         extraCapacity: z.number().int().min(0),
         quotas: z.array(quotaSchema),
         questions: z.array(questionSchema),
-        raffle: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -285,7 +284,7 @@ export const eventsRouter = router({
           currentId: null,
           expectedImageId: null,
           imageId: input.imageId,
-          uploaderId: ctx.user.id,
+          uploaderId: ctx.managementUser.id,
         });
         const event = await tx.event.create({
           data: {
@@ -305,7 +304,6 @@ export const eventsRouter = router({
             draft: input.draft,
             signupsPublic: input.signupsPublic,
             verificationEmail: input.verificationEmail,
-            raffleEnabled: input.raffle,
             openQuotaSize: openQuotaSize,
             extraCapacity: input.extraCapacity,
           },
@@ -372,7 +370,7 @@ export const eventsRouter = router({
             currentId: current.imageId,
             imageId: input.imageId,
             expectedImageId: input.expectedImageId,
-            uploaderId: ctx.user.id,
+            uploaderId: ctx.managementUser.id,
           });
           // Delete quotas by IDs that are not in the input anymore and do not have signups
           const existingQuotas = await tx.quota.findMany({
@@ -504,33 +502,5 @@ export const eventsRouter = router({
         });
       }
       return { ...updatedEvent, notificationWarning };
-    }),
-  startRaffle: eventEditorProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const now = new Date();
-      const startTime = new Date(now.getTime() + 10000); // Start in 10 seconds
-      const endTime = new Date(startTime.getTime() + 30000); // 30 second window
-
-      // Update event with raffle times
-      await ctx.prisma.event.update({
-        where: { id: input.eventId },
-        data: {
-          raffleEnabled: true,
-          raffleStartTime: startTime,
-          raffleEndTime: endTime,
-          raffleStatus: RaffleStatus.NOT_STARTED,
-        },
-      });
-
-      // The raffle worker will pick this up and start it at the right time
-      return {
-        startTime,
-        endTime,
-      };
     }),
 });

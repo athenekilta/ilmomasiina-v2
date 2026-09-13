@@ -25,10 +25,7 @@ test("scope includes enabled observed queries, not inactive caches or raffle", (
       query("events.getEventsAdmin", { includeDrafts: true }),
       query("events.getEventByID", { eventId: 4 }),
       query("events.getEventEditId", { eventId: 4 }),
-      query("signups.getSignupStatusByEventAndEmail", {
-        eventId: 8,
-        email: "private@example.com",
-      }),
+      query("signups.getMySignupStatus", { eventId: 8 }),
       query("signups.getSignupByID", { eventId: 3, signupId: "secret" }),
       query("events.getEventByID", { eventId: 10 }, false),
       query("signups.exportSignupsCsv", { eventId: 11 }, false),
@@ -55,7 +52,7 @@ test("empty or disabled-only scopes subscribe to profile without event or user d
 test("scope reacts to enabled observer changes independently of navigation", () => {
   let enabled = false;
   const sidebar = {
-    ...query("signups.getSignupStatusByEventAndEmail", { eventId: 7 }),
+    ...query("signups.getMySignupStatus", { eventId: 7 }),
     isActive: () => enabled,
   };
   assert.deepEqual(collectScope([sidebar]).eventIds, []);
@@ -126,7 +123,7 @@ for (const kind of ["event", "signups"] as const) {
       "events.getEventByID",
       "events.getEventEditId",
       "signups.getSignupByEventIds",
-      "signups.getSignupStatusByEventAndEmail",
+      "signups.getMySignupStatus",
       "signups.getSignupByID",
       "signups.exportSignupsCsv",
     ]) {
