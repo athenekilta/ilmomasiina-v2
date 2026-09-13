@@ -30,7 +30,7 @@ const EventSignupAccessEmail = Object.assign(
         <EventSignupDetails {...props} />
 
         <Button
-          className="bg-brand-secondary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
+          className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
           href={props.editUrl}
         >
           Muokkaa ilmoa
