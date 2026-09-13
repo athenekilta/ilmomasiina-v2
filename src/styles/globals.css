@@ -44,10 +44,10 @@
     @apply rounded-inner bg-brand-beige;
   }
 
-<<<<<<< HEAD
   .event-description-markdown.md-editor-preview-wrapper {
     @apply bg-transparent p-0 text-base leading-relaxed;
-=======
+  }
+
   .event-banner {
     container-type: inline-size;
     --event-overlay-color: theme("colors.brand.sand");
@@ -91,6 +91,5 @@
 
   .event-banner-caption {
     background: var(--event-overlay-surface);
->>>>>>> arttu
   }
 }
