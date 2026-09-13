@@ -15,7 +15,7 @@ import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { Divider } from "@/components/Divider";
 import { BasicInfoFields } from "./BasicInfoFields";
-import { EventImageBanner, EventImageField } from "./EventImageFields";
+import { EventImageBanner } from "./EventImageFields";
 import { useEventImageSelection } from "../hooks/useEventImageSelection";
 import { Questions } from "./Questions";
 import { Quotas } from "./Quotas";
@@ -250,7 +250,6 @@ export function EventForm({ editId }: EventFormProps) {
         </div>
 
         <BasicInfoFields
-          imageField={<EventImageField selection={imageSelection} />}
           control={control}
           register={register}
           watch={watch}

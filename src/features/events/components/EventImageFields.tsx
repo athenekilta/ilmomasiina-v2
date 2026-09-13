@@ -1,7 +1,6 @@
 import { useId, useRef, useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ImagePlus, Info, Trash2 } from "lucide-react";
 import { Button } from "@/components/Button";
-import { FieldSet } from "@/components/FieldSet";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
 import { getEventImage } from "@/features/eventCard/eventCardImage";
@@ -11,71 +10,87 @@ import {
   type EventImageSelection,
 } from "../hooks/useEventImageSelection";
 
-function ImageControls({
-  selection,
-  location,
-}: {
-  selection: EventImageSelection;
-  location: "field" | "banner";
-}) {
+function ImageControls({ selection }: { selection: EventImageSelection }) {
   const id = useId();
   const [confirmRemoval, setConfirmRemoval] = useState(false);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
-  const error = selection.error?.location === location ? selection.error : null;
-  const isDecoding = selection.decodingAt === location;
+  const { error, isDecoding, setInputRef, selectFile, selectButtonRef } =
+    selection;
 
   return (
     <div className="min-w-0 space-y-2">
-      <div className="flex flex-wrap gap-2">
+      <input
+        ref={setInputRef}
+        type="file"
+        accept={EVENT_IMAGE_ACCEPT}
+        aria-label="Valitse tapahtumakuva"
+        hidden
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          // Clearing the native input allows choosing the same file again.
+          event.currentTarget.value = "";
+          void selectFile(file);
+        }}
+      />
+      <div className="flex flex-wrap items-center gap-2">
         <Button
-          ref={location === "field" ? selection.fieldButtonRef : undefined}
+          ref={selectButtonRef}
           type="button"
           variant="bordered"
           startIcon={<ImagePlus size={18} aria-hidden />}
-          aria-describedby={`${id}-help${error ? ` ${id}-error` : ""}`}
-          onClick={(event) =>
-            selection.openPicker(location, event.currentTarget)
-          }
+          aria-describedby={error ? `${id}-error` : undefined}
+          onClick={selection.openPicker}
         >
           {selection.image ? "Vaihda kuva" : "Valitse kuva"}
         </Button>
-        {location === "banner" && selection.image && (
-          <Button
-            ref={removeButtonRef}
-            type="button"
-            variant="text"
-            color="danger"
-            startIcon={<Trash2 size={18} aria-hidden />}
-            onClick={() => setConfirmRemoval(true)}
+        <div className="flex items-center gap-2">
+          {selection.image && (
+            <Button
+              ref={removeButtonRef}
+              type="button"
+              variant="text"
+              color="danger"
+              startIcon={<Trash2 size={18} aria-hidden />}
+              onClick={() => setConfirmRemoval(true)}
+            >
+              Poista kuva
+            </Button>
+          )}
+          <span className="group relative shrink-0">
+            <button
+              type="button"
+              aria-label="Kuvan kokorajoitus ja kuvasuhde"
+              aria-describedby={`${id}-help`}
+              className="text-brand-dark focus-visible:ring-brand-secondary flex h-8 w-8 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-hidden"
+            >
+              <Info size={18} aria-hidden />
+            </button>
+            <span
+              id={`${id}-help`}
+              role="tooltip"
+              className="invisible absolute top-full right-0 z-10 w-max max-w-[calc(100vw-4rem)] pt-2 opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+            >
+              <span className="bg-brand-dark rounded-control shadow-card block px-3 py-2 text-xs text-white">
+                Enintään 10 MiB. Kuvasuhde 5:2.
+              </span>
+            </span>
+          </span>
+        </div>
+        {selection.image && (
+          <p
+            className="text-brand-dark min-w-0 flex-[1_1_10rem] truncate text-sm"
+            title={selection.image.file.name}
           >
-            Poista kuva
-          </Button>
+            {selection.image.file.name}
+          </p>
         )}
       </div>
-      {location === "field" && selection.image && (
-        <p className="text-brand-dark text-sm wrap-anywhere">
-          {selection.image.file.name}
-          <span className="text-gray-600">
-            {" · "}
-            {new Intl.NumberFormat("fi-FI", {
-              maximumFractionDigits: 2,
-            }).format(selection.image.file.size / (1024 * 1024))}{" "}
-            MiB
-          </span>
-        </p>
-      )}
-      <p
-        id={`${id}-help`}
-        className={location === "field" ? "text-xs text-gray-600" : "sr-only"}
-      >
-        Enintään 10 MiB. Kuvasuhde 5:2.
-      </p>
       <p role="status" className="text-xs text-gray-600 empty:hidden">
         {isDecoding ? "Avataan kuvaa…" : ""}
       </p>
       {error && (
         <p id={`${id}-error`} role="alert" className="text-danger text-sm">
-          {error.message}
+          {error}
         </p>
       )}
       {confirmRemoval && (
@@ -94,32 +109,6 @@ function ImageControls({
         />
       )}
     </div>
-  );
-}
-
-export function EventImageField({
-  selection,
-}: {
-  selection: EventImageSelection;
-}) {
-  const { setInputRef, selectFile } = selection;
-  return (
-    <FieldSet title="Tapahtumakuva (valinnainen)">
-      <input
-        ref={setInputRef}
-        type="file"
-        accept={EVENT_IMAGE_ACCEPT}
-        aria-label="Valitse tapahtumakuva"
-        hidden
-        onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          // Clearing the native input allows choosing the same file again.
-          event.currentTarget.value = "";
-          void selectFile(file);
-        }}
-      />
-      <ImageControls selection={selection} location="field" />
-    </FieldSet>
   );
 }
 
@@ -153,7 +142,7 @@ export function EventImageBanner({
         )}
       </div>
       <div className="px-4 pt-4 sm:px-7">
-        <ImageControls selection={selection} location="banner" />
+        <ImageControls selection={selection} />
       </div>
     </div>
   );

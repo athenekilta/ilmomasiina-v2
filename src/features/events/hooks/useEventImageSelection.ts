@@ -3,25 +3,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export const EVENT_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-type ImageControlLocation = "field" | "banner";
 type SelectedEventImage = { file: File; url: string };
 
 /** Local preview state only; files must not enter the event's JSON payload. */
 export function useEventImageSelection() {
   const [image, setImage] = useState<SelectedEventImage | null>(null);
-  const [error, setError] = useState<{
-    location: ImageControlLocation;
-    message: string;
-  } | null>(null);
-  const [decodingAt, setDecodingAt] = useState<ImageControlLocation | null>(
-    null,
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [isDecoding, setIsDecoding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fieldButtonRef = useRef<HTMLButtonElement>(null);
-  const pickerOrigin = useRef<{
-    location: ImageControlLocation;
-    button: HTMLButtonElement;
-  } | null>(null);
+  const selectButtonRef = useRef<HTMLButtonElement>(null);
   const requestId = useRef(0);
   const objectUrls = useRef(new Set<string>());
 
@@ -30,7 +20,7 @@ export function useEventImageSelection() {
     // React does not expose the file input's native cancel event as a prop.
     if (input) {
       input.oncancel = () => {
-        pickerOrigin.current?.button.focus({ preventScroll: true });
+        selectButtonRef.current?.focus({ preventScroll: true });
       };
     }
   }, []);
@@ -53,16 +43,12 @@ export function useEventImageSelection() {
     };
   }, [image]);
 
-  function openPicker(
-    location: ImageControlLocation,
-    button: HTMLButtonElement,
-  ) {
-    pickerOrigin.current = { location, button };
+  function openPicker() {
     inputRef.current?.click();
   }
 
   function restorePickerFocus() {
-    pickerOrigin.current?.button.focus({ preventScroll: true });
+    selectButtonRef.current?.focus({ preventScroll: true });
   }
 
   async function selectFile(file: File | undefined) {
@@ -70,20 +56,19 @@ export function useEventImageSelection() {
     if (!file) return;
 
     const currentRequest = ++requestId.current;
-    const location = pickerOrigin.current?.location ?? "field";
     setError(null);
-    setDecodingAt(null);
+    setIsDecoding(false);
 
     if (!EVENT_IMAGE_ACCEPT.split(",").includes(file.type)) {
-      setError({ location, message: "Valitse JPEG-, PNG- tai WebP-kuva." });
+      setError("Valitse JPEG-, PNG- tai WebP-kuva.");
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError({ location, message: "Kuvan enimmäiskoko on 10 MiB." });
+      setError("Kuvan enimmäiskoko on 10 MiB.");
       return;
     }
 
-    setDecodingAt(location);
+    setIsDecoding(true);
     let url: string | undefined;
     let accepted = false;
     try {
@@ -101,16 +86,13 @@ export function useEventImageSelection() {
       accepted = true;
     } catch {
       if (currentRequest === requestId.current) {
-        setError({
-          location,
-          message: "Kuvaa ei voitu avata. Valitse toinen kuvatiedosto.",
-        });
+        setError("Kuvaa ei voitu avata. Valitse toinen kuvatiedosto.");
       }
     } finally {
       if (!accepted && url && objectUrls.current.delete(url)) {
         URL.revokeObjectURL(url);
       }
-      if (currentRequest === requestId.current) setDecodingAt(null);
+      if (currentRequest === requestId.current) setIsDecoding(false);
     }
   }
 
@@ -118,16 +100,16 @@ export function useEventImageSelection() {
     requestId.current += 1;
     setImage(null);
     setError(null);
-    setDecodingAt(null);
-    fieldButtonRef.current?.focus({ preventScroll: true });
+    setIsDecoding(false);
+    selectButtonRef.current?.focus({ preventScroll: true });
   }
 
   return {
     image,
     error,
-    decodingAt,
+    isDecoding,
     setInputRef,
-    fieldButtonRef,
+    selectButtonRef,
     openPicker,
     selectFile,
     removeImage,

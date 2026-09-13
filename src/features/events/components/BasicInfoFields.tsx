@@ -1,5 +1,4 @@
 import { FieldSet } from "@/components/FieldSet";
-import type { ReactNode } from "react";
 import { Input } from "@/components/Input";
 import { Switch } from "@/components/Switch";
 import { eventFormSchema } from "../utils/eventFormSchema";
@@ -26,7 +25,6 @@ import { BADGE_TONE_OPTIONS } from "@/features/eventCard/badgeTone";
 type EventFormValues = z.input<typeof eventFormSchema>;
 
 type BasicInfoFieldsProps = {
-  imageField: ReactNode;
   control: Control<EventFormValues>;
   register: UseFormRegister<EventFormValues>;
   watch: UseFormWatch<EventFormValues>;
@@ -35,7 +33,6 @@ type BasicInfoFieldsProps = {
 };
 
 export function BasicInfoFields({
-  imageField,
   control,
   register,
   watch,
@@ -81,7 +78,6 @@ export function BasicInfoFields({
           </Select>
         </div>
       </FieldSet>
-      {imageField}
       <FieldSet title="Aika">
         <div className="grid w-full grid-cols-1 gap-6">
           <DateInput
