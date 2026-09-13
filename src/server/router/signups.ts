@@ -90,6 +90,84 @@ export const signupsRouter = router({
       });
       return signups;
     }),
+  getSignupStatusByEventAndEmail: publicProcedure
+    .input(
+      z.object({
+        eventId: z.number(),
+        email: z.string().email(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const signups = await ctx.prisma.signup.findMany({
+        where: {
+          Quota: { eventId: input.eventId },
+          email: { equals: input.email.trim(), mode: "insensitive" },
+          status: { not: SignupStatus.REJECTED },
+        },
+        select: {
+          id: true,
+          completedAt: true,
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      });
+      const signup =
+        signups.find((item) => item.completedAt !== null) ?? signups[0];
+
+      if (!signup) return null;
+
+      return {
+        id: signup.id,
+        state: signup.completedAt === null ? "IN_PROGRESS" : "COMPLETED",
+      };
+    }),
+
+  resendSignupEmail: publicProcedure
+    .input(
+      z.object({
+        eventId: z.number(),
+        email: z.string().email(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const signup = await ctx.prisma.signup.findFirst({
+        where: {
+          Quota: { eventId: input.eventId },
+          email: { equals: input.email.trim(), mode: "insensitive" },
+          status: { not: SignupStatus.REJECTED },
+          completedAt: { not: null },
+        },
+        include: {
+          Quota: { include: { Event: true } },
+        },
+        orderBy: [{ completedAt: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+      });
+
+      if (!signup) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Signup not found",
+        });
+      }
+
+      const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+      const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+      const editUrl = `${nextAuthUrl}events/${input.eventId}/${signup.id}`;
+      const template =
+        signup.status === SignupStatus.CONFIRMED
+          ? ctx.mail.templates.eventSignup
+          : ctx.mail.templates.eventQueue;
+
+      await (
+        await template({
+          eventName: signup.Quota.Event.title,
+          editUrl,
+        })
+      ).send({
+        to: { displayName: signup.name, address: signup.email },
+        from: "DoNotReply@athene.fi",
+      });
+    }),
+
   getSignupByID: publicProcedure
     .input(
       z.object({

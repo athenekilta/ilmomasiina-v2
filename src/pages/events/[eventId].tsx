@@ -72,6 +72,14 @@ function Registration({
     useState<SignupConflictChoice | null>(null);
 
   const createSignupMutation = api.signups.createSignup.useMutation();
+  const signupStatusQuery = api.signups.getSignupStatusByEventAndEmail.useQuery(
+    {
+      eventId: event.id,
+      email: storedUser?.email ?? "",
+    },
+    { enabled: !!storedUser?.email },
+  );
+
   const resolveSignupConflictMutation =
     api.signups.resolveSignupConflict.useMutation();
   const addDemoSignupMutation = api.signups.addDemoSignup.useMutation({
@@ -81,6 +89,8 @@ function Registration({
     onError: (error) => alert.error(error.message),
   });
   const showDemoControls = process.env.NODE_ENV === "development";
+  const signupStatus = signupStatusQuery.data;
+  const hasExistingSignup = signupStatus !== null && signupStatus !== undefined;
 
   const quotas = event.Quotas.filter((quota) => quota.id !== "queue");
   const finiteQuotas = quotas.filter(
@@ -276,8 +286,57 @@ function Registration({
               )}
             </div>
           </form>
+        ) : signupStatus?.state === "COMPLETED" ? (
+          <div
+            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+            role="status"
+          >
+            <p>
+              <span className="font-medium text-gray-900">Ilmo kunnossa!</span><br/>
+              Olet ilmonnut sähköpostilla{" "}
+              <span className="text-gray-900">{storedUser?.email}</span>.
+              Muokkaa ilmoa sieltä löytyvällä linkillä.
+            </p>
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+
+              <button
+                type="button"
+                onClick={() => setIsEditingUserData(true)}
+                className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+              >
+                Uusi ilmo
+              </button>
+            </div>
+          </div>
+        ) : signupStatus?.state === "IN_PROGRESS" ? (
+          <div
+            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+            role="status"
+          >
+            <p>
+              <span className="font-medium text-gray-900">Ilmo kesken!</span><br/>
+              Sinulla on keskeneräinen ilmoittautuminen sähköpostilla{" "}
+              <span className="text-gray-900">{storedUser?.email}</span>.
+            </p>
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+              <Link
+                href={`/events/${event.id}/${signupStatus.id}?existing=true`}
+                className="text-brand-primary hover:underline"
+              >
+                Viimeistele ilmo
+                  </Link>
+
+              <button
+                type="button"
+                onClick={() => setIsEditingUserData(true)}
+                className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+              >
+                Uusi ilmo
+              </button>
+            </div>
+          </div>
         ) : (
-          <p className="surface-muted border-l-brand-primary text-brand-dark/80 mb-3 border-l-2 px-3 py-2 text-sm">
+          <p className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm">
             Hei{" "}
             <span className="font-medium text-gray-900">
               {storedUser?.name}
@@ -446,19 +505,21 @@ function Registration({
                         −1
                       </Button>
                     )}
-                    <Button
-                      size="small"
-                      className="shrink-0 px-3"
-                      color="primary"
-                      onClick={handleSubmit(getHandleSignup(quota.id))}
-                      disabled={!isRegistrationOpen || !isValid || isSubmitting}
-                      loading={
-                        isSubmitting &&
-                        createSignupMutation.variables?.quotaId === quota.id
-                      }
-                    >
-                      {signupGoesToQueue ? "Ilmoa jonoon" : "Ilmoa"}
-                    </Button>
+                    {!hasExistingSignup && (
+                      <Button
+                        size="small"
+                        className="shrink-0 px-3"
+                        color="primary"
+                        onClick={handleSubmit(getHandleSignup(quota.id))}
+                        disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                        loading={
+                          isSubmitting &&
+                          createSignupMutation.variables?.quotaId === quota.id
+                        }
+                      >
+                        {signupGoesToQueue ? "Ilmoa jonoon" : "Ilmoa"}
+                      </Button>
+                    )}
                     {showDemoControls && (
                       <Button
                         type="button"
