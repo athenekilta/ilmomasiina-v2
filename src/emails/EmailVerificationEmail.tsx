@@ -1,59 +1,51 @@
-import { Container, Heading } from "@react-email/components";
+import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
 
 export type EmailVerificationEmailProps = {
   verificationUrl?: string;
 };
 
-const defautlProps: EmailVerificationEmailProps =
-  process.env.NODE_ENV === "development"
-    ? {
-      verificationUrl: "http://localhost:3000/auth/email/verify",
-    }
-    : {
-      verificationUrl: "",
-    };
+const defaultProps: EmailVerificationEmailProps = {
+  verificationUrl: "http://localhost:3000/auth/email/verify",
+};
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getSubject(props: EmailVerificationEmailProps) {
-  return `📨 Verify your email`;
+function getSubject() {
+  return "Vahvista sähköpostiosoitteesi";
 }
 
 const EmailVerificationEmail = Object.assign(
   function EmailVerificationEmail(originalProps: EmailVerificationEmailProps) {
-    const props = { ...defautlProps, ...originalProps };
+    const props = { ...defaultProps, ...originalProps };
 
     return (
-      <Email title={getSubject(props)} preview="Verify your email">
-        <Heading as="h1" className="text-4xl font-bold">
-          Welcome to Ilmomasiina
+      <Email
+        title={getSubject()}
+        preview="Vahvista Ilmomasiina-tilisi sähköpostiosoite"
+      >
+        <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
+          Vahvista sähköpostiosoitteesi
         </Heading>
-        <Container className="py-8">
-          <Heading as="h2" className="text-2xl font-bold">
-            Verify your email
-          </Heading>
-          <Container className="pt-4">
-            <Container className="py-4">
-              <Heading as="h3" className="text-lg font-bold">
-                To verify your email, click the link below.
-              </Heading>
-            </Container>
-            <Container className="py-4">
-              <a
-                href={props.verificationUrl}
-                className="text-blue-600 underline"
-              >
-                {props.verificationUrl}
-              </a>
-            </Container>
-          </Container>
-        </Container>
+        <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
+          Viimeistele Ilmomasiina-tilisi käyttöönotto vahvistamalla
+          sähköpostiosoitteesi.
+        </Text>
+
+        {props.verificationUrl && (
+          <Button
+            className="bg-brand-secondary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
+            href={props.verificationUrl}
+          >
+            Vahvista sähköpostiosoite
+          </Button>
+        )}
+
+        <Text className="text-brand-dark mt-7 mb-0 text-sm leading-6">
+          Jos et ole luonut tiliä, voit jättää tämän viestin huomiotta.
+        </Text>
       </Email>
     );
   },
-  {
-    getSubject,
-  }
+  { getSubject },
 );
 
 export default EmailVerificationEmail;

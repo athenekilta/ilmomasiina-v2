@@ -176,7 +176,6 @@ export const signupsRouter = router({
       };
     }),
 
-
   sendMySignupAccessEmail: publicProcedure
     .input(z.object({ eventId: z.number() }))
     .mutation(async ({ ctx, input }) => {
@@ -208,6 +207,10 @@ export const signupsRouter = router({
       await (
         await ctx.mail.templates.eventSignupAccess({
           eventName: signup.Quota.Event.title,
+          eventDate: signup.Quota.Event.date,
+          signupName: signup.name,
+          signupEmail: signup.identity.email,
+          quotaName: signup.Quota.title,
           editUrl: await createSignupEditUrl(signup.id),
         })
       ).send({
@@ -760,6 +763,10 @@ export const signupsRouter = router({
         await (
           await ctx.mail.templates.eventSignup({
             eventName: currentSignup.Quota.Event.title,
+            eventDate: currentSignup.Quota.Event.date,
+            signupName: newSignup.name,
+            signupEmail: newSignup.identity.email,
+            quotaName: currentSignup.Quota.title,
             editUrl: await createSignupEditUrl(currentSignup.id),
           })
         ).send({
@@ -773,6 +780,10 @@ export const signupsRouter = router({
         await (
           await ctx.mail.templates.eventQueue({
             eventName: currentSignup.Quota.Event.title,
+            eventDate: currentSignup.Quota.Event.date,
+            signupName: newSignup.name,
+            signupEmail: newSignup.identity.email,
+            quotaName: currentSignup.Quota.title,
             editUrl: await createSignupEditUrl(currentSignup.id),
           })
         ).send({

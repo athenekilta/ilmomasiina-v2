@@ -4,11 +4,18 @@ import { createSignupEditUrl } from "@/server/features/userSession/service";
 export type QueueAcceptedNotification = {
   eventId: number;
   eventName: string;
-  signups: Array<{ id: string; name: string; email: string }>;
+  eventDate: Date;
+  signups: Array<{
+    id: string;
+    name: string;
+    email: string;
+    quotaName: string;
+  }>;
 };
 
 export async function sendQueueAcceptedEmails({
   eventName,
+  eventDate,
   signups,
 }: QueueAcceptedNotification) {
   if (signups.length === 0) return;
@@ -19,7 +26,14 @@ export async function sendQueueAcceptedEmails({
       .map(async (signup) => {
         const editUrl = await createSignupEditUrl(signup.id);
         await (
-          await emailTemplates.eventQueueAccepted({ eventName, editUrl })
+          await emailTemplates.eventQueueAccepted({
+            eventName,
+            eventDate,
+            signupName: signup.name,
+            signupEmail: signup.email,
+            quotaName: signup.quotaName,
+            editUrl,
+          })
         ).send({
           to: { displayName: signup.name, address: signup.email },
           from: "DoNotReply@athene.fi",

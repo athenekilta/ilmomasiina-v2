@@ -1,12 +1,17 @@
 import {
-  Html,
-  Tailwind,
-  Head,
-  Preview,
+  Body,
   Container,
-  Hr,
-  Text,
+  Head,
+  Html,
+  Preview,
+  Section,
+  Tailwind,
 } from "@react-email/components";
+import tailwindConfig from "../../../tailwind.config.cjs";
+
+const emailTailwindConfig = {
+  theme: tailwindConfig.theme,
+};
 
 export type EmailProps = {
   children: React.ReactNode;
@@ -16,22 +21,18 @@ export type EmailProps = {
 
 export function Email(props: EmailProps) {
   return (
-    <Tailwind>
-      <Html lang="en" dir="ltr" className="bg-white p-8">
+    <Tailwind config={emailTailwindConfig}>
+      <Html lang="fi" dir="ltr">
         <Head>
           <title>{props.title}</title>
         </Head>
         <Preview>{props.preview}</Preview>
-        <Container>{props.children}</Container>
-        <Container className="pt-4">
-          <Container className="py-4">
-            <Hr />
+        <Body className="bg-brand-beige text-brand-dark m-0 px-4 py-8 font-sans">
+          <Container className="border-brand-sand bg-brand-light mx-auto max-w-xl overflow-hidden rounded-xl border border-solid">
+            <Section className="bg-brand-primary h-2" />
+            <Section className="px-6 py-8 sm:px-10">{props.children}</Section>
           </Container>
-          <Text className="pt-2 text-black/40">
-            Do not answer this email. This email has been automatically sent by
-            Ilmomasiina.
-          </Text>
-        </Container>
+        </Body>
       </Html>
     </Tailwind>
   );
