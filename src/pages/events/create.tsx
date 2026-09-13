@@ -8,7 +8,7 @@ export default function CreateEvent() {
     <ProtectedRoute adminOnly={true}>
       <PageHead title="Create event" />
       <Layout>
-        <div className="surface-panel mx-auto mt-4 w-full max-w-3xl p-4 sm:mt-6 sm:p-6">
+        <div className="surface-panel mx-auto mt-4 w-full max-w-3xl sm:mt-6">
           <EventForm />
         </div>
       </Layout>

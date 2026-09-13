@@ -15,6 +15,8 @@ import { nativeTime } from "@/utils/nativeTime";
 import { useRouter } from "next/router";
 import { Divider } from "@/components/Divider";
 import { BasicInfoFields } from "./BasicInfoFields";
+import { EventImageBanner, EventImageField } from "./EventImageFields";
+import { useEventImageSelection } from "../hooks/useEventImageSelection";
 import { Questions } from "./Questions";
 import { Quotas } from "./Quotas";
 import { SignupsTable } from "./SignupsTable";
@@ -34,6 +36,7 @@ export type EventFormProps = {
 type EventFormValues = z.input<typeof eventFormSchema>;
 
 export function EventForm({ editId }: EventFormProps) {
+  const imageSelection = useEventImageSelection();
   const createMutation = api.events.createEvent.useMutation();
   const updateMutation = api.events.updateEvent.useMutation();
   const router = useRouter();
@@ -182,6 +185,8 @@ export function EventForm({ editId }: EventFormProps) {
   });
 
   const isDraft = useWatch({ control, name: "draft" });
+  const badgeText = useWatch({ control, name: "badgeText" });
+  const badgeTone = useWatch({ control, name: "badgeTone" }) ?? "GREEN";
   const seatHoldingSignupCounts = (signups ?? []).reduce<
     Record<string, number>
   >((counts, signup) => {
@@ -202,7 +207,12 @@ export function EventForm({ editId }: EventFormProps) {
   return (
     <form onSubmit={onSubmit} className="relative">
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
-      <div className="flex flex-col gap-6 px-0 sm:px-1">
+      <EventImageBanner
+        selection={imageSelection}
+        badgeText={badgeText}
+        badgeTone={badgeTone}
+      />
+      <div className="flex flex-col gap-6 p-4 sm:px-7 sm:py-6">
         <div className="flex flex-row flex-wrap items-start justify-between gap-3">
           <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
             {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
@@ -239,6 +249,7 @@ export function EventForm({ editId }: EventFormProps) {
         </div>
 
         <BasicInfoFields
+          imageField={<EventImageField selection={imageSelection} />}
           control={control}
           register={register}
           watch={watch}
