@@ -2,7 +2,6 @@ import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
-import { superadminProcedure } from "../trpc/procedures/superadminProcedure";
 import { eventEditorProcedure } from "../trpc/procedures/eventEditorProcedure";
 import { TRPCError } from "@trpc/server";
 import { SignupStatus } from "@/generated/prisma/client";
@@ -777,7 +776,7 @@ export const signupsRouter = router({
       return result.signup;
     }),
 
-  moveSignupToQuota: superadminProcedure
+  moveSignupToQuota: eventEditorProcedure
     .input(
       z.object({
         signupId: z.string(),
@@ -905,7 +904,7 @@ export const signupsRouter = router({
       return signup;
     }),
 
-  exportSignupsCsv: superadminProcedure
+  exportSignupsCsv: eventEditorProcedure
     .input(
       z.object({
         eventId: z.number(),
