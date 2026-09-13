@@ -41,6 +41,13 @@ export const clientSchema = z.object({
     .optional()
     .default("error")
     .catch("error"),
+  NEXT_PUBLIC_LIVE_URL: z
+    .string()
+    .url()
+    .refine((value) => ["ws:", "wss:"].includes(new URL(value).protocol), {
+      message: "Live URL must use ws:// or wss://",
+    })
+    .optional(),
 });
 
 /**
@@ -53,4 +60,7 @@ export const clientEnv = {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   NEXT_PUBLIC_DEV_TRPC_LOG: process.env.NEXT_PUBLIC_DEV_TRPC_LOG,
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  NEXT_PUBLIC_LIVE_URL: process.env.NEXT_PUBLIC_LIVE_URL,
 };

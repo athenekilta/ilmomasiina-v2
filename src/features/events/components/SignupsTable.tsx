@@ -12,6 +12,7 @@ import { decodeCheckboxAnswer } from "@/features/events/utils/questionAnswers";
 import type { Answer, Question, Quota, Signup } from "@/generated/prisma";
 import { api } from "@/utils/api";
 import { formatDateTime } from "@/utils/format";
+import { draftSignature } from "../utils/draftSync";
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -46,7 +47,9 @@ export function SignupsTable({
   eventName,
   quotas,
   questions,
+  disabled = false,
 }: {
+  disabled?: boolean;
   signups: SignupWithAnswers[];
   eventId: number;
   eventName?: string;
@@ -119,6 +122,9 @@ export function SignupsTable({
     }
   };
 
+  const currentDeleteTarget = signups.find((signup) => signup.id === signupToDelete?.id);
+  const deleteTargetChanged = !!signupToDelete && draftSignature(currentDeleteTarget) !== draftSignature(signupToDelete);
+
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -128,7 +134,7 @@ export function SignupsTable({
         <Button
           type="button"
           onClick={handleDownload}
-          disabled={isDownloading}
+          disabled={isDownloading || disabled}
           size="small"
         >
           {isDownloading ? "Ladataan..." : "Vie CSV-tiedostona"}
@@ -202,11 +208,11 @@ export function SignupsTable({
                   status={status}
                   quotas={quotas}
                   questions={sortedQuestions}
-                  isMoving={moveSignup.isPending}
-                  isDeleting={deleteSignup.isPending}
+                  isMoving={moveSignup.isPending || disabled}
+                  isDeleting={deleteSignup.isPending || disabled}
                   onToggle={() => toggleSignup(signup.id)}
                   onMove={(targetQuotaId) => {
-                    if (targetQuotaId === signup.quotaId) return;
+                    if (disabled || targetQuotaId === signup.quotaId || !quotas.some((quota) => quota.id === targetQuotaId)) return;
                     moveSignup.mutate({ signupId: signup.id, targetQuotaId });
                   }}
                   onDelete={() => setSignupToDelete(signup)}
@@ -220,13 +226,20 @@ export function SignupsTable({
       {signupToDelete && (
         <ConfirmationDialog
           title="Poista ilmoittautuminen?"
-          message={`Haluatko varmasti poistaa käyttäjän ${signupToDelete.name} ilmoittautumisen? Tätä ei voi perua.`}
-          confirmLabel="Poista ilmoittautuminen"
+          message={!currentDeleteTarget
+            ? "Ilmoittautuminen on jo poistettu muualla."
+            : deleteTargetChanged
+              ? `Ilmoittautumista on muutettu muualla. Tarkista käyttäjän ${currentDeleteTarget.name} uusimmat tiedot ennen poistoa. Kiintiö: ${quotas.find((quota) => quota.id === currentDeleteTarget.quotaId)?.title ?? currentDeleteTarget.quotaId}.`
+              : `Haluatko varmasti poistaa käyttäjän ${signupToDelete.name} ilmoittautumisen? Tätä ei voi perua.`}
+          confirmLabel={!currentDeleteTarget ? "Sulje" : deleteTargetChanged ? "Tarkista uusimmat tiedot" : "Poista ilmoittautuminen"}
           pending={deleteSignup.isPending}
           onCancelAction={() => setSignupToDelete(null)}
-          onConfirmAction={() =>
-            deleteSignup.mutate({ signupId: signupToDelete.id, eventId })
-          }
+          onConfirmAction={() => {
+            if (!currentDeleteTarget) { setSignupToDelete(null); return; }
+            if (deleteTargetChanged) { setSignupToDelete(currentDeleteTarget); return; }
+            if (disabled) { alert.error("Päivitä tiedot ennen poistoa."); return; }
+            deleteSignup.mutate({ signupId: currentDeleteTarget.id, eventId });
+          }}
         />
       )}
     </div>

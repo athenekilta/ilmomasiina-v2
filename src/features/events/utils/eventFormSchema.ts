@@ -91,6 +91,6 @@ export const eventFormSchema = z.object({
   verificationEmail: z.string().optional(),
   extraCapacity: z.number().int().min(0),
   raffleEnabled: z.boolean().default(false),
-  Quotas: z.array(quotaSchema.extend({ signupCount: z.number() })),
+  Quotas: z.array(quotaSchema),
   Questions: z.array(questionSchema),
 });

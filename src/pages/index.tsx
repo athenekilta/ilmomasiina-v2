@@ -11,6 +11,7 @@ import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { useState } from "react";
+import { useNow } from "@/hooks/useNow";
 import { EventCard } from "@/features/eventCard/EventCard";
 import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
 import HydrationZustand from "@/components/HydrationZustand";
@@ -19,6 +20,8 @@ import { Button } from "@/components/Button";
 import { UserRole } from "@/generated/prisma";
 
 export default function DesktopPage() {
+  // Re-render cards and time-derived grouping without refetching event data.
+  useNow();
   const [includeDrafts, setIncludeDrafts] = useState(false);
   const [includeOlderEvents, setIncludeOlderEvents] = useState(false);
 

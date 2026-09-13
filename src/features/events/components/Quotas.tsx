@@ -27,6 +27,7 @@ type QuotasProps = {
   eventId?: number;
   editId?: number;
   seatHoldingSignupCounts: Record<string, number>;
+  signupCounts: Record<string, number>;
 };
 
 export function Quotas({
@@ -37,6 +38,7 @@ export function Quotas({
   eventId,
   editId,
   seatHoldingSignupCounts,
+  signupCounts,
 }: QuotasProps) {
   const extraCapacity = watch("extraCapacity");
   const [extraCapacityInput, setExtraCapacityInput] = useState<string | null>(
@@ -56,7 +58,7 @@ export function Quotas({
         sharedPlacesAllocation: "NEVER",
         sortId,
         eventId: eventId ?? NaN,
-        signupCount: 0,
+
       },
     ]);
   }, [eventId, getValues, setValue]);
@@ -176,6 +178,7 @@ export function Quotas({
                           setValue("Quotas", quotas);
                         }}
                         deleteQuota={deleteQuota}
+                        signupCount={signupCounts[quota.id] ?? 0}
                         seatHoldingSignupCount={
                           seatHoldingSignupCounts[quota.id] ?? 0
                         }

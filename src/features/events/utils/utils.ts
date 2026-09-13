@@ -1,5 +1,5 @@
 import type { Quota, Event } from "@/generated/prisma/client";
-import { isPast, isFuture } from "date-fns";
+
 
 export function OriginalQuotaTitle(quotas: Quota[], quotaId: string) {
   const quota = quotas.find((q: Quota) => q.id === quotaId);
@@ -7,12 +7,12 @@ export function OriginalQuotaTitle(quotas: Quota[], quotaId: string) {
   return quota.title;
 }
 
-export function RegistrationDate(event: Event) {
+export function RegistrationDate(event: Pick<Event, "registrationStartDate" | "registrationEndDate">, now = Date.now()) {
   const registrationStartDate = new Date(event.registrationStartDate);
   const registrationEndDate = new Date(event.registrationEndDate);
 
-  const isRegistrationInFuture = isFuture(registrationStartDate);
-  const isRegistrationClosed = isPast(registrationEndDate);
+  const isRegistrationInFuture = registrationStartDate.getTime() > now;
+  const isRegistrationClosed = registrationEndDate.getTime() <= now;
 
   return {
     isRegistrationInFuture,

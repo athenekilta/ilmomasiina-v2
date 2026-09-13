@@ -16,19 +16,21 @@ export function QuotaRow({
   onChange,
   deleteQuota,
   quotasLength,
+  signupCount,
   seatHoldingSignupCount,
   moveUnusedPlacesToJokerPlaces,
   errors,
 }: {
-  quota: Quota & { signupCount: number };
-  onChange: (value: Quota & { signupCount: number }) => void;
+  quota: Quota;
+  onChange: (value: Quota) => void;
   deleteQuota: (id: string) => void;
   quotasLength: number;
+  signupCount: number;
   seatHoldingSignupCount: number;
   moveUnusedPlacesToJokerPlaces: (id: string, usedPlaces: number) => void;
   errors: FieldErrorsImpl<Quota> | undefined;
 }) {
-  const canDelete = quotasLength >= 2 && quota.signupCount === 0;
+  const canDelete = quotasLength >= 2 && signupCount === 0;
   const protectedPlacesUsed =
     quota.size === null
       ? seatHoldingSignupCount
@@ -190,10 +192,10 @@ export function QuotaRow({
         >
           Poista kiintiö
         </Button>
-        {quota.signupCount > 0 && (
+        {signupCount > 0 && (
           <p className="text-xs leading-relaxed text-gray-600">
-            Kiintiössä on {quota.signupCount}{" "}
-            {quota.signupCount === 1 ? "ilmoittautuminen" : "ilmoittautumista"},
+            Kiintiössä on {signupCount}{" "}
+            {signupCount === 1 ? "ilmoittautuminen" : "ilmoittautumista"},
             joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset
             toiseen kiintiöön ennen tämän kiintiön poistamista.
           </p>

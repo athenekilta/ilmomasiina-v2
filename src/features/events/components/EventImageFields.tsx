@@ -18,7 +18,9 @@ function ImageControls({
   disabled: boolean;
 }) {
   const id = useId();
-  const [confirmRemoval, setConfirmRemoval] = useState(false);
+  const [removalTarget, setRemovalTarget] = useState<string>();
+  const currentTarget = `${selection.savedImageId ?? ""}:${selection.image?.url ?? ""}`;
+  const removalChanged = removalTarget !== currentTarget;
   const removeButtonRef = useRef<HTMLButtonElement>(null);
   const { error, isDecoding, setInputRef, selectFile, selectButtonRef } =
     selection;
@@ -60,7 +62,7 @@ function ImageControls({
               variant="text"
               color="danger"
               startIcon={<Trash2 size={18} aria-hidden />}
-              onClick={() => setConfirmRemoval(true)}
+              onClick={() => setRemovalTarget(currentTarget)}
             >
               Poista kuva
             </Button>
@@ -102,17 +104,21 @@ function ImageControls({
           {error}
         </p>
       )}
-      {confirmRemoval && (
+      {removalTarget !== undefined && (
         <ConfirmationDialog
           title="Poista tapahtumakuva?"
-          confirmLabel="Poista kuva"
+          message={removalChanged ? "Kuva on muuttunut muualla. Tarkista nykyinen esikatselu ennen poistoa." : undefined}
+          confirmLabel={!selection.hasImage ? "Sulje" : removalChanged ? "Tarkista nykyinen kuva" : "Poista kuva"}
           pending={disabled}
           onCancelAction={() => {
-            setConfirmRemoval(false);
+            setRemovalTarget(undefined);
             removeButtonRef.current?.focus({ preventScroll: true });
           }}
           onConfirmAction={() => {
-            setConfirmRemoval(false);
+            if (disabled) return;
+            if (!selection.hasImage) { setRemovalTarget(undefined); return; }
+            if (removalChanged) { setRemovalTarget(currentTarget); return; }
+            setRemovalTarget(undefined);
             selection.removeImage();
           }}
         />

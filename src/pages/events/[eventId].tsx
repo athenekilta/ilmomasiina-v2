@@ -7,6 +7,8 @@ import { MarkdownContent } from "@/features/events/components/MarkdownContent";
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
+import { useNow } from "@/hooks/useNow";
+import { isUnavailableError } from "@/features/events/utils/draftSync";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { UserRole } from "@/generated/prisma";
 import { Input } from "@/components/Input";
@@ -52,11 +54,13 @@ const quotaSegmentColors = [
 
 function Registration({
   event,
+  now,
 }: {
   event: RouteOutput["events"]["getEventByID"];
+  now: number | null;
 }) {
   const router = useRouter();
-  const { isRegistrationOpen } = RegistrationDate(event);
+  const { isRegistrationOpen } = RegistrationDate(event, now ?? undefined);
 
   const alert = useAlert();
 
@@ -650,6 +654,7 @@ function EventBannerImage({
 }
 
 export default function EventPage() {
+  const now = useNow();
   const router = useRouter();
   const eventId = Number(router.query.eventId);
 
@@ -658,7 +663,7 @@ export default function EventPage() {
     loginUser.data?.role === UserRole.event_editor ||
     loginUser.data?.role === UserRole.superadmin;
 
-  const { data: event, isLoading } = api.events.getEventByID.useQuery(
+  const { data: event, isLoading, error, refetch } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
     {
       enabled: !isNaN(eventId),
@@ -670,14 +675,32 @@ export default function EventPage() {
   // Hype has nothing left to sell once the doors are shut — same rule the
   // cards on the front page follow.
   const registrationClosed = event
-    ? RegistrationDate(event).isRegistrationClosed
+    ? RegistrationDate(event, now ?? undefined).isRegistrationClosed
     : false;
+
+  if (isUnavailableError(error) || (!isLoading && !event)) {
+    return <Layout><PageHead title="Tapahtuma ei ole saatavilla" />
+      <div role="alert" className="surface-panel space-y-4 p-6">
+        <p>{error?.data?.code === "FORBIDDEN" || error?.data?.code === "UNAUTHORIZED"
+          ? "Sinulla ei ole oikeutta nähdä tätä tapahtumaa."
+          : error?.data?.code === "NOT_FOUND" || !event
+            ? "Tapahtumaa ei löytynyt tai se ei ole enää saatavilla."
+            : "Tapahtuman päivitys epäonnistui. Yritä uudelleen."}</p>
+        <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
+        <Button.Link href="/">Takaisin tapahtumiin</Button.Link>
+      </div>
+    </Layout>;
+  }
 
   return (
     <>
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
+          {error && <div role="alert" className="surface-muted mb-4 p-4 text-sm">
+            Tapahtuman päivitys epäonnistui. Näytetyt tiedot voivat olla vanhentuneita.
+            <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
+          </div>}
           <Link
             href="/"
             className="text-brand-secondary hover:text-brand-dark focus-visible:ring-brand-secondary mb-3 flex w-fit min-w-0 items-center gap-2 rounded-full text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
@@ -773,7 +796,7 @@ export default function EventPage() {
 
                     <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
                       <HydrationZustand>
-                        {event && <Registration event={event} />}
+                        {event && <Registration key={event.id} event={event} now={now} />}
                       </HydrationZustand>
                     </div>
                   </div>

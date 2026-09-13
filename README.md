@@ -33,24 +33,55 @@ Update DATABASE_URL in your .env to match the password & user.
 
 ## Getting Started
 
+Use Node.js 24 LTS and npm 10 or newer (Docker uses Node 24).
+
 1. Clone the repository
 2. Install dependencies:
    ```bash
    npm install
    ```
-3. Copy the environment file and configure your variables:
-   ```bash
-   cp .env.example .env
+3. Create a root `.env` file with your local settings, for example:
+   ```dotenv
+   DATABASE_URL=postgresql://postgres:secret@127.0.0.1:5432/ilmomasiina?schema=public
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=replace-with-a-random-local-secret
    ```
 4. Set up the database:
    ```bash
    npx prisma generate
    npx prisma db push
+   npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql
    ```
-5. Run the development server:
+   `db push` creates the schema but **does not install the live-update triggers**.
+   The SQL command installs them for this schema-push development setup; see
+   migration deployment notes below before using it on an existing database.
+5. Start the Next.js development server:
    ```bash
    npm run dev
    ```
+6. To enable live updates, start the gateway in a second terminal:
+   ```bash
+   npm run live
+   ```
+
+`npm start` is an alias for the **development** Next.js server. The live-update
+gateway and scheduled worker are separate processes, so a missing database or
+live configuration does not prevent Next.js from starting.
+
+For a local production run, configure production environment variables and run
+the web server and gateway in separate terminals:
+
+```bash
+npm run build
+npm run start:production
+```
+
+```bash
+npm run live
+```
+
+`start:production` runs only `next start` and requires an existing build. It does
+not build, apply migrations, or start the live-update gateway or worker.
 
 After this you can go and create yourself an account in the ui at [http://localhost:3000]. If you want to test admin features, set your role to admin in prisma studio. More info about prisma studio at the end of the README.md.
 
@@ -69,13 +100,104 @@ The worker processes scheduled raffles, removes expired signup reservations, and
 npm run worker
 ```
 
-Docker Compose starts the `app` and `worker` services automatically:
+Docker Compose starts `app`, `realtime`, and the existing `worker` service:
 
 ```bash
 docker compose up --build
 ```
 
-Only one worker instance should run at a time.
+Only one worker instance should run at a time. Do not also run `npm run worker`
+against the same database while the Compose worker is running. The live-update
+gateway is separate from this worker and does not run scheduled jobs.
+
+## Live-update runtime and deployment
+
+Run the gateway locally with `npm run live`. It serves HTTP `GET /health` and
+WebSocket upgrades at `/api/live`. Local startup binds to
+`LIVE_HOST=127.0.0.1` and `LIVE_PORT=3001` by default.
+
+In development, the browser connects directly to `ws://<browser-host>:3001/api/live`
+instead of sending this additional WebSocket through Next's HMR upgrade handler.
+For a different local address, set the complete browser-reachable URL before
+starting Next, for example:
+
+```dotenv
+NEXT_PUBLIC_LIVE_URL=ws://localhost:4001/api/live
+```
+
+Also set the matching `LIVE_HOST` and `LIVE_PORT` for `npm run live`. Because
+`NEXT_PUBLIC_LIVE_URL` is included in browser code, never put credentials or
+secrets in it. The gateway still requires the exact `NEXTAUTH_URL` browser
+origin and authenticates with the short-lived ticket.
+
+Next does not proxy WebSocket traffic in development or production. In
+production the browser still connects to the same-origin `/api/live` path, but
+the front-end reverse proxy must route that path directly to the gateway.
+
+Compose builds `realtime` from the same full-source `worker` Docker target, but
+overrides its command to launch only the gateway. It binds `LIVE_HOST=0.0.0.0`
+inside the container and publishes the gateway on host loopback port `3001`, so
+host nginx can reach it without exposing it on an external interface. The app
+and gateway can restart independently; reconnecting clients perform a resync.
+
+### Database triggers and rollout
+
+Deploy the additive `20260913130000_live_updates` migration **before starting**
+the updated services. For a database with the existing migration history:
+
+```bash
+docker compose build app realtime worker
+docker compose run --rm worker npm run prisma-deploy-migrations
+docker compose up -d app realtime worker
+```
+
+On a development database created with `prisma db push`, apply the trigger SQL
+after pushing the schema:
+
+```bash
+npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql
+```
+
+Prisma 7 reads `DATABASE_URL` from `prisma.config.ts`; `db execute` does not take
+`--url` or `--schema`. In Docker, use the same command through
+`docker compose run --rm worker npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql`.
+Executing SQL directly does not record the migration in Prisma's migration
+history; it is not a substitute for `migrate deploy` on migration-managed
+production databases. Existing schema-push databases need a deliberate baseline
+before switching to migrations. The older auth/schema migration mismatch noted
+in the image-test section is separate from this additive migration.
+
+PostgreSQL notifications are **invalidation hints, not a durable event log**.
+Changes made while a listener is disconnected are not replayed. Recovery after
+a browser WebSocket reconnect or a gateway database-listener reconnect requires
+a full refetch of active queries; do not treat reconnection as proof that cached
+data is current. The gateway needs a persistent PostgreSQL connection supporting
+`LISTEN`/`NOTIFY` (not a transaction-pooled connection).
+
+### TLS and reverse proxies
+
+Serve production browser connections at the app's same-origin
+`wss://your-host/api/live`. The TLS-terminating reverse proxy must route that
+path directly to the gateway on port `3001`, while ordinary app traffic goes to
+Next on port `3000`. For nginx, the `/api/live` location needs, for example:
+
+```nginx
+location = /api/live {
+    proxy_pass http://127.0.0.1:3001;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 3600s;
+}
+```
+
+This example assumes nginx runs on the Docker host. A proxy in the Compose
+network should use `http://realtime:3001` instead. Preserve the browser `Origin`
+header and do not expose the gateway as a separate public origin. Hosting must support
+long-running Node processes and WebSocket upgrades; a serverless-only deployment
+cannot run this gateway. Monitor gateway health and reconnect failures.
+
 
 ## Event images
 
@@ -114,9 +236,9 @@ and role when uploading or attaching an image.
 Deploy the additive image migration before starting the updated services:
 
 ```bash
-docker compose build app worker
+docker compose build app realtime worker
 docker compose run --rm worker npm run prisma-deploy-migrations
-docker compose up -d app worker
+docker compose up -d app realtime worker
 ```
 
 Never use `docker compose down -v` during routine deployment: it removes the
@@ -204,9 +326,11 @@ docker compose run --rm worker npm run prisma-deploy-migrations
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
+- `npm run dev` / `npm start` - Start the Next development server
+- `npm run build` - Build the production app
+- `npm run start:production` - Start the Next production server after building
+- `npm run live` - Start the live-update gateway separately
+- `npm run worker` - Start the single scheduled-task worker separately
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix linting issues
 
