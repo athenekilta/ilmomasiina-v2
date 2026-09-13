@@ -1,15 +1,17 @@
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
-import { getServerAuthSession } from "../common/get-server-auth-session";
+import { getServerManagementSession } from "../common/get-server-management-session";
 import { prisma } from "../external/prisma";
 import cuid from "cuid";
-import type { NextApiRequest } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
 import { mail } from "../external/mail";
 import { fromNodeHeaders } from "better-auth/node";
-import { Session } from "@/server/auth";
+import type { ManagementSession } from "@/server/auth";
+import { createUserSessionContext } from "../features/userSession/request";
 
 type CreateContextOptions = {
-  session: Session | null;
+  managementSession: ManagementSession | null;
   req: NextApiRequest;
+  res?: NextApiResponse;
 };
 
 export const createStaticContext = () => {
@@ -26,19 +28,22 @@ export const createStaticContext = () => {
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  **/
 export const createContextInner = async (opts: CreateContextOptions) => {
-  const user = opts.session?.user?.id
-    ? await prisma.user.findUnique({
+  const managementUser = opts.managementSession?.user?.id
+    ? await prisma.managementUser.findUnique({
         where: {
-          id: opts.session.user.id,
+          id: opts.managementSession.user.id,
         },
       })
     : undefined;
 
   return {
     ...createStaticContext(), // All static context
-    session: opts.session, // Pass through the session from the outer function
+    managementSession: opts.managementSession,
     host: opts.req.headers.host, // Pass host from headers
-    user, // Pass user from Prisma if any
+    managementUser,
+    userSession: opts.res
+      ? createUserSessionContext(opts.req, opts.res)
+      : undefined,
   };
 };
 
@@ -49,14 +54,14 @@ export const createContextInner = async (opts: CreateContextOptions) => {
 export const createContext = async (
   opts: Pick<CreateNextContextOptions, "req" | "res">,
 ) => {
-  const { req } = opts;
+  const { req, res } = opts;
 
   // Get the session from the server using the getServerSession wrapper function
-  const session = await getServerAuthSession({
+  const managementSession = await getServerManagementSession({
     headers: fromNodeHeaders(req.headers),
   });
 
-  return await createContextInner({ session, req });
+  return await createContextInner({ managementSession, req, res });
 };
 
 export type Context = Awaited<ReturnType<typeof createContext>>;

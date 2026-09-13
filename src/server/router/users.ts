@@ -2,11 +2,11 @@ import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { superadminProcedure } from "../trpc/procedures/superadminProcedure";
 import { TRPCError } from "@trpc/server";
-import { UserRole } from "@/generated/prisma/client";
+import { ManagementRole } from "@/generated/prisma/client";
 
 export const usersRouter = router({
   getUsers: superadminProcedure.query(({ ctx }) =>
-    ctx.prisma.user.findMany({
+    ctx.prisma.managementUser.findMany({
       select: {
         id: true,
         name: true,
@@ -17,17 +17,17 @@ export const usersRouter = router({
     }),
   ),
 
-  updateUserRole: superadminProcedure
+  updateManagementRole: superadminProcedure
     .input(
       z.object({
         userId: z.string(),
-        role: z.nativeEnum(UserRole),
+        role: z.nativeEnum(ManagementRole),
       }),
     )
     .mutation(({ input, ctx }) => {
       if (
-        input.userId === ctx.session.user.id &&
-        input.role !== UserRole.superadmin
+        input.userId === ctx.managementSession.user.id &&
+        input.role !== ManagementRole.superadmin
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -35,7 +35,7 @@ export const usersRouter = router({
         });
       }
 
-      return ctx.prisma.user.update({
+      return ctx.prisma.managementUser.update({
         where: { id: input.userId },
         data: { role: input.role },
       });

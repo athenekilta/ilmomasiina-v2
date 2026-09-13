@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { useUser } from "@/features/auth/hooks/useUser";
+
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 
 /* Runs the full height of the card along its edge, so this card reads
@@ -22,22 +22,22 @@ const PROMPT_IMAGE = "/placeholders/kaappikello.png";
 export function IdentityPromptCard() {
   const [saved, setSaved] = useState(false);
 
-  const sessionUser = useUser().data;
   const {
     register,
     formState: { errors },
     handleSubmit,
     storedUser,
+    isIdentityLoading,
     setUser,
   } = useGuestIdentityForm();
 
-  const save = handleSubmit((data) => {
-    setUser({ name: data.name, email: data.email });
+  const save = handleSubmit(async (data) => {
+    await setUser({ name: data.name, email: data.email });
     setSaved(true);
   });
 
   // Nothing to prompt for once the details exist.
-  if (saved || sessionUser || storedUser?.email) return null;
+  if (isIdentityLoading || saved || storedUser?.email) return null;
 
   return (
     /* Grid, so the form can change which cells it occupies without moving

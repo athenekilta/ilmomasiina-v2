@@ -6,7 +6,6 @@ import { TRPCError } from "@trpc/server";
 import { sendNewEmailVerificationToken } from "@/features/emailVerification/sendNewEmailVerificationToken";
 import { passwordChangeRouter } from "./auth.passwordChange";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
-import { auth } from "@/server/auth";
 
 export const authRouter = router({
   emailVerification: emailVerificationRouter,

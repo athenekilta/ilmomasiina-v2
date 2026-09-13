@@ -126,7 +126,7 @@ exports.Prisma.ExampleScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.UserScalarFieldEnum = {
+exports.Prisma.ManagementUserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
@@ -137,7 +137,7 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.AccountScalarFieldEnum = {
+exports.Prisma.ManagementAccountScalarFieldEnum = {
   id: 'id',
   accountId: 'accountId',
   providerId: 'providerId',
@@ -153,7 +153,7 @@ exports.Prisma.AccountScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.SessionScalarFieldEnum = {
+exports.Prisma.ManagementSessionScalarFieldEnum = {
   id: 'id',
   expiresAt: 'expiresAt',
   token: 'token',
@@ -164,7 +164,7 @@ exports.Prisma.SessionScalarFieldEnum = {
   userId: 'userId'
 };
 
-exports.Prisma.VerificationScalarFieldEnum = {
+exports.Prisma.ManagementVerificationScalarFieldEnum = {
   id: 'id',
   identifier: 'identifier',
   value: 'value',
@@ -216,11 +216,7 @@ exports.Prisma.EventScalarFieldEnum = {
   verificationEmail: 'verificationEmail',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  deletedAt: 'deletedAt',
-  raffleEnabled: 'raffleEnabled',
-  raffleStartTime: 'raffleStartTime',
-  raffleEndTime: 'raffleEndTime',
-  raffleStatus: 'raffleStatus'
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.QuestionScalarFieldEnum = {
@@ -244,24 +240,51 @@ exports.Prisma.AnswerScalarFieldEnum = {
 exports.Prisma.SignupScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  email: 'email',
   completedAt: 'completedAt',
   createdAt: 'createdAt',
   quotaId: 'quotaId',
   originalQuotaId: 'originalQuotaId',
-  registrationIntent: 'registrationIntent',
   status: 'status',
-  allocatedAt: 'allocatedAt'
+  allocatedAt: 'allocatedAt',
+  identityId: 'identityId'
 };
 
-exports.Prisma.RaffleSimulationScalarFieldEnum = {
+exports.Prisma.IdentityScalarFieldEnum = {
   id: 'id',
-  eventId: 'eventId',
-  seed: 'seed',
-  startTime: 'startTime',
-  endTime: 'endTime',
-  physicsState: 'physicsState',
-  createdAt: 'createdAt'
+  email: 'email',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserSessionScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  name: 'name',
+  email: 'email',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt'
+};
+
+exports.Prisma.SignupGrantScalarFieldEnum = {
+  id: 'id',
+  signupId: 'signupId'
+};
+
+exports.Prisma.IdentityGrantScalarFieldEnum = {
+  id: 'id',
+  identityId: 'identityId'
+};
+
+exports.Prisma.TokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  signupGrantId: 'signupGrantId',
+  identityGrantId: 'identityGrantId',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt'
 };
 
 exports.Prisma.QuotaScalarFieldEnum = {
@@ -278,10 +301,6 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -291,13 +310,7 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
-};
-exports.UserRole = exports.$Enums.UserRole = {
+exports.ManagementRole = exports.$Enums.ManagementRole = {
   user: 'user',
   event_editor: 'event_editor',
   superadmin: 'superadmin'
@@ -314,13 +327,6 @@ exports.BadgeTone = exports.$Enums.BadgeTone = {
   GREEN: 'GREEN',
   PINK: 'PINK',
   DARK: 'DARK'
-};
-
-exports.RaffleStatus = exports.$Enums.RaffleStatus = {
-  NOT_STARTED: 'NOT_STARTED',
-  REGISTRATION_OPEN: 'REGISTRATION_OPEN',
-  SIMULATING: 'SIMULATING',
-  COMPLETED: 'COMPLETED'
 };
 
 exports.QuestionType = exports.$Enums.QuestionType = {
@@ -346,10 +352,10 @@ exports.SharedPlacesAllocation = exports.$Enums.SharedPlacesAllocation = {
 
 exports.Prisma.ModelName = {
   Example: 'Example',
-  User: 'User',
-  Account: 'Account',
-  Session: 'Session',
-  Verification: 'Verification',
+  ManagementUser: 'ManagementUser',
+  ManagementAccount: 'ManagementAccount',
+  ManagementSession: 'ManagementSession',
+  ManagementVerification: 'ManagementVerification',
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordChangeToken: 'PasswordChangeToken',
   EventImage: 'EventImage',
@@ -357,7 +363,11 @@ exports.Prisma.ModelName = {
   Question: 'Question',
   Answer: 'Answer',
   Signup: 'Signup',
-  RaffleSimulation: 'RaffleSimulation',
+  Identity: 'Identity',
+  UserSession: 'UserSession',
+  SignupGrant: 'SignupGrant',
+  IdentityGrant: 'IdentityGrant',
+  Token: 'Token',
   Quota: 'Quota'
 };
 

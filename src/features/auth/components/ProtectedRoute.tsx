@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import { useSession } from "@/server/auth/auth-client";
-import { useUser } from "../hooks/useUser";
+import { useManagementSession } from "@/server/auth/management-auth-client";
+import { useManagementUser } from "../hooks/useManagementUser";
 import type { RouteOutput } from "@/types/types";
 import { routes } from "@/utils/routes";
-import { UserRole } from "@/generated/prisma";
+import { ManagementRole } from "@/generated/prisma";
 
 export type ProtectedRouteProps = {
   children?: React.ReactNode;
@@ -26,11 +26,11 @@ export function ProtectedRoute(props: ProtectedRouteProps) {
     superadminOnly,
     denyAccessOnLoading,
   } = props;
-  const user = useUser();
-  const session = useSession();
+  const user = useManagementUser();
+  const managementSession = useManagementSession();
 
   const redirect = getRedirectIfAccessBlocked({
-    isLoading: session.isPending || user.isLoading,
+    isLoading: managementSession.isPending || user.isLoading,
     user: user.data,
     options: {
       unauthenticatedOnly,
@@ -77,13 +77,13 @@ function getRedirectIfAccessBlocked({
   }
 
   const canEditEvents =
-    user.role === UserRole.event_editor || user.role === UserRole.superadmin;
+    user.role === ManagementRole.event_editor || user.role === ManagementRole.superadmin;
 
   if (options.eventEditorOnly && !canEditEvents) {
     return routes.landingPage;
   }
 
-  if (options.superadminOnly && user.role !== UserRole.superadmin) {
+  if (options.superadminOnly && user.role !== ManagementRole.superadmin) {
     return routes.landingPage;
   }
 }

@@ -29,9 +29,9 @@ export default async function handler(
   let writtenId: string | undefined;
   try {
     const ctx = await createContext({ req, res });
-    if (!ctx.session || !ctx.user)
+    if (!ctx.managementSession || !ctx.managementUser)
       throw new ImageRequestError(401, "Kirjaudu sisään lisätäksesi kuvan.");
-    checkUploadAccess(req.headers.origin, env.NEXTAUTH_URL, ctx.user.role);
+    checkUploadAccess(req.headers.origin, env.NEXTAUTH_URL, ctx.managementUser.role);
     release = reserveUpload();
     const variants = await processImage(await readImageBody(req));
     if (req.aborted || res.destroyed) return;
@@ -41,7 +41,7 @@ export default async function handler(
     await ctx.prisma.eventImage.create({
       data: {
         id: imageId,
-        uploaderId: ctx.user.id,
+        uploaderId: ctx.managementUser.id,
         deleteAfter: new Date(Date.now() + IMAGE_RETENTION_MS),
       },
     });

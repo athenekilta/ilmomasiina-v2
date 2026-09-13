@@ -3,16 +3,17 @@ import { authRouter } from "./auth";
 import { eventsRouter } from "./events";
 import { signupsRouter } from "./signups";
 import { profileRouter } from "./profile";
-import { raffleRouter } from "./raffle";
+
 import { usersRouter } from "./users";
+import { userSessionRouter } from "./userSession";
 
 export const appRouter = router({
   auth: authRouter,
   events: eventsRouter,
   signups: signupsRouter,
   profile: profileRouter,
-  raffle: raffleRouter,
-  users: usersRouter
+  users: usersRouter,
+  userSession: userSessionRouter,
 });
 
 // export type definition of API

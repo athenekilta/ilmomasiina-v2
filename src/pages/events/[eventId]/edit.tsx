@@ -12,7 +12,7 @@ export default function EditEventPage() {
       <PageHead title="Edit event" />
       <Layout>
         <div className="surface-panel mx-auto mt-4 w-full max-w-3xl sm:mt-6">
-          {isReady && <EventForm editId={eventId} />}
+          {isReady && <EventForm key={eventId} editId={eventId} />}
         </div>
       </Layout>
     </ProtectedRoute>

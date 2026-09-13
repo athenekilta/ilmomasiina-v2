@@ -42,14 +42,6 @@ type EventSeed = {
   webpageUrl?: string;
   draft?: boolean;
   signupsPublic?: boolean;
-  raffleEnabled?: boolean;
-  raffleStartTime?: Date;
-  raffleEndTime?: Date;
-  raffleStatus?:
-    | "NOT_STARTED"
-    | "REGISTRATION_OPEN"
-    | "SIMULATING"
-    | "COMPLETED";
   quotas: QuotaSeed[];
   questions?: {
     question: string;
@@ -65,7 +57,7 @@ const hours = (n: number) => moment().add(n, "hours").toDate();
 
 /**
  * Thirteen events covering every state the front page can render: open, opening
- * later, already closed, full with a queue, raffle, long titles, and an event
+ * later, already closed, full with a queue, long titles, and an event
  * that already happened but is still inside the 7 day window.
  *
  * Every date is relative to the moment the script runs, so re-running it is
@@ -175,22 +167,18 @@ const eventSeeds: EventSeed[] = [
     quotas: [{ title: "Kaikki", size: 30, signups: 30 }],
   },
   {
-    title: "Arvontasitsit 2026",
-    badgeText: "Sattuma suosii",
+    title: "Suositut sitsit 2026",
+    badgeText: "Paikkoja rajoitetusti",
     badgeTone: "DARK",
     date: days(18),
     registrationStartDate: days(-2),
     registrationEndDate: days(10),
     extraCapacity: 0,
     description:
-      "Paikat arvotaan ilmoittautuneiden kesken. Arvonta alkaa ilmoittautumisajan päätyttyä.",
+      "Suositut sitsit rajatulla osallistujamäärällä. Ilmoittaudu ajoissa!",
     price: "25 €",
     location: "Ilmatorjuntamuseo",
     signupsPublic: true,
-    raffleEnabled: true,
-    raffleStartTime: hours(2),
-    raffleEndTime: hours(4),
-    raffleStatus: "REGISTRATION_OPEN",
     quotas: [
       { title: "Fuksit", size: 20, signups: 14 },
       { title: "Vanhemmat opiskelijat", size: 10, signups: 9 },
@@ -360,9 +348,6 @@ async function addTestEvents() {
       where: { eventId: { in: existingIds } },
     });
     await prisma.quota.deleteMany({ where: { eventId: { in: existingIds } } });
-    await prisma.raffleSimulation.deleteMany({
-      where: { eventId: { in: existingIds } },
-    });
 
     console.log(`Tyhjennettiin ${existingIds.length} aiempaa testitapahtumaa`);
   }
@@ -413,12 +398,19 @@ async function addTestEvents() {
       const confirmed = quotaSeed.signups;
       const waitlisted = quotaSeed.waitlisted ?? 0;
       for (let s = 0; s < confirmed + waitlisted; s++) {
+        const name = faker.person.fullName();
+        const email = faker.internet.email().trim().toLowerCase();
+        const identity = await prisma.identity.upsert({
+          where: { email },
+          update: {},
+          create: { email, name },
+        });
         const signup = await prisma.signup.create({
           data: {
             quotaId: quota.id,
             originalQuotaId: quota.id,
-            name: faker.person.fullName(),
-            email: faker.internet.email(),
+            name,
+            identityId: identity.id,
             completedAt: moment()
               .subtract(faker.number.int({ min: 1, max: 5000 }), "minutes")
               .toDate(),

@@ -3,7 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
-import { signIn, signUp } from "@/server/auth/auth-client";
+import {
+  managementSignIn,
+  managementSignUp,
+} from "@/server/auth/management-auth-client";
 import { userSignUpSchema } from "../utils/userSignUpSchema";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
@@ -30,8 +33,8 @@ export function SignupForm() {
   });
 
   const handleSubmit = createHandleSubmit(async (values) => {
-    const result = await signUp.email(values);
-    await signIn.email(values);
+    const result = await managementSignUp.email(values);
+    await managementSignIn.email(values);
   });
 
   const errorMessage = queryError;

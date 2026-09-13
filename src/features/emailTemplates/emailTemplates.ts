@@ -4,6 +4,7 @@ import PasswordChangeEmail from "@/emails/PasswordChangeEmail";
 import EventSignupEmail from "@/emails/EventSignupEmail";
 import EventQueueEmail from "@/emails/EventQueueEmail";
 import EventQueueAcceptedEmail from "@/emails/EventQueueAcceptedEmail";
+import EventSignupAccessEmail from "@/emails/EventSignupAccessEmail";
 
 export const emailTemplates = {
   emailVerification: createEmailTemplate(EmailVerificationEmail),
@@ -11,4 +12,5 @@ export const emailTemplates = {
   eventSignup: createEmailTemplate(EventSignupEmail),
   eventQueue: createEmailTemplate(EventQueueEmail),
   eventQueueAccepted: createEmailTemplate(EventQueueAcceptedEmail),
+  eventSignupAccess: createEmailTemplate(EventSignupAccessEmail),
 };

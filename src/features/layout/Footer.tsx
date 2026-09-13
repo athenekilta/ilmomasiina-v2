@@ -1,8 +1,8 @@
 import { routes } from "@/utils/routes";
 import Link from "next/link";
-import { useUser } from "../auth/hooks/useUser";
+import { useManagementUser } from "../auth/hooks/useManagementUser";
 import { c } from "@/utils/classnames";
-import { AdminMenu } from "./AdminMenu";
+import { ManagementMenu } from "./ManagementMenu";
 import { useIsClient } from "@/hooks/useIsClient";
 
 const linkClass = c(
@@ -13,7 +13,7 @@ const linkClass = c(
 
 export function Footer() {
   const isClient = useIsClient();
-  const user = useUser();
+  const user = useManagementUser();
   const isLoggedIn = isClient && !!user.data;
 
   return (
@@ -29,7 +29,7 @@ export function Footer() {
           <span className="text-stone-500 select-none" aria-hidden>
             ·
           </span>
-          <AdminMenu />
+          <ManagementMenu />
         </>
       )}
       <span className="text-stone-500 select-none" aria-hidden>

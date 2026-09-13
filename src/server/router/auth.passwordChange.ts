@@ -37,7 +37,7 @@ export const passwordChangeRouter = router({
 
       const hashedPassword = await hashPassword(input.password);
 
-      const credentialAccount = await ctx.prisma.account.findFirst({
+      const credentialAccount = await ctx.prisma.managementAccount.findFirst({
         where: {
           providerId: "credential",
           user: { email: token.email },
@@ -51,7 +51,7 @@ export const passwordChangeRouter = router({
         });
       }
 
-      await ctx.prisma.account.update({
+      await ctx.prisma.managementAccount.update({
         where: { id: credentialAccount.id },
         data: {
           password: hashedPassword,
@@ -72,7 +72,7 @@ export const passwordChangeRouter = router({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const user = await ctx.prisma.user.findUnique({
+      const user = await ctx.prisma.managementUser.findUnique({
         where: {
           email: input.email,
         },

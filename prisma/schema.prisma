@@ -28,33 +28,31 @@ model Example {
 
 // When extending user data, extend this model
 
-model User {
-  id            String    @id @default(cuid())
+model ManagementUser {
+  id            String              @id @default(cuid())
   name          String?
-  email         String?   @unique
-  emailVerified Boolean   @default(false)
+  email         String?             @unique
+  emailVerified Boolean             @default(false)
   image         String?
-  role          UserRole  @default(user)
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  @@map("user")
+  role          ManagementRole      @default(user)
+  accounts      ManagementAccount[]
+  sessions      ManagementSession[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 }
 
-enum UserRole {
+enum ManagementRole {
   user
   event_editor
   superadmin
 }
 
-model Account {
-  id                    String    @id
+model ManagementAccount {
+  id                    String         @id
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  ManagementUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -66,11 +64,10 @@ model Account {
   updatedAt             DateTime
 
   @@index([userId])
-  @@map("account")
 }
 
-model Session {
-  id        String   @id
+model ManagementSession {
+  id        String         @id
   expiresAt DateTime
   token     String
   createdAt DateTime
@@ -78,14 +75,13 @@ model Session {
   ipAddress String?
   userAgent String?
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      ManagementUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
   @@index([userId])
-  @@map("session")
 }
 
-model Verification {
+model ManagementVerification {
   id         String   @id
   identifier String
   value      String
@@ -94,7 +90,6 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-  @@map("verification")
 }
 
 model EmailVerificationToken {
@@ -120,12 +115,6 @@ enum BadgeTone {
   DARK
 }
 
-enum RaffleStatus {
-  NOT_STARTED
-  REGISTRATION_OPEN
-  SIMULATING
-  COMPLETED
-}
 
 enum EventImageState {
   PENDING
@@ -169,13 +158,8 @@ model Event {
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   deletedAt             DateTime?          @map("deletedAt") // Paranoid deletion setup
-  raffleEnabled         Boolean            @default(false)
-  raffleStartTime       DateTime?
-  raffleEndTime         DateTime?
-  raffleStatus          RaffleStatus       @default(NOT_STARTED)
   Questions             Question[]
   Quotas                Quota[]
-  raffleSimulations     RaffleSimulation[]
 }
 
 enum QuestionType {
@@ -214,19 +198,79 @@ model Answer {
 model Signup {
   id                 String       @id @default(cuid())
   name               String
-  email              String
   completedAt        DateTime? // when signup process is completed
   createdAt          DateTime     @default(now())
   quotaId            String
   originalQuotaId    String
-  registrationIntent DateTime?
   status             SignupStatus @default(IN_PROGRESS)
   allocatedAt        DateTime?
   Quota              Quota        @relation("Quota", fields: [quotaId], references: [id])
   OriginalQuota      Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
   Answers            Answer[]
+  identityId         String
+  identity           Identity      @relation(fields: [identityId], references: [id])
+  signupGrant        SignupGrant?
 
   @@index([quotaId])
+  @@index([identityId])
+}
+
+model Identity {
+  id        String          @id @default(cuid())
+  email     String          @unique
+  name      String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  signups   Signup[]
+  grants    IdentityGrant[]
+}
+
+model UserSession {
+  id           String        @id @default(cuid())
+  tokenHash    String        @unique
+  name         String?
+  email        String?
+  createdAt    DateTime      @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  signupGrants   SignupGrant[]
+  identityGrants IdentityGrant[]
+
+  @@index([expiresAt])
+}
+
+model SignupGrant {
+  id       String        @id @default(cuid())
+  signupId String        @unique
+  signup   Signup        @relation(fields: [signupId], references: [id], onDelete: Cascade)
+  sessions UserSession[]
+  tokens   Token[]
+}
+
+model IdentityGrant {
+  id         String        @id @default(cuid())
+  identityId String        @unique
+  identity   Identity      @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  sessions   UserSession[]
+  tokens     Token[]
+}
+
+// Exactly one grant relation must be set. Signup tokens remain reusable;
+// future identity tokens are consumed atomically by setting consumedAt.
+model Token {
+  id              String         @id @default(cuid())
+  tokenHash       String         @unique
+  signupGrantId   String?
+  identityGrantId String?
+  createdAt       DateTime       @default(now())
+  expiresAt       DateTime
+  consumedAt      DateTime?
+  signupGrant     SignupGrant?   @relation(fields: [signupGrantId], references: [id], onDelete: Cascade)
+  identityGrant   IdentityGrant? @relation(fields: [identityGrantId], references: [id], onDelete: Cascade)
+
+  @@index([signupGrantId])
+  @@index([identityGrantId])
+  @@index([expiresAt])
 }
 
 enum SignupStatus {
@@ -245,16 +289,6 @@ enum SharedPlacesAllocation {
   AFTER_REGISTRATION_CLOSE
 }
 
-model RaffleSimulation {
-  id           String   @id @default(cuid())
-  eventId      Int
-  seed         String
-  startTime    DateTime
-  endTime      DateTime
-  physicsState Json // Stores initial positions and final order
-  event        Event    @relation(fields: [eventId], references: [id])
-  createdAt    DateTime @default(now())
-}
 
 model Quota {
   id                     String                 @id @default(cuid())

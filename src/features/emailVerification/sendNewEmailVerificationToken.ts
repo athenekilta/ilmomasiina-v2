@@ -7,7 +7,7 @@ export async function sendNewEmailVerificationToken(
   input: { email: string },
   options: { force: boolean }
 ) {
-  const user = await ctx.prisma.user.findUnique({
+  const user = await ctx.prisma.managementUser.findUnique({
     where: { email: input.email },
   });
   if (!options.force) {

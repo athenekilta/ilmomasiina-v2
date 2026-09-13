@@ -18,18 +18,26 @@ import { BenchIcon, ChairIcon, PersonIcon } from "./seatIcons";
  *
  * The component owns its white card because the 1.5px walls that separate the
  * bar from the grey are painted in the card's own background colour. Moving
- * it onto a tinted surface means changing WALL_COLOR to match.
+ * it onto a tinted surface means changing SURFACE to match.
  */
 
-const BAR_HEIGHT = 22;
+const BAR_HEIGHT = 23;
 const RADIUS = 7;
-/** White gap between the bar and the grey continuation. */
+/**
+ * Gap between the bar and the grey continuation, and the colour the
+ * continuation fades out into. Both are the card's own background, so they
+ * have to move together with it: the signup column sits on the page panel's white.
+ */
 const WALL = 1.5;
-const WALL_COLOR = "#ffffff";
+const SURFACE = "#ffffff";
 /** Width kept clear on the right for the continuation. */
-const LANE = 38;
-/** How far the grey may run past the card's padding. */
-const OVERSHOOT = 7;
+const LANE = 42;
+/**
+ * How far the grey runs past the bars' own right edge, into whatever padding
+ * surrounds them. Nothing clips it: the gradient has to reach the background
+ * colour in free space, or it ends mid-fade on a hard edge.
+ */
+const OVERSHOOT = 5;
 /**
  * The grey reaches back under the bar's rounded end so the wall cuts the
  * notch out of it. Without this the grey stops at a straight edge and the
@@ -37,33 +45,29 @@ const OVERSHOOT = 7;
  */
 const REACH_BACK = RADIUS + WALL;
 /** So the signup count fits even when a quota is at 1 of 30. */
-const MIN_FILL = 48;
+const MIN_FILL = 54;
+/**
+ * And so the last places left still fit: a quota at 38 of 40 has a 5% pale
+ * zone, which would swallow the very figure people are watching. Both ends
+ * of the bar keep a floor, and the proportion gives way — the figures are
+ * what the row is for.
+ */
+const MIN_PALE = 58;
 /** Fewer shared places than this and the continuation stops rather than fades. */
 const FEW_SHARED = 5;
 
 const GREY = "#d8d3cc";
-const FADE = `linear-gradient(to right, ${GREY} 0%, ${GREY} 42%, ${WALL_COLOR} 100%)`;
+const FADE = `linear-gradient(to right, ${GREY} 0%, ${GREY} 42%, ${SURFACE} 100%)`;
 
 /* The chair covers 59% of its viewBox, the person 67%, the bench 91%, so
    equal sizes would read as three different weights. Same reason the chair
    is a shade darker than the bench: less ink over the same area. */
-const PERSON_SIZE = 14;
-const CHAIR_SIZE = 16;
-const BENCH_SIZE = 15;
+const PERSON_SIZE = 16;
+const CHAIR_SIZE = 18;
+const BENCH_SIZE = 17;
 const FIGURE = "#5c564f";
 const CHAIR_COLOR = "#6b645c";
 const BENCH_COLOR = "#7a736a";
-
-/**
- * What fits in the pale zone, estimated against the narrowest track the
- * layout produces rather than measured. Estimating keeps the choice stable
- * between server and client render, and errs the safe way: a wide screen may
- * drop the chair where it would have fitted, which nobody notices, instead of
- * clipping a figure, which everybody does.
- */
-const NARROWEST_TRACK = 260;
-const ROOM_FOR_CHAIR = 50;
-const ROOM_FOR_FIGURE = 20;
 
 export function QuotaBars({ event }: { event: QuotaBarsInput }) {
   const { rows, totalSignupCount, shared, queuedCount } = buildQuotaBars(event);
@@ -75,7 +79,7 @@ export function QuotaBars({ event }: { event: QuotaBarsInput }) {
   const lane = rows.some((row) => row.continuesToShared) ? LANE : 0;
 
   return (
-    <section className="surface-panel flex flex-col gap-[18px] overflow-hidden p-5">
+    <section className="flex flex-col gap-[18px]">
       <h3 className="text-brand-dark text-base font-extrabold tracking-[0.015em] uppercase tabular-nums">
         {totalSignupCount} ilmonnutta
       </h3>
@@ -100,7 +104,7 @@ export function QuotaBars({ event }: { event: QuotaBarsInput }) {
             ) : (
               <span className="flex items-center gap-[7px] text-stone-400">
                 <BenchIcon size={16} />
-                Yhteiset paikat ovat täynnä
+                Ei vapaita yhteisiä paikkoja
               </span>
             ))}
           {queuedCount > 0 && (
@@ -167,7 +171,7 @@ function QuotaBarItem({
             flex: lane === 0 ? "0 0 100%" : `0 0 calc(100% - ${lane}px)`,
             height: BAR_HEIGHT,
             borderRadius: RADIUS,
-            boxShadow: `0 0 0 ${WALL}px ${WALL_COLOR}`,
+            boxShadow: `0 0 0 ${WALL}px ${SURFACE}`,
           }}
         >
           <div
@@ -175,7 +179,10 @@ function QuotaBarItem({
             style={{
               // An unlimited quota has no proportion to draw, so its block is
               // only as wide as the figure inside it.
-              flex: row.fillRatio === null ? "0 0 auto" : `0 0 ${row.fillRatio * 100}%`,
+              flex:
+                row.fillRatio === null
+                  ? "0 0 auto"
+                  : `0 1 ${row.fillRatio * 100}%`,
               minWidth: MIN_FILL,
               borderRadius: RADIUS,
               background: color.fill,
@@ -186,7 +193,7 @@ function QuotaBarItem({
           </div>
 
           {!isFull && (
-            <PlacesLeft freePlaces={row.freePlaces} fillRatio={row.fillRatio} pale={color.pale} />
+            <PlacesLeft freePlaces={row.freePlaces} pale={color.pale} />
           )}
         </div>
 
@@ -199,30 +206,32 @@ function QuotaBarItem({
 /** The quota's own free places, shown in the zone that represents them. */
 function PlacesLeft({
   freePlaces,
-  fillRatio,
   pale,
 }: {
   freePlaces: number | null;
-  fillRatio: number | null;
   pale: string;
 }) {
-  const width = fillRatio === null ? NARROWEST_TRACK : (1 - fillRatio) * NARROWEST_TRACK;
-  // An unlimited quota has no figure here: there is no ceiling to subtract from.
-  const showFigure = freePlaces !== null && width >= ROOM_FOR_FIGURE;
-  const showChair = showFigure && width >= ROOM_FOR_CHAIR;
-
   return (
     <div
-      className="relative z-10 flex h-full min-w-0 flex-auto items-center justify-end gap-1 overflow-hidden"
+      className="relative z-10 flex h-full flex-auto items-center justify-end gap-1 overflow-hidden pr-2"
       style={{
         marginLeft: -RADIUS,
+        minWidth: MIN_PALE,
+        // Clears the notch the filled block's rounded end cuts into this
+        // one, so the figure never ends up against the seam.
+        paddingLeft: RADIUS + 5,
         borderRadius: `0 ${RADIUS}px ${RADIUS}px 0`,
         background: pale,
-        paddingRight: showChair ? 8 : showFigure ? 7 : 0,
       }}
     >
-      {showFigure && <Figure value={freePlaces} style={{ color: FIGURE }} />}
-      {showChair && <ChairIcon size={CHAIR_SIZE} style={{ color: CHAIR_COLOR }} />}
+      {/* An unlimited quota has no figure here: there is no ceiling to
+          subtract from. */}
+      {freePlaces !== null && (
+        <>
+          <Figure value={freePlaces} style={{ color: FIGURE }} />
+          <ChairIcon size={CHAIR_SIZE} style={{ color: CHAIR_COLOR }} />
+        </>
+      )}
     </div>
   );
 }
@@ -234,13 +243,16 @@ function PlacesLeft({
  */
 function Continuation({ remaining }: { remaining: number }) {
   const fading = remaining >= FEW_SHARED;
+  // Only the fade runs past the padding, and only because it needs free space
+  // to finish in. A capped end is a definite end, so it stops on the line.
+  const over = fading ? OVERSHOOT : 0;
   return (
     <div
       className="relative z-0 box-border flex items-center"
       style={{
-        flex: `0 0 ${LANE + OVERSHOOT + REACH_BACK}px`,
+        flex: `0 0 ${LANE + over + REACH_BACK}px`,
         marginLeft: -REACH_BACK,
-        marginRight: -OVERSHOOT,
+        marginRight: -over,
         height: BAR_HEIGHT,
         background: fading ? FADE : GREY,
         borderRadius: fading ? 0 : `0 ${RADIUS}px ${RADIUS}px 0`,
@@ -267,7 +279,7 @@ function Figure({
 }) {
   return (
     <span
-      className={`block text-[10.5px] leading-none font-bold whitespace-nowrap tabular-nums ${className ?? ""}`}
+      className={`block text-[12.5px] leading-none font-bold whitespace-nowrap tabular-nums ${className ?? ""}`}
       style={style}
     >
       {value}

@@ -7,10 +7,15 @@ import {
 } from "../utils/eventImage";
 export { EVENT_IMAGE_ACCEPT } from "../utils/eventImage";
 
+import { assertCurrentImageSelection } from "../utils/draftSync";
+
 type SelectedEventImage = { file: File; url: string };
 
 /** Files stay outside tRPC JSON; only processed upload IDs enter an event save. */
-export function useEventImageSelection(existingImageId: string | null = null) {
+export function useEventImageSelection(
+  existingImageId: string | null = null,
+  locked = false,
+) {
   const [action, setAction] = useState<"keep" | "replace" | "remove">("keep");
   const expectedImageId = useRef<string | null>(null);
   const uploaded = useRef<{
@@ -55,6 +60,7 @@ export function useEventImageSelection(existingImageId: string | null = null) {
   }, [image]);
 
   function openPicker() {
+    if (locked) return;
     inputRef.current?.click();
   }
 
@@ -64,7 +70,7 @@ export function useEventImageSelection(existingImageId: string | null = null) {
 
   async function selectFile(file: File | undefined) {
     restorePickerFocus();
-    if (!file) return;
+    if (!file || locked) return;
 
     const currentRequest = ++requestId.current;
     setError(null);
@@ -111,6 +117,7 @@ export function useEventImageSelection(existingImageId: string | null = null) {
   }
 
   function removeImage() {
+    if (locked) return;
     if (action === "keep") expectedImageId.current = existingImageId;
     setAction("remove");
     uploaded.current = null;
@@ -125,6 +132,8 @@ export function useEventImageSelection(existingImageId: string | null = null) {
     imageId?: string | null;
     expectedImageId?: string | null;
   }> {
+    const selectionId = requestId.current;
+    if (isDecoding) throw new Error("Odota kuvan avaamisen valmistumista.");
     if (action === "keep") return {};
     if (action === "remove")
       return { imageId: null, expectedImageId: expectedImageId.current };
@@ -155,6 +164,7 @@ export function useEventImageSelection(existingImageId: string | null = null) {
             result?.error || "Kuvan lataus epäonnistui. Yritä uudelleen.",
           );
         }
+        assertCurrentImageSelection(selectionId, requestId.current);
         uploaded.current = {
           file: image.file,
           imageId: result.imageId,
@@ -166,9 +176,11 @@ export function useEventImageSelection(existingImageId: string | null = null) {
         expectedImageId: expectedImageId.current,
       };
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Kuvan lataus epäonnistui.",
-      );
+      if (selectionId === requestId.current) {
+        setError(
+          error instanceof Error ? error.message : "Kuvan lataus epäonnistui.",
+        );
+      }
       throw error;
     }
   }
@@ -177,12 +189,15 @@ export function useEventImageSelection(existingImageId: string | null = null) {
     requestId.current++;
     setImage(null);
     setAction("keep");
+    setIsDecoding(false);
+    expectedImageId.current = null;
     uploaded.current = null;
     setError(null);
   }
 
   return {
     image,
+    isDirty: action !== "keep" || isDecoding,
     hasImage: !!image || (action !== "remove" && !!existingImageId),
     savedImageId: action === "remove" ? null : existingImageId,
     uploadForSave,

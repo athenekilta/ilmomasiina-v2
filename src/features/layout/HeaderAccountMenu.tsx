@@ -105,13 +105,13 @@ export function HeaderAccountMenu() {
   const [open, setOpen] = useState(false);
   const closePanel = useCallback(() => setOpen(false), []);
 
-  const saveGuest = handleSubmit((data) => {
-    setUser({ name: data.name, email: data.email });
+  const saveGuest = handleSubmit(async (data) => {
+    await setUser({ name: data.name, email: data.email });
     closePanel();
   });
 
-  const clearGuest = () => {
-    clearUser();
+  const clearGuest = async () => {
+    await clearUser();
     reset({ name: "", email: "" });
     closePanel();
   };

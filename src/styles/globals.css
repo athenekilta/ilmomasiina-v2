@@ -48,19 +48,35 @@
     @apply bg-transparent p-0 text-base leading-relaxed;
   }
 
+  /* md-editor-rt ships its own font stack with its stylesheet, so the event
+     description came out in a face nothing else on the page uses. It is body
+     copy and has to read as body copy; only code keeps a monospace face. */
+  .event-description-markdown.md-editor-preview-wrapper,
+  .event-description-markdown :not(code, pre, kbd, samp) {
+    @apply font-primary;
+  }
+
   .event-banner {
     container-type: inline-size;
     --event-overlay-color: theme("colors.brand.sand");
     --event-overlay-surface: color-mix(
       in srgb,
-      var(--event-overlay-color) 96%,
+      var(--event-overlay-color) 85%,
       transparent
     );
-    --event-overlay-fade-height: clamp(48px, 18cqw, 72px);
+    /* Just enough to clear the top line of the title: the fade is there to
+       seat the text on the image, not to wash the picture out. */
+    /* The whole transition runs inside the caption, on both the cards and
+       the detail banner: it starts just above the top line of text and
+       finishes just below it. The separate strip above is what used to
+       carry it, and splitting the ramp in two is what made it step. */
+    --event-overlay-fade-height: 0px;
+    --event-overlay-caption-fade: 21px;
   }
 
   .event-banner--detail {
-    --event-overlay-fade-height: clamp(64px, 18cqw, 128px);
+    /* The detail title is larger, so its run is a little longer. */
+    --event-overlay-caption-fade: 27px;
   }
 
   .event-banner--muted {
@@ -70,26 +86,55 @@
   .event-banner-fade {
     height: var(--event-overlay-fade-height);
     pointer-events: none;
-    /* Sample 0.96 * (3t² - 2t³) every 10%: both ends flatten out,
+    /* Sample 0.85 * (3t² - 2t³) every 10%: both ends flatten out,
        easing into the untouched image above and the text surface below.
        These adjacent backgrounds must not overlap and compound alpha. */
     background: linear-gradient(
       to bottom,
       color-mix(in srgb, var(--event-overlay-color) 0%, transparent) 0%,
-      color-mix(in srgb, var(--event-overlay-color) 2.688%, transparent) 10%,
-      color-mix(in srgb, var(--event-overlay-color) 9.984%, transparent) 20%,
-      color-mix(in srgb, var(--event-overlay-color) 20.736%, transparent) 30%,
-      color-mix(in srgb, var(--event-overlay-color) 33.792%, transparent) 40%,
-      color-mix(in srgb, var(--event-overlay-color) 48%, transparent) 50%,
-      color-mix(in srgb, var(--event-overlay-color) 62.208%, transparent) 60%,
-      color-mix(in srgb, var(--event-overlay-color) 75.264%, transparent) 70%,
-      color-mix(in srgb, var(--event-overlay-color) 86.016%, transparent) 80%,
-      color-mix(in srgb, var(--event-overlay-color) 93.312%, transparent) 90%,
+      color-mix(in srgb, var(--event-overlay-color) 2.38%, transparent) 10%,
+      color-mix(in srgb, var(--event-overlay-color) 8.84%, transparent) 20%,
+      color-mix(in srgb, var(--event-overlay-color) 18.36%, transparent) 30%,
+      color-mix(in srgb, var(--event-overlay-color) 29.92%, transparent) 40%,
+      color-mix(in srgb, var(--event-overlay-color) 42.5%, transparent) 50%,
+      color-mix(in srgb, var(--event-overlay-color) 55.08%, transparent) 60%,
+      color-mix(in srgb, var(--event-overlay-color) 66.64%, transparent) 70%,
+      color-mix(in srgb, var(--event-overlay-color) 76.16%, transparent) 80%,
+      color-mix(in srgb, var(--event-overlay-color) 82.62%, transparent) 90%,
       var(--event-overlay-surface) 100%
     );
   }
 
   .event-banner-caption {
-    background: var(--event-overlay-surface);
+    /* The whole transition lives here rather than in the strip above, so it
+       can start low AND run long. Splitting it in two was what made it sharp:
+       the ramp finished in the strip's few pixels and the caption was already
+       solid. The caption is anchored to the banner's bottom, so its padding
+       grows upward and the text stays put. */
+    padding-top: 14px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--event-overlay-color) 0%, transparent)
+        0px,
+      color-mix(in srgb, var(--event-overlay-color) 2.38%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.1),
+      color-mix(in srgb, var(--event-overlay-color) 8.84%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.2),
+      color-mix(in srgb, var(--event-overlay-color) 18.36%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.3),
+      color-mix(in srgb, var(--event-overlay-color) 29.92%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.4),
+      color-mix(in srgb, var(--event-overlay-color) 42.5%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.5),
+      color-mix(in srgb, var(--event-overlay-color) 55.08%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.6),
+      color-mix(in srgb, var(--event-overlay-color) 66.64%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.7),
+      color-mix(in srgb, var(--event-overlay-color) 76.16%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.8),
+      color-mix(in srgb, var(--event-overlay-color) 82.62%, transparent)
+        calc(var(--event-overlay-caption-fade) * 0.9),
+      var(--event-overlay-surface) var(--event-overlay-caption-fade)
+    );
   }
 }

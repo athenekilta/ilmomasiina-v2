@@ -13,5 +13,5 @@ export const protectedProcedure = trpcProcedure
 
 export type ProtectedProcedureContext = RequiredProp<
   Context,
-  "user" | "session"
+  "managementUser" | "managementSession"
 >;

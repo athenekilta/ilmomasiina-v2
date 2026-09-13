@@ -4,7 +4,8 @@
  * A front-view chair with the parts that make one recognisable: a wide
  * backrest floating above the seat on two posts, and legs that splay
  * outwards. The bench is the same chair stretched — same viewpoint, same
- * parts, one unbroken backrest, and the only difference is width. That
+ * parts, one unbroken backrest of the same weight, and the
+ * only difference is width. That
  * difference is the message: narrow is one place, wide is many. Solid rather
  * than outlined because at 14-16px outlined shapes close up into a smudge.
  *
@@ -56,11 +57,11 @@ export function ChairIcon(props: IconProps) {
   return (
     <Glyph {...props}>
       <rect x="3.6" y="1.8" width="6.8" height="2.8" rx="1.1" />
-      <rect x="4.4" y="4.6" width="1" height="2" />
-      <rect x="8.6" y="4.6" width="1" height="2" />
-      <rect x="2.8" y="6.5" width="8.4" height="1.5" rx="0.7" />
-      <path d="M4 8.1h1l-.6 3.6h-1z" />
-      <path d="M10 8.1h-1l.6 3.6h1z" />
+      <rect x="4.4" y="4.6" width="1" height="1.43" />
+      <rect x="8.6" y="4.6" width="1" height="1.43" />
+      <rect x="2.8" y="6.03" width="8.4" height="1.5" rx="0.7" />
+      <path d="M4 7.63h1l-.6 4.07h-1z" />
+      <path d="M10 7.63h-1l.6 4.07h1z" />
     </Glyph>
   );
 }
@@ -70,11 +71,11 @@ export function BenchIcon(props: IconProps) {
   return (
     <Glyph {...props}>
       <rect x="0.9" y="1.8" width="12.2" height="2.8" rx="1.1" />
-      <rect x="1.9" y="4.6" width="1" height="1.9" />
-      <rect x="11.1" y="4.6" width="1" height="1.9" />
-      <rect x="0.4" y="6.5" width="13.2" height="1.5" rx="0.7" />
-      <path d="M1.6 8.1h1l-.6 3.6h-1z" />
-      <path d="M12.4 8.1h-1l.6 3.6h1z" />
+      <rect x="1.9" y="4.6" width="1" height="1.43" />
+      <rect x="11.1" y="4.6" width="1" height="1.43" />
+      <rect x="0.4" y="6.03" width="13.2" height="1.5" rx="0.7" />
+      <path d="M1.6 7.63h1l-.6 4.07h-1z" />
+      <path d="M12.4 7.63h-1l.6 4.07h1z" />
     </Glyph>
   );
 }

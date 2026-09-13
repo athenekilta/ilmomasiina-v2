@@ -3,8 +3,7 @@ Ilmomasiina v2 TODO:
 	- athene tili ?
 	- pitää ottaa se aalto email signup restrictioni pois
 	- mitä muutoksia tää vaatii?
- - jätetään raffle pois
-	- piilotetaan kaikkialta
+
  - admin-puoli
 	- oikeestaan kaikki puuttuu
  - UI parannuksia

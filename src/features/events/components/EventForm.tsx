@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addDays, set } from "date-fns";
-import { useForm, useWatch } from "react-hook-form";
-import type { z } from "zod";
+import { set } from "date-fns";
+import { useForm, useWatch, type UseFormSetValue } from "react-hook-form";
 import { Button } from "@/components/Button";
 import { FieldSet } from "@/components/FieldSet";
 import { TextArea } from "@/components/TextArea";
@@ -12,7 +11,14 @@ import { useAlert } from "@/features/alert/hooks/useAlert";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
 import { nativeDate } from "@/utils/nativeDate";
-import { nativeTime } from "@/utils/nativeTime";
+import {
+  eventDraftSnapshot,
+  eventDraftValues,
+  type EventFormValues,
+} from "../utils/eventDraft";
+import { useServerDraft } from "../hooks/useServerDraft";
+import { DraftChangeNotice } from "./DraftChangeNotice";
+import { getDraftUpdate, isUnavailableError } from "../utils/draftSync";
 import { useRouter } from "next/router";
 import { Divider } from "@/components/Divider";
 import { BasicInfoFields } from "./BasicInfoFields";
@@ -34,8 +40,6 @@ export type EventFormProps = {
   editId?: number;
 };
 
-type EventFormValues = z.input<typeof eventFormSchema>;
-
 export function EventForm({ editId }: EventFormProps) {
   const creationRequestId = useRef<string | null>(null);
   const submitting = useRef(false);
@@ -43,16 +47,18 @@ export function EventForm({ editId }: EventFormProps) {
   const createMutation = api.events.createEvent.useMutation();
   const updateMutation = api.events.updateEvent.useMutation();
   const router = useRouter();
-  const { data: signups, isLoading: signUpsLoading } =
-    api.signups.getSignupByEventIds.useQuery(
-      {
-        eventId: editId!,
-      },
-      {
-        enabled: !!editId,
-      },
-    );
+  const signupsQuery = api.signups.getSignupByEventIds.useQuery(
+    {
+      eventId: editId!,
+    },
+    {
+      enabled: !!editId,
+    },
+  );
 
+  const { data: signups, error: signupsError } = signupsQuery;
+  const retryQueries = () =>
+    Promise.all([eventQuery.refetch(), signupsQuery.refetch()]);
   const alert = useAlert();
 
   const { error: queryError } = useQueryParams();
@@ -60,7 +66,7 @@ export function EventForm({ editId }: EventFormProps) {
     alert.error("Error: " + queryError);
   }
 
-  const { data: editEvent, isLoading } = api.events.getEventEditId.useQuery(
+  const eventQuery = api.events.getEventEditId.useQuery(
     {
       eventId: editId ?? NaN,
     },
@@ -69,72 +75,77 @@ export function EventForm({ editId }: EventFormProps) {
       refetchOnWindowFocus: false,
     },
   );
-  const imageSelection = useEventImageSelection(editEvent?.imageId ?? null);
+  const { data: editEvent, isLoading, error: eventError } = eventQuery;
+  const [imageBaseline, setImageBaseline] = useState<string | null>(null);
+  const [needsReload, setNeedsReload] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
 
   const {
     register,
     watch,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting, isDirty, errors },
     getValues,
-    setValue,
+    setValue: setFormValue,
+    reset,
     control,
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
-    values: {
-      ...(editEvent ? editEvent : {}),
-      date: editEvent?.date
-        ? nativeDate.form.stringify(editEvent.date)
-        : nativeDate.form.stringify(addDays(new Date(), 7)),
-      time: editEvent?.date
-        ? nativeTime.stringify(
-            set(new Date(editEvent.date), { seconds: 0, milliseconds: 0 }),
-          )
-        : nativeTime.stringify(set(new Date(), { hours: 12, minutes: 0 })),
-      registrationStartDate: editEvent?.registrationStartDate
-        ? nativeDate.form.stringify(editEvent.registrationStartDate)
-        : nativeDate.form.stringify(addDays(new Date(), 1)),
-      registrationEndDate: editEvent?.registrationEndDate
-        ? nativeDate.form.stringify(editEvent.registrationEndDate)
-        : nativeDate.form.stringify(addDays(new Date(), 5)),
-      registrationEndTime: editEvent?.registrationEndDate
-        ? nativeTime.stringify(
-            set(new Date(editEvent.registrationEndDate), {
-              seconds: 0,
-              milliseconds: 0,
-            }),
-          )
-        : nativeTime.stringify(set(new Date(), { hours: 23, minutes: 59 })),
-      registrationStartTime: editEvent?.registrationStartDate
-        ? nativeTime.stringify(
-            set(new Date(editEvent.registrationStartDate), {
-              seconds: 0,
-              milliseconds: 0,
-            }),
-          )
-        : nativeTime.stringify(set(new Date(), { hours: 12, minutes: 0 })),
-      Quotas:
-        editEvent?.Quotas.map((quota) => ({
-          ...quota,
-          signupCount:
-            signups?.filter((signup) => signup.quotaId === quota.id).length ||
-            0,
-        })) || [],
-      Questions: editEvent?.Questions || [],
-      raffleEnabled: editEvent?.raffleEnabled || false,
-      extraCapacity: editEvent?.extraCapacity ?? 0,
-      price: editEvent?.price || "",
-      location: editEvent?.location || "",
-      title: editEvent?.title || "",
-      badgeText: editEvent?.badgeText || "",
-      badgeTone: editEvent?.badgeTone || "GREEN",
-      webpageUrl: editEvent?.webpageUrl || "",
-      description: editEvent?.description || "",
-      draft: editEvent?.draft ?? true,
-      signupsPublic: editEvent?.signupsPublic ?? true,
-      verificationEmail: editEvent?.verificationEmail || "",
-    },
+    defaultValues: eventDraftValues(),
   });
+
+  const busy = isSubmitting || isReloading;
+  const imageSelection = useEventImageSelection(imageBaseline, busy);
+
+  // Custom controls and drag/drop use setValue rather than registered inputs.
+  const setValue: UseFormSetValue<EventFormValues> = useCallback(
+    (name, value, options) => {
+      if (submitting.current) return;
+      setFormValue(name, value, { shouldDirty: true, ...options });
+    },
+    [setFormValue],
+  );
+  const incoming = useMemo(
+    () =>
+      editEvent && !eventError ? eventDraftSnapshot(editEvent) : undefined,
+    [editEvent, eventError],
+  );
+  const onAdopt = useCallback(
+    (snapshot: NonNullable<typeof incoming>) => {
+      reset(snapshot.values);
+      setImageBaseline(snapshot.imageId);
+    },
+    [reset],
+  );
+  const draft = useServerDraft({
+    incoming,
+    dirty: isDirty || imageSelection.isDirty || needsReload,
+    busy,
+    onAdopt,
+  });
+  const reloadDraft = async () => {
+    if (submitting.current || busy) return;
+    submitting.current = true;
+    setIsReloading(true);
+    try {
+      const [result, signupResult] = await retryQueries();
+      if (result.error || !result.data || signupResult.error) {
+        alert.error(
+          "Uusimpien tietojen lataus epäonnistui. Omat muutoksesi säilytettiin.",
+        );
+        return;
+      }
+      draft.adopt(eventDraftSnapshot(result.data));
+      imageSelection.markSaved();
+      setNeedsReload(false);
+    } finally {
+      submitting.current = false;
+      setIsReloading(false);
+    }
+  };
+  const staleData = !!eventError || !!signupsError || (!!editId && !signups);
+  const saveBlocked =
+    draft.changedElsewhere || needsReload || staleData || isReloading;
 
   const combineDateAndTime = (dateValue: string, time: string) => {
     const date = nativeDate.form.parse(dateValue);
@@ -150,6 +161,7 @@ export function EventForm({ editId }: EventFormProps) {
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    if (saveBlocked) return;
     const date = combineDateAndTime(data.date, data.time);
     const registrationStartDate = combineDateAndTime(
       data.registrationStartDate,
@@ -175,6 +187,24 @@ export function EventForm({ editId }: EventFormProps) {
     try {
       const imageChange = await imageSelection.uploadForSave();
       if (editId) {
+        // Uploading can take long enough for a remote edit to arrive. Never
+        // submit the old draft over an edit already observed by this client.
+        const latest = utils.events.getEventEditId.getData({ eventId: editId });
+        if (
+          !latest ||
+          getDraftUpdate(
+            draft.baseline,
+            eventDraftSnapshot(latest),
+            true,
+            false,
+          ) === "conflict"
+        ) {
+          setNeedsReload(true);
+          alert.warning(
+            "Tietoja muutettiin kuvan latauksen aikana. Lataa uusimmat tiedot ennen tallentamista.",
+          );
+          return;
+        }
         const event = await updateMutation.mutateAsync({
           ...formData,
           ...imageChange,
@@ -182,11 +212,23 @@ export function EventForm({ editId }: EventFormProps) {
           quotas: data.Quotas,
           questions,
         });
-        // Refresh the persisted preview before releasing the local blob URL.
-        utils.events.getEventEditId.setData({ eventId: editId }, (previous) =>
-          previous ? { ...previous, ...event } : previous,
-        );
-        imageSelection.markSaved();
+        // The mutation response need not contain canonical questions/quotas.
+        // Keep the draft and image baseline until a full saved snapshot arrives.
+        try {
+          await utils.events.getEventEditId.cancel({ eventId: editId });
+          const saved = await utils.events.getEventEditId.fetch(
+            { eventId: editId },
+            { staleTime: 0 },
+          );
+          draft.adopt(eventDraftSnapshot(saved));
+          imageSelection.markSaved();
+          setNeedsReload(false);
+        } catch {
+          setNeedsReload(true);
+          alert.warning(
+            "Tapahtuma tallennettiin, mutta uusimpia tietoja ei voitu ladata. Lataa tiedot ennen uutta tallennusta.",
+          );
+        }
         alert.success("Event updated successfully");
         if (event.notificationWarning)
           alert.warning(
@@ -212,6 +254,10 @@ export function EventForm({ editId }: EventFormProps) {
         utils.events.getEventByID.invalidate(),
       ]).catch(() => undefined);
     } catch (error) {
+      if ((error as { data?: { code?: string } })?.data?.code === "CONFLICT") {
+        setNeedsReload(true);
+        void retryQueries();
+      }
       if (
         error &&
         typeof error === "object" &&
@@ -242,7 +288,39 @@ export function EventForm({ editId }: EventFormProps) {
     return counts;
   }, {});
 
-  if (editId && (signUpsLoading || isLoading)) {
+  const signupCounts = (signups ?? []).reduce<Record<string, number>>(
+    (counts, signup) => {
+      counts[signup.quotaId] = (counts[signup.quotaId] ?? 0) + 1;
+      return counts;
+    },
+    {},
+  );
+
+  if (
+    editId &&
+    (isUnavailableError(eventError) ||
+      isUnavailableError(signupsError) ||
+      (!isLoading && !editEvent))
+  ) {
+    return (
+      <div role="alert" className="space-y-3 p-6">
+        <p>
+          Tapahtumaa ei löytynyt, sen lataus epäonnistui tai sinulla ei ole
+          muokkausoikeutta. Tallentamattomia muutoksia ei lähetetty.
+        </p>
+        <Button
+          type="button"
+          disabled={eventQuery.isFetching || signupsQuery.isFetching}
+          onClick={() => void retryQueries()}
+        >
+          Yritä uudelleen
+        </Button>
+        <Button.Link href="/">Takaisin tapahtumiin</Button.Link>
+      </div>
+    );
+  }
+
+  if (editId && (isLoading || !draft.baseline)) {
     return (
       <div className="bg-brand-beige text-brand-dark pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center p-4 text-sm font-medium">
         Loading...
@@ -252,116 +330,143 @@ export function EventForm({ editId }: EventFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="relative">
-      {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
-      <EventImageBanner
-        selection={imageSelection}
-        disabled={isSubmitting}
-        eventId={editId}
-        badgeText={badgeText}
-        badgeTone={badgeTone}
-      />
-      <div className="flex flex-col gap-6 p-4 sm:px-7 sm:py-6">
-        <div className="flex flex-row flex-wrap items-start justify-between gap-3">
-          <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
-            {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
-          </h1>
-
-          <div className="flex flex-wrap gap-2">
-            {!editId ? (
-              <Button
-                type="submit"
-                disabled={imageSelection.isDecoding}
-                loading={isSubmitting}
-              >
-                Tallenna luonnoksena
-              </Button>
-            ) : (
-              <>
-                <Button
-                  type="submit"
-                  disabled={imageSelection.isDecoding}
-                  loading={isSubmitting}
-                  color="primary"
-                >
-                  Tallenna muutokset
-                </Button>
-                <Button
-                  type="submit"
-                  onClick={() => setValue("draft", !isDraft)}
-                  disabled={imageSelection.isDecoding}
-                  loading={isSubmitting}
-                  variant="bordered"
-                >
-                  {isDraft ? "Julkaise" : "Muuta luonnokseksi"}
-                </Button>
-                <Button.Link
-                  type="button"
-                  variant="text"
-                  href={`/events/${editId}`}
-                >
-                  Siirry ilmosivulle
-                </Button.Link>
-              </>
-            )}
-          </div>
+      {(draft.changedElsewhere || needsReload) && (
+        <DraftChangeNotice
+          onReload={() => void reloadDraft()}
+          disabled={busy || eventQuery.isFetching || signupsQuery.isFetching}
+        />
+      )}
+      {(eventError || signupsError) && (
+        <div role="alert" className="text-danger p-4">
+          <p>
+            Tietojen päivitys epäonnistui. Omat muutoksesi säilytettiin.
+            Tallennus on estetty, kunnes tiedot saadaan päivitettyä.
+          </p>
+          <Button
+            type="button"
+            disabled={busy || eventQuery.isFetching || signupsQuery.isFetching}
+            onClick={() => void retryQueries()}
+          >
+            Yritä uudelleen
+          </Button>
         </div>
-
-        <BasicInfoFields
-          control={control}
-          register={register}
-          watch={watch}
-          setValue={setValue}
-          errors={errors}
-        />
-
-        <Divider spacingY="none" />
-
-        <Quotas
-          getValues={getValues}
-          setValue={setValue}
-          watch={watch}
-          errors={errors}
-          eventId={editEvent?.id}
-          editId={editId}
-          seatHoldingSignupCounts={seatHoldingSignupCounts}
-        />
-
-        <Divider spacingY="none" />
-
-        <Questions
-          getValues={getValues}
-          setValue={setValue}
-          watch={watch}
-          errors={errors}
-          eventId={editEvent?.id}
-          signupCount={signups ? signups.length : 0}
-        />
-
-        <Divider spacingY="none" />
-
-        <FieldSet title="Vahvistusviesti sähköpostiin">
-          <TextArea {...register("verificationEmail")} rows={5} fullWidth />
-        </FieldSet>
-
-        {editId && (
-          <>
-            <Divider spacingY="none" />
-            <FieldSet title="Ilmoittautuneet">
-              {signups && signups.length > 0 ? (
-                <SignupsTable
-                  signups={signups}
-                  eventId={editId}
-                  eventName={editEvent?.title}
-                  quotas={editEvent?.Quotas ?? []}
-                  questions={editEvent?.Questions ?? []}
-                />
-              ) : (
-                <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
-              )}
-            </FieldSet>
-          </>
+      )}
+      <fieldset disabled={busy} inert={busy} className="min-w-0 border-0 p-0">
+        {Object.keys(errors).length > 0 && (
+          <ValidationSummary errors={errors} />
         )}
-      </div>
+        <EventImageBanner
+          selection={imageSelection}
+          disabled={busy}
+          eventId={editId}
+          badgeText={badgeText}
+          badgeTone={badgeTone}
+        />
+        <div className="flex flex-col gap-6 p-4 sm:px-7 sm:py-6">
+          <div className="flex flex-row flex-wrap items-start justify-between gap-3">
+            <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
+              {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
+            </h1>
+
+            <div className="flex flex-wrap gap-2">
+              {!editId ? (
+                <Button
+                  type="submit"
+                  disabled={imageSelection.isDecoding || saveBlocked}
+                  loading={isSubmitting}
+                >
+                  Tallenna luonnoksena
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="submit"
+                    disabled={imageSelection.isDecoding || saveBlocked}
+                    loading={isSubmitting}
+                    color="primary"
+                  >
+                    Tallenna muutokset
+                  </Button>
+                  <Button
+                    type="submit"
+                    onClick={() => setValue("draft", !isDraft)}
+                    disabled={imageSelection.isDecoding || saveBlocked}
+                    loading={isSubmitting}
+                    variant="bordered"
+                  >
+                    {isDraft ? "Julkaise" : "Muuta luonnokseksi"}
+                  </Button>
+                  <Button.Link
+                    type="button"
+                    variant="text"
+                    href={`/events/${editId}`}
+                  >
+                    Siirry ilmosivulle
+                  </Button.Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          <BasicInfoFields
+            control={control}
+            register={register}
+            watch={watch}
+            setValue={setValue}
+            errors={errors}
+          />
+
+          <Divider spacingY="none" />
+
+          <Quotas
+            getValues={getValues}
+            setValue={setValue}
+            watch={watch}
+            errors={errors}
+            eventId={editEvent?.id}
+            editId={editId}
+            seatHoldingSignupCounts={seatHoldingSignupCounts}
+            signupCounts={signupCounts}
+          />
+
+          <Divider spacingY="none" />
+
+          <Questions
+            getValues={getValues}
+            setValue={setValue}
+            watch={watch}
+            errors={errors}
+            eventId={editEvent?.id}
+            signupCount={signups ? signups.length : 0}
+          />
+
+          <Divider spacingY="none" />
+
+          <FieldSet title="Vahvistusviesti sähköpostiin">
+            <TextArea {...register("verificationEmail")} rows={5} fullWidth />
+          </FieldSet>
+
+          {editId && (
+            <>
+              <Divider spacingY="none" />
+              <FieldSet title="Ilmoittautuneet">
+                {signups ? (
+                  <SignupsTable
+                    signups={signups}
+                    disabled={staleData || busy || needsReload}
+                    eventId={editId}
+                    eventName={editEvent?.title}
+                    quotas={editEvent?.Quotas ?? []}
+                    questions={editEvent?.Questions ?? []}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
+                )}
+              </FieldSet>
+            </>
+          )}
+        </div>
+      </fieldset>
     </form>
   );
 }

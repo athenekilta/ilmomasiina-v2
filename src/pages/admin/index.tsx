@@ -1,19 +1,19 @@
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
-import { useUser } from "@/features/auth/hooks/useUser";
+import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
 import { Layout } from "@/features/layout/Layout";
 import { PageHead } from "@/features/layout/PageHead";
 import { UsersTable } from "@/features/users/components/UsersTable";
-import { UserRole } from "@/generated/prisma";
+import { ManagementRole } from "@/generated/prisma";
 import { api } from "@/utils/api";
 
 export default function ManageUsers() {
-  const currentUser = useUser();
-  const isSuperadmin = currentUser.data?.role === UserRole.superadmin;
+  const currentUser = useManagementUser();
+  const isSuperadmin = currentUser.data?.role === ManagementRole.superadmin;
   const apiContext = api.useContext();
   const usersQuery = api.users.getUsers.useQuery(undefined, {
     enabled: isSuperadmin,
   });
-  const updateUserRoleMutation = api.users.updateUserRole.useMutation({
+  const updateManagementRoleMutation = api.users.updateManagementRole.useMutation({
     onSuccess: () => apiContext.users.getUsers.invalidate(),
   });
 
@@ -48,15 +48,15 @@ export default function ManageUsers() {
               <UsersTable
                 users={usersQuery.data}
                 onUpdateRole={(userId, role) =>
-                  updateUserRoleMutation.mutate({ userId, role })
+                  updateManagementRoleMutation.mutate({ userId, role })
                 }
-                isUpdating={updateUserRoleMutation.isPending}
+                isUpdating={updateManagementRoleMutation.isPending}
               />
             ) : (
               <p className="mt-4 text-stone-600">Ei käyttäjiä.</p>
             )}
 
-            {updateUserRoleMutation.error && (
+            {updateManagementRoleMutation.error && (
               <p role="alert" className="mt-3 text-red-700">
                 Käyttöoikeuden päivittäminen epäonnistui.
               </p>

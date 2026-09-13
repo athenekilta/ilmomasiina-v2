@@ -9,23 +9,26 @@ import {
 import { api } from "@/utils/api";
 import { PageHead } from "@/features/layout/PageHead";
 import { Layout } from "../features/layout/Layout";
-import { useUser } from "@/features/auth/hooks/useUser";
+import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
 import { useState } from "react";
+import { useNow } from "@/hooks/useNow";
 import { EventCard } from "@/features/eventCard/EventCard";
 import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
-import HydrationZustand from "@/components/HydrationZustand";
+
 import { groupEventsForList } from "@/features/eventCard/eventOrder";
 import { Button } from "@/components/Button";
-import { UserRole } from "@/generated/prisma";
+import { ManagementRole } from "@/generated/prisma";
 
 export default function DesktopPage() {
+  // Re-render cards and time-derived grouping without refetching event data.
+  useNow();
   const [includeDrafts, setIncludeDrafts] = useState(false);
   const [includeOlderEvents, setIncludeOlderEvents] = useState(false);
 
-  const user = useUser();
+  const user = useManagementUser();
   const canEditEvents =
-    user.data?.role === UserRole.event_editor ||
-    user.data?.role === UserRole.superadmin;
+    user.data?.role === ManagementRole.event_editor ||
+    user.data?.role === ManagementRole.superadmin;
 
   const regularEventsQuery = api.events.getEvents.useQuery(undefined, {
     enabled: !canEditEvents,
@@ -54,9 +57,7 @@ export default function DesktopPage() {
           <div className="flex-col pb-4">
             {/* Above the heading, not under it: this is not an event, and
                 under "Tapahtumat" it read as the first item in the list. */}
-            <HydrationZustand>
-              <IdentityPromptCard />
-            </HydrationZustand>
+            <IdentityPromptCard />
 
             <header className="mt-2 mb-4 w-full">
               <h1 className="text-brand-secondary px-1 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">

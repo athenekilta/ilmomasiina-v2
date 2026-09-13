@@ -7,11 +7,13 @@ import { MarkdownContent } from "@/features/events/components/MarkdownContent";
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
-import { useUser } from "@/features/auth/hooks/useUser";
-import { UserRole } from "@/generated/prisma";
+import { useNow } from "@/hooks/useNow";
+import { isUnavailableError } from "@/features/events/utils/draftSync";
+import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
+import { ManagementRole } from "@/generated/prisma";
 import { Input } from "@/components/Input";
 
-import HydrationZustand from "@/components/HydrationZustand";
+
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -20,6 +22,7 @@ import { formatEventDateTime, formatRegistration } from "@/utils/format";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { TRPCClientError } from "@trpc/client";
 import { Icon } from "@/components/Icon";
+import { Check, UserRound } from "lucide-react";
 import { Divider } from "@/components/Divider";
 import { getEventImage } from "@/features/eventCard/eventCardImage";
 import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
@@ -46,11 +49,14 @@ type SignupConflictChoice = {
 
 function Registration({
   event,
+  now,
 }: {
   event: RouteOutput["events"]["getEventByID"];
+  now: number | null;
 }) {
   const router = useRouter();
-  const { isRegistrationOpen } = RegistrationDate(event);
+  const apiContext = api.useContext();
+  const { isRegistrationOpen } = RegistrationDate(event, now ?? undefined);
 
   const alert = useAlert();
 
@@ -60,6 +66,7 @@ function Registration({
     handleSubmit,
     reset,
     storedUser,
+    isIdentityLoading,
     setUser,
   } = useGuestIdentityForm();
   const [isEditingUserData, setIsEditingUserData] = useState(false);
@@ -67,12 +74,11 @@ function Registration({
     useState<SignupConflictChoice | null>(null);
 
   const createSignupMutation = api.signups.createSignup.useMutation();
-  const signupStatusQuery = api.signups.getSignupStatusByEventAndEmail.useQuery(
-    {
-      eventId: event.id,
-      email: storedUser?.email ?? "",
-    },
-    { enabled: !!storedUser?.email },
+  const sendSignupAccessEmailMutation =
+    api.signups.sendMySignupAccessEmail.useMutation();
+  const signupStatusQuery = api.signups.getMySignupStatus.useQuery(
+    { eventId: event.id },
+    { enabled: !isIdentityLoading },
   );
 
   const resolveSignupConflictMutation =
@@ -85,7 +91,9 @@ function Registration({
   });
   const showDemoControls = process.env.NODE_ENV === "development";
   const signupStatus = signupStatusQuery.data;
-  const hasExistingSignup = signupStatus !== null && signupStatus !== undefined;
+  const hasExistingSignup =
+    signupStatusQuery.isPending ||
+    (signupStatus !== null && signupStatus !== undefined);
 
   const quotas = event.Quotas.filter((quota) => quota.id !== QUEUE_QUOTA_ID);
   const seatHoldingSignupCount = (quota: (typeof quotas)[number]) =>
@@ -99,25 +107,44 @@ function Registration({
 
   // if no stored user, start in editing mode
   useEffect(() => {
-    if (!storedUser) {
+    if (!isIdentityLoading && !storedUser) {
       setIsEditingUserData(true);
     }
-  }, [storedUser]);
+  }, [isIdentityLoading, storedUser]);
 
   const saveUserData = handleSubmit(async (data) => {
     try {
-      setUser({ name: data.name, email: data.email });
+      await setUser({ name: data.name, email: data.email });
+      await apiContext.signups.getMySignupStatus.invalidate({
+        eventId: event.id,
+      });
       setIsEditingUserData(false);
     } catch (e) {
-      console.error("Failed to save user data to store", e);
+      console.error("Failed to save user session identity", e);
     }
   });
 
   const showCompletedSignupWarning = () =>
     alert.warning(
-      "Tällä sähköpostilla on jo vahvistettu ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
+      "Tällä sähköpostilla on jo ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
       { timeoutMs: 10000 },
     );
+
+  const requestSignupAccessEmail = async () => {
+    try {
+      await sendSignupAccessEmailMutation.mutateAsync({ eventId: event.id });
+      alert.success(
+        "Ilmon muokkauslinkki lähetetty sähköpostiin",
+        { timeoutMs: 10000 },
+      );
+    } catch (error) {
+      console.error(error);
+      alert.error("Linkin lähettäminen epäonnistui. Yritä uudelleen.", {
+        timeoutMs: 10000,
+      });
+    }
+  };
+
 
   const resolveSignupConflict = async (choice: "NEW" | "EXISTING") => {
     if (!signupConflict) return;
@@ -134,9 +161,7 @@ function Registration({
         return;
       }
 
-      await router.push(
-        `/events/${event.id}/${result.signup.id}${result.isExistingSignup ? "?existing=true" : ""}`,
-      );
+      await router.push(`/events/${event.id}/${result.signup.id}`);
     } catch (error) {
       console.error(error);
       if (error instanceof Error) {
@@ -154,6 +179,7 @@ function Registration({
           email: data.email,
         });
         if (result) {
+          await apiContext.userSession.getIdentity.invalidate();
           if ("requiresSignupChoice" in result && result.requiresSignupChoice) {
             setSignupConflict({
               candidateSignupId: result.signup.id,
@@ -184,14 +210,14 @@ function Registration({
   };
 
   return (
-    <div className="mb-5">
-      <div>
+    <div>
+      <div className="flex flex-col gap-9">
         {/* One card for the whole signup: what this is, when it closes, who
             you are, and the choice. Split across four blocks it repeated its
             own heading twice and left the deadline owned by nothing. */}
-        <div className="surface-panel mb-3 flex flex-col gap-4 p-5">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-brand-dark text-base font-extrabold tracking-[0.015em] uppercase">
+            <h2 className="text-brand-secondary text-base font-extrabold tracking-[0.015em] uppercase">
               Ilmo
             </h2>
             <p className="text-brand-primary text-[13px] font-semibold">
@@ -202,7 +228,7 @@ function Registration({
             </p>
           </div>
         {isEditingUserData ? (
-          <form className="surface-muted p-4" onSubmit={saveUserData}>
+          <form className="-mx-[5px] sm:mx-0 surface-muted p-4" onSubmit={saveUserData}>
             <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
               Täydennä ilmotietosi
             </h3>
@@ -262,17 +288,37 @@ function Registration({
           </form>
         ) : signupStatus?.state === "COMPLETED" ? (
           <div
-            className="surface-muted text-brand-dark/80 px-3 py-2 text-sm"
+            className="-mx-[5px] sm:mx-0 surface-muted text-brand-dark/80 px-3 py-2 text-sm"
             role="status"
           >
             <p>
-              <span className="font-medium text-gray-900">Ilmo kunnossa!</span><br/>
+              <span className="font-medium text-gray-900">Ilmo kunnossa!</span>
+              <br />
               Olet ilmonnut sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
-              Muokkaa ilmoa sieltä löytyvällä linkillä.
+              {!signupStatus.canEditDirectly &&
+                " Muokkaa ilmoa sähköpostista löytyvällä linkillä."}
             </p>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-
+              {signupStatus.canEditDirectly && signupStatus.id ? (
+                <Link
+                  href={`/events/${event.id}/${signupStatus.id}`}
+                  className="text-brand-primary hover:underline"
+                >
+                  Muokkaa ilmoa
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={requestSignupAccessEmail}
+                  disabled={sendSignupAccessEmailMutation.isPending}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                >
+                  {sendSignupAccessEmailMutation.isPending
+                    ? "Lähetetään linkkiä…"
+                    : "Lähetä muokkauslinkki sähköpostiin"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setIsEditingUserData(true)}
@@ -284,21 +330,35 @@ function Registration({
           </div>
         ) : signupStatus?.state === "IN_PROGRESS" ? (
           <div
-            className="surface-muted text-brand-dark/80 px-3 py-2 text-sm"
+            className="-mx-[5px] sm:mx-0 surface-muted text-brand-dark/80 px-3 py-2 text-sm"
             role="status"
           >
             <p>
-              <span className="font-medium text-gray-900">Ilmo kesken!</span><br/>
+              <span className="font-medium text-gray-900">Ilmo kesken!</span>
+              <br />
               Sinulla on keskeneräinen ilmoittautuminen sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
             </p>
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              <Link
-                href={`/events/${event.id}/${signupStatus.id}?existing=true`}
-                className="text-brand-primary hover:underline"
-              >
-                Viimeistele ilmo
-                  </Link>
+              {signupStatus.canEditDirectly && signupStatus.id ? (
+                <Link
+                  href={`/events/${event.id}/${signupStatus.id}`}
+                  className="text-brand-primary hover:underline"
+                >
+                  Viimeistele ilmo
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={requestSignupAccessEmail}
+                  disabled={sendSignupAccessEmailMutation.isPending}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                >
+                  {sendSignupAccessEmailMutation.isPending
+                    ? "Lähetetään linkkiä…"
+                    : "Lähetä muokkauslinkki"}
+                </button>
+              )}
 
               <button
                 type="button"
@@ -310,25 +370,47 @@ function Registration({
             </div>
           </div>
         ) : (
-          <div className="surface-muted flex items-center justify-between gap-3 p-3">
-            <p className="text-brand-dark/80 min-w-0 text-[12.5px] leading-snug">
-              Ilmoat nimellä{" "}
-              <span className="text-brand-dark font-bold">
-                {storedUser?.name}
+          /* Same shape as the header's identity panel: the green check and
+             the uppercase heading say "this is settled" at a glance, and the
+             values below are what you check before pressing the button. */
+          <div className="-mx-[5px] sm:mx-0 surface-muted flex flex-col gap-2 p-3.5">
+            <span className="text-brand-secondary text-xs font-bold tracking-wide uppercase">
+              Ilmotiedot kunnossa
+            </span>
+            {/* The badge sits beside the values it vouches for, not beside
+                the heading — and that leaves the row's right end free for the
+                action, level with the same two lines. */}
+            <div className="flex items-center gap-2.5">
+              <span className="text-brand-dark/70 relative shrink-0" aria-hidden>
+                <UserRound size={34} strokeWidth={2} />
+                {/* Inverted from the header's version: there the badge sits
+                    on the green bar, where a pale disc carries. On the beige
+                    panel the pale disc disappears, so the disc goes dark and
+                    the mark light. */}
+                <span className="bg-brand-secondary ring-brand-beige absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full text-white ring-[3px]">
+                  <Check size={11} strokeWidth={4} />
+                </span>
               </span>
-              <br />
-              <span className="break-all">{storedUser?.email}</span>
-            </p>
-            <Button
-              type="button"
-              size="small"
-              color="neutral"
-              variant="bordered"
-              className="shrink-0"
-              onClick={() => setIsEditingUserData(true)}
-            >
-              Vaihda
-            </Button>
+              <p className="text-brand-dark min-w-0 flex-1 text-sm leading-snug">
+                <span className="font-bold">{storedUser?.name}</span>
+                <br />
+                <span className="text-brand-dark/70 break-all">
+                  {storedUser?.email}
+                </span>
+              </p>
+              {/* No outline: inside a tinted panel the colour change is the
+                  edge, the same way the app's nested surfaces work. */}
+              <Button
+                type="button"
+                size="small"
+                color="neutral"
+                variant="filled"
+                className="shrink-0 bg-white enabled:hover:bg-stone-100 enabled:active:bg-stone-200"
+                onClick={() => setIsEditingUserData(true)}
+              >
+                Vaihda
+              </Button>
+            </div>
           </div>
         )}
         {/* A rule and a label between the identity panel and the buttons: a
@@ -337,11 +419,9 @@ function Registration({
             button carries what varies — the quota names when there is a
             choice, the verb when there is only one quota. */}
         {(!hasExistingSignup || showDemoControls) && !isEditingUserData && (
-          <div className="flex flex-col gap-3 border-t border-stone-100 pt-4">
-            <h3 className="text-sm font-bold tracking-[0.06em] text-stone-600 uppercase">
-              {quotas.length > 1
-                ? "Ilmoa omaan kiintiöösi"
-                : (quotas[0]?.title ?? "Ilmo")}
+          <div className="flex flex-col gap-3 pt-2">
+            <h3 className="text-[13px] font-bold tracking-[0.06em] text-stone-500 uppercase">
+              Ilmoa omaan kiintiöösi
             </h3>
             <div className="flex flex-col gap-2">
               {quotas.map((quota) => {
@@ -352,9 +432,6 @@ function Registration({
                   protectedPlacesAreFull &&
                   (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
                     sharedPlacesAreFull);
-                // With one quota the heading above already names it, so the
-                // button says the act instead of repeating the name.
-                const label = quotas.length > 1 ? quota.title : "Ilmoa";
 
                 return (
                   <div key={quota.id} className="flex items-center gap-1">
@@ -390,22 +467,30 @@ function Registration({
                         {quota.title}
                       </span>
                     ) : (
+                      /* Joining a queue is not the same act as taking a
+                         place, so the button is not the same button: filled
+                         means a place, outlined means a wait. In a list where
+                         some quotas are full and some are not, that shows at
+                         a glance — and "jonoon" rides along as its own small
+                         label rather than as punctuation in the name. */
                       <Button
                         className="min-w-0 grow"
                         color="primary"
+                        variant={signupGoesToQueue ? "bordered" : "filled"}
                         onClick={handleSubmit(getHandleSignup(quota.id))}
-                        disabled={
-                          !isRegistrationOpen || !isValid || isSubmitting
-                        }
+                        disabled={!isRegistrationOpen || isSubmitting}
                         loading={
                           isSubmitting &&
                           createSignupMutation.variables?.quotaId === quota.id
                         }
                       >
-                        <span className="truncate">
-                          {signupGoesToQueue
-                            ? `${label} — jonoon`
-                            : label}
+                        <span className="flex min-w-0 items-baseline justify-center gap-2">
+                          <span className="truncate">{quota.title}</span>
+                          {signupGoesToQueue && (
+                            <span className="shrink-0 text-[11px] font-bold tracking-wide uppercase opacity-70">
+                              jonoon
+                            </span>
+                          )}
                         </span>
                       </Button>
                     )}
@@ -546,15 +631,16 @@ function EventBannerImage({
 }
 
 export default function EventPage() {
+  const now = useNow();
   const router = useRouter();
   const eventId = Number(router.query.eventId);
 
-  const loginUser = useUser();
+  const loginUser = useManagementUser();
   const canEditEvent =
-    loginUser.data?.role === UserRole.event_editor ||
-    loginUser.data?.role === UserRole.superadmin;
+    loginUser.data?.role === ManagementRole.event_editor ||
+    loginUser.data?.role === ManagementRole.superadmin;
 
-  const { data: event, isLoading } = api.events.getEventByID.useQuery(
+  const { data: event, isLoading, error, refetch } = api.events.getEventByID.useQuery(
     { eventId: eventId! },
     {
       enabled: !isNaN(eventId),
@@ -566,14 +652,32 @@ export default function EventPage() {
   // Hype has nothing left to sell once the doors are shut — same rule the
   // cards on the front page follow.
   const registrationClosed = event
-    ? RegistrationDate(event).isRegistrationClosed
+    ? RegistrationDate(event, now ?? undefined).isRegistrationClosed
     : false;
+
+  if (isUnavailableError(error) || (!isLoading && !event)) {
+    return <Layout><PageHead title="Tapahtuma ei ole saatavilla" />
+      <div role="alert" className="surface-panel space-y-4 p-6">
+        <p>{error?.data?.code === "FORBIDDEN" || error?.data?.code === "UNAUTHORIZED"
+          ? "Sinulla ei ole oikeutta nähdä tätä tapahtumaa."
+          : error?.data?.code === "NOT_FOUND" || !event
+            ? "Tapahtumaa ei löytynyt tai se ei ole enää saatavilla."
+            : "Tapahtuman päivitys epäonnistui. Yritä uudelleen."}</p>
+        <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
+        <Button.Link href="/">Takaisin tapahtumiin</Button.Link>
+      </div>
+    </Layout>;
+  }
 
   return (
     <>
       <PageHead title={event?.title || "Loading..."} />
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
+          {error && <div role="alert" className="surface-muted mb-4 p-4 text-sm">
+            Tapahtuman päivitys epäonnistui. Näytetyt tiedot voivat olla vanhentuneita.
+            <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
+          </div>}
           <Link
             href="/"
             className="text-brand-secondary hover:text-brand-dark focus-visible:ring-brand-secondary mb-3 flex w-fit min-w-0 items-center gap-2 rounded-full text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
@@ -644,7 +748,7 @@ export default function EventPage() {
 
                   <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
                     <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
-                      <h2 className="text-brand-secondary mb-3 text-xs font-bold tracking-widest uppercase">
+                      <h2 className="text-brand-secondary mb-3 text-base font-extrabold tracking-[0.015em] uppercase">
                         Tiedot
                       </h2>
                       <p>
@@ -668,16 +772,17 @@ export default function EventPage() {
                     </div>
 
                     <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
-                      <HydrationZustand>
-                        {event && <Registration event={event} />}
-                      </HydrationZustand>
+                      {event && (
+                        <Registration key={event.id} event={event} now={now} />
+                      )}
                     </div>
                   </div>
 
                   {event.signupsPublic && (
                     <>
-                      <Divider spacingY="lg" />
-                      <ParticipantsTable event={event} />
+                      <div className="mt-12">
+                        <ParticipantsTable event={event} />
+                      </div>
                     </>
                   )}
                 </>

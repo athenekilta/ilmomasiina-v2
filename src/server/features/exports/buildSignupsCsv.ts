@@ -18,6 +18,7 @@ export async function createSignupsCsv(
     include: {
       Quota: { select: { id: true, title: true } },
       Answers: true,
+      identity: { select: { email: true } },
     },
   });
 
@@ -48,7 +49,7 @@ export async function createSignupsCsv(
       return [
         index + 1,
         signup.name,
-        signup.email,
+        signup.identity.email,
         date,
         signup.Quota?.title || signup.quotaId,
         ...answers,
