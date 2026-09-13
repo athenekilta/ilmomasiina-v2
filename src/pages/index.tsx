@@ -114,6 +114,11 @@ export default function DesktopPage() {
 
             <section className="w-full" aria-label="Tapahtumalista">
               <h2 className="sr-only">Tapahtumalista</h2>
+              {events.open.length === 0 && events.closed.length === 0 && (
+                <p className="text-brand-dark px-1 text-sm">
+                  Tyhjää täynnä. Ei tulevia tapahtumia.
+                </p>
+              )}
               {/* Every card is the same size. Columns are added only once
                   the previous count would leave cards uncomfortably wide:
                   two from `md` (768px), three from `xl` (1280px) — below
