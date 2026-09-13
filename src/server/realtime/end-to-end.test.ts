@@ -113,10 +113,7 @@ test(
     await Promise.all([writer.connect(), worker.connect()]);
     await writer.query(
       await readFile(
-        new URL(
-          "../../../prisma/migrations/20260913130000_live_updates/migration.sql",
-          import.meta.url,
-        ),
+        new URL("../../../prisma/live-updates.sql", import.meta.url),
         "utf8",
       ),
     );

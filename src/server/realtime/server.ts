@@ -2,6 +2,7 @@ import "dotenv/config";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createGateway } from "./gateway";
+import { installLiveUpdates } from "./install";
 import { PgLiveListener } from "./listener";
 import { canonicalOrigin, requireLiveSecret } from "./ticket";
 
@@ -14,6 +15,7 @@ export async function startLiveServer(env: NodeJS.ProcessEnv = process.env) {
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error("LIVE_PORT must be an integer from 1 to 65535");
   const host = env.LIVE_HOST ?? "127.0.0.1";
+  await installLiveUpdates(env.DATABASE_URL);
   const listener = new PgLiveListener({
     connectionString: env.DATABASE_URL,
     log: (message) => console.warn(message),

@@ -50,11 +50,9 @@ Use Node.js 24 LTS and npm 10 or newer (Docker uses Node 24).
    ```bash
    npx prisma generate
    npx prisma db push
-   npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql
    ```
-   `db push` creates the schema but **does not install the live-update triggers**.
-   The SQL command installs them for this schema-push development setup; see
-   migration deployment notes below before using it on an existing database.
+   Prisma does not model PostgreSQL triggers. `npm run live` installs the
+   idempotent live-update triggers automatically when the gateway starts.
 5. Start the Next.js development server:
    ```bash
    npm run dev
@@ -142,30 +140,16 @@ and gateway can restart independently; reconnecting clients perform a resync.
 
 ### Database triggers and rollout
 
-Deploy the additive `20260913130000_live_updates` migration **before starting**
-the updated services. For a database with the existing migration history:
+Prisma does not represent PostgreSQL trigger functions or triggers. The gateway
+therefore applies the idempotent `prisma/live-updates.sql` script before opening
+its listener and WebSocket port. This works after either `prisma db push` or
+`prisma migrate deploy` and keeps the ordinary schema fully manageable by
+Prisma.
 
-```bash
-docker compose build app realtime worker
-docker compose run --rm worker npm run prisma-deploy-migrations
-docker compose up -d app realtime worker
-```
-
-On a development database created with `prisma db push`, apply the trigger SQL
-after pushing the schema:
-
-```bash
-npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql
-```
-
-Prisma 7 reads `DATABASE_URL` from `prisma.config.ts`; `db execute` does not take
-`--url` or `--schema`. In Docker, use the same command through
-`docker compose run --rm worker npx prisma db execute --file prisma/migrations/20260913130000_live_updates/migration.sql`.
-Executing SQL directly does not record the migration in Prisma's migration
-history; it is not a substitute for `migrate deploy` on migration-managed
-production databases. Existing schema-push databases need a deliberate baseline
-before switching to migrations. The older auth/schema migration mismatch noted
-in the image-test section is separate from this additive migration.
+The database role used by the gateway must be allowed to create functions and
+triggers in the application schema. Startup fails instead of reporting a healthy
+gateway with no update source if installation is not possible. Starting the
+Compose `realtime` service performs the same installation automatically.
 
 PostgreSQL notifications are **invalidation hints, not a durable event log**.
 Changes made while a listener is disconnected are not replayed. Recovery after

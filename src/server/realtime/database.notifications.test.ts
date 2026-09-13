@@ -35,10 +35,7 @@ type Notification = { channel: string; payload?: string };
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 const migrations = new URL("../../../prisma/migrations/", import.meta.url);
-const migration = new URL(
-  "20260913130000_live_updates/migration.sql",
-  migrations,
-);
+const migration = new URL("../../../prisma/live-updates.sql", import.meta.url);
 const eventChange = (eventId: number, publicFlag = true): Change => ({
   kind: "event",
   eventId,
