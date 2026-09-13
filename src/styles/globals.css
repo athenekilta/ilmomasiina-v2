@@ -44,4 +44,7 @@
     @apply rounded-inner bg-brand-beige;
   }
 
+  .event-description-markdown.md-editor-preview-wrapper {
+    @apply bg-transparent p-0 text-base leading-relaxed;
+  }
 }

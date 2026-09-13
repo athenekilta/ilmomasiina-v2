@@ -1,3 +1,4 @@
+import "md-editor-rt/lib/style.css";
 import "../styles/globals.css";
 
 import { type AppType } from "next/app";

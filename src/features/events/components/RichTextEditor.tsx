@@ -1,6 +1,12 @@
-import { MdEditor } from "md-editor-rt";
-import { useState, useEffect } from "react";
-import "md-editor-rt/lib/style.css";
+import dynamic from "next/dynamic";
+
+const MdEditor = dynamic(
+  () => import("md-editor-rt").then((module) => module.MdEditor),
+  {
+    ssr: false,
+    loading: () => <div className="h-96 animate-pulse bg-stone-100" />,
+  },
+);
 
 export function RichTextEditor({
   value,
@@ -9,16 +15,10 @@ export function RichTextEditor({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  if (!isClient) {
-    return null;
-  }
   return (
     <MdEditor
-      modelValue={value}
+      value={value}
+      preview
       onChange={(value) => onChange(value)}
       language="en-US"
       placeholder="Kirjoita kuvaus"

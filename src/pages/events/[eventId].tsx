@@ -3,6 +3,7 @@ import { api } from "@/utils/api";
 import { Layout } from "@/features/layout/Layout";
 import { Button } from "@/components/Button";
 import { ParticipantsTable } from "@/features/events/components/ParticipantsTable";
+import { MarkdownContent } from "@/features/events/components/MarkdownContent";
 import { PageHead } from "@/features/layout/PageHead";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { useEffect, useState } from "react";
@@ -771,9 +772,9 @@ export default function EventPage() {
                         </p>
                       )}
                       <Divider spacingY="md" />
-                      <div className="prose prose-sm text-brand-dark max-w-none text-base leading-relaxed">
-                        {event.description}
-                      </div>
+                      {event.description && (
+                        <MarkdownContent value={event.description} />
+                      )}
                     </div>
 
                     <div className="w-full min-w-0 border-t border-stone-200 pt-8 sm:flex-1 sm:basis-0 sm:border-t-0 sm:border-l sm:border-stone-200 sm:pt-0 sm:pl-6 lg:pl-8">
