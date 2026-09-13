@@ -67,16 +67,11 @@ export function EventCard({
         href={routes.app.events.event(event.id)}
         className="focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
       >
-        {/* Media banner. The fade under the title is the images' own
-            background colour rather than a dark scrim, so it reads as the
-            picture continuing rather than a bar dropped on top of it — and
-            the text sits on a light surface, dark, like the rest of the
-            card. `brand-sand` is also the banner's own background, so a
-            missing image leaves a plain sand block that the fade blends
-            into invisibly. */}
+        {/* The shared sand fade keeps text legible on uploaded photos as
+            well as illustrations, and blends into the missing-image fill. */}
         <div
-          className={`relative w-full overflow-hidden ${BANNER_ASPECT} ${
-            isClosed ? "bg-stone-200" : "bg-brand-sand"
+          className={`event-banner relative w-full overflow-hidden ${BANNER_ASPECT} ${
+            isClosed ? "event-banner--muted bg-stone-200" : "bg-brand-sand"
           }`}
         >
           <BannerImage
@@ -87,14 +82,14 @@ export function EventCard({
           />
 
           {event.draft && (
-            <span className="absolute top-0 left-0 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
+            <span className="absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
               Luonnos
             </span>
           )}
 
           {/* Corner stack, so a closed event that also carries an editorial
               tag shows both instead of one landing on top of the other. */}
-          <div className="absolute top-3 right-3 flex max-w-[80%] flex-col items-end gap-2">
+          <div className="absolute top-3 right-3 z-10 flex max-w-[80%] flex-col items-end gap-2">
             {/* A closed event still belongs in the list, but it is not
                 actionable — the drained image and this padlock say so
                 before any text is read. */}
@@ -119,29 +114,14 @@ export function EventCard({
             )}
           </div>
 
-          {/* Two layers rather than one gradient over the whole block: the
-              ramp is a fixed height that always sits directly above the
-              text, and the text itself gets an even ground underneath. A
-              single gradient spanning the box stretched with the content,
-              so a third line of text pushed the ramp's midpoint up into the
-              title and left it sitting on a half-transparent wash. This way
-              the ground grows with the content and the fade never changes
-              shape. */}
+          {/* The fade scales with banner width; the steady text surface
+              grows independently when the title or metadata wraps. */}
           <div className="absolute inset-x-0 bottom-0">
-            <div
-              className={`h-10 bg-linear-to-t to-transparent ${
-                isClosed ? "from-stone-200/95" : "from-brand-sand/91"
-              }`}
-              aria-hidden
-            />
-            <div
-              className={`px-4 pb-3 sm:px-5 ${
-                isClosed ? "bg-stone-200/95" : "bg-brand-sand/91"
-              }`}
-            >
+            <div className="event-banner-fade" aria-hidden />
+            <div className="event-banner-caption px-4 pb-3 sm:px-5">
               <h2
                 className={`line-clamp-2 text-base font-bold tracking-tight sm:text-lg ${
-                  isClosed ? "text-stone-500" : "text-brand-secondary"
+                  isClosed ? "text-stone-600" : "text-brand-secondary"
                 }`}
               >
                 {event.title}
@@ -150,7 +130,7 @@ export function EventCard({
                 people scan for before anything else. */}
               <div
                 className={`mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs sm:text-sm ${
-                  isClosed ? "text-stone-500" : "text-brand-dark"
+                  isClosed ? "text-stone-600" : "text-brand-dark"
                 }`}
               >
                 <p className="flex min-w-0 items-center gap-1.5">

@@ -695,11 +695,8 @@ export default function EventPage() {
                 : "surface-panel"
             }`}
           >
-            {/* The same banner the event wears on the front page: full-bleed
-                picture, the card's own sand fading up under the title, and
-                the editorial badge in the corner. Only the proportions
-                banner keeps the same 5:2 proportions as the cards. */}
-            <div className="bg-brand-sand relative aspect-[5/2] w-full overflow-hidden">
+            {/* Shared with the cards, with a longer fade for wider banners. */}
+            <div className="event-banner event-banner--detail bg-brand-sand relative aspect-[5/2] w-full overflow-hidden">
               {event && (
                 <EventBannerImage
                   key={event.imageId ?? "placeholder"}
@@ -710,7 +707,7 @@ export default function EventPage() {
 
               {event?.badgeText && !registrationClosed && (
                 <span
-                  className={`shadow-card absolute top-4 right-4 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                  className={`shadow-card absolute top-4 right-4 z-10 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
                 >
                   {event.badgeText}
                 </span>
@@ -718,11 +715,8 @@ export default function EventPage() {
 
               {event && (
                 <div className="absolute inset-x-0 bottom-0">
-                  <div
-                    className="from-brand-sand/91 h-10 bg-linear-to-t to-transparent"
-                    aria-hidden
-                  />
-                  <div className="bg-brand-sand/91 flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
+                  <div className="event-banner-fade" aria-hidden />
+                  <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
                     <h1 className="text-brand-dark text-2xl font-extrabold uppercase sm:text-3xl">
                       {event.title}
                     </h1>
