@@ -10,6 +10,7 @@ import {
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
 import { RaffleStatus, SignupStatus } from "@/generated/prisma/client";
+import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
 import { reconcileEventAllocations } from "../features/allocations/reconcileEventAllocations";
 import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
@@ -142,7 +143,7 @@ export const eventsRouter = router({
 
       // Create queue quota. NOTE! This is only a presentation and does not actually exist on the DB level.
       event.Quotas.push({
-        id: "queue",
+        id: QUEUE_QUOTA_ID,
         title: "Queue",
         sortId: Number.MAX_SAFE_INTEGER,
         eventId: event.id,
@@ -173,9 +174,13 @@ export const eventsRouter = router({
       // Signups waiting for allocation are represented in the queue.
       // In-progress signups stay in their quota because they hold a seat there.
       // Their details remain private in the public event response below.
-      const queueQuota = event.Quotas.find((quota) => quota.id === "queue");
+      const queueQuota = event.Quotas.find(
+        (quota) => quota.id === QUEUE_QUOTA_ID,
+      );
       if (!queueQuota) throw new Error("Queue quota not found");
-      for (const quota of event.Quotas.filter((item) => item.id !== "queue")) {
+      for (const quota of event.Quotas.filter(
+        (item) => item.id !== QUEUE_QUOTA_ID,
+      )) {
         const queued = quota.Signups.filter(
           (signup) =>
             signup.status === SignupStatus.PENDING ||

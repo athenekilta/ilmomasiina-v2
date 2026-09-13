@@ -14,6 +14,12 @@ type QuotaSeed = {
   /** How many signups to generate into this quota. May exceed size (queue). */
   signups: number;
   /**
+   * Signups waiting for a place rather than holding one. The event router
+   * gathers these into the queue quota, so this is what puts a figure on the
+   * "Jonossa" line.
+   */
+  waitlisted?: number;
+  /**
    * Whether this quota may take from the event's jokeripaikat (extraCapacity)
    * once its own places run out — right away, only after registration closes,
    * or never. Defaults to NEVER, same as the admin form.
@@ -58,7 +64,7 @@ const days = (n: number) => moment().add(n, "days").toDate();
 const hours = (n: number) => moment().add(n, "hours").toDate();
 
 /**
- * Nine events covering every state the front page can render: open, opening
+ * Thirteen events covering every state the front page can render: open, opening
  * later, already closed, full with a queue, raffle, long titles, and an event
  * that already happened but is still inside the 7 day window.
  *
@@ -236,6 +242,80 @@ const eventSeeds: EventSeed[] = [
       },
     ],
   },
+  /* Three events that exist to exercise the quota bars rather than the front
+     page: the states that are hard to reach by accident are quotas that are
+     nearly full, shared places that are nearly gone, and a full quota whose
+     members can still get in through the shared ones. */
+  {
+    title: "Jokeripaikat: kiintiöt loppumassa",
+    date: days(21),
+    registrationStartDate: days(-2),
+    registrationEndDate: days(9),
+    extraCapacity: 14,
+    location: "Otaniemi",
+    description:
+      "Molemmissa kiintiöissä on enää muutama oma paikka jäljellä, mutta yhteisiä paikkoja on runsaasti.",
+    quotas: [
+      { title: "Athene", size: 40, signups: 37, sharedPlaces: "IMMEDIATE" },
+      { title: "Prodeko", size: 40, signups: 38, sharedPlaces: "IMMEDIATE" },
+    ],
+  },
+  {
+    title: "Jokeripaikat: yhteisiä enää pari",
+    date: days(14),
+    registrationStartDate: days(-4),
+    registrationEndDate: days(3),
+    extraCapacity: 10,
+    location: "Otaniemi",
+    description:
+      "Molemmat kiintiöt ovat täynnä ja yli, joten yhteisistä paikoista on enää kaksi jäljellä.",
+    quotas: [
+      { title: "Athene", size: 40, signups: 44, sharedPlaces: "IMMEDIATE" },
+      { title: "Prodeko", size: 40, signups: 44, sharedPlaces: "IMMEDIATE" },
+    ],
+  },
+  {
+    title: "Jokeripaikat: kaikki täynnä, jono käynnissä",
+    date: days(18),
+    registrationStartDate: days(-6),
+    registrationEndDate: days(2),
+    extraCapacity: 12,
+    location: "Otaniemi",
+    description:
+      "Kiintiöt ja yhteiset paikat ovat kaikki täynnä, joten uudet ilmot menevät jonoon.",
+    quotas: [
+      {
+        title: "Athene",
+        size: 40,
+        signups: 46,
+        waitlisted: 7,
+        sharedPlaces: "IMMEDIATE",
+      },
+      {
+        title: "Prodeko",
+        size: 40,
+        signups: 46,
+        waitlisted: 5,
+        sharedPlaces: "IMMEDIATE",
+      },
+    ],
+  },
+  {
+    title: "Jokeripaikat: neljä kiintiötä",
+    date: days(28),
+    registrationStartDate: days(-1),
+    registrationEndDate: days(12),
+    extraCapacity: 25,
+    location: "Otaniemi",
+    description:
+      "Athene on täynnä mutta pääsee yhä yhteisiin paikkoihin. Lukkarit ei pääse, joten sen rivi päättyy omaan palkkiinsa.",
+    quotas: [
+      { title: "Athene", size: 40, signups: 49, sharedPlaces: "IMMEDIATE" },
+      { title: "Prodeko", size: 40, signups: 22, sharedPlaces: "IMMEDIATE" },
+      { title: "Lukkarit ja valokuvaajat", size: 6, signups: 4 },
+      { title: "Muut", size: 3, signups: 3, sharedPlaces: "IMMEDIATE" },
+    ],
+  },
   {
     title: "Menneet sitsit (3 pv sitten)",
     date: days(-3),
@@ -257,9 +337,13 @@ async function addTestEvents() {
   const titles = eventSeeds.map((e) => e.title);
   const existing = await prisma.event.findMany({
     where: { title: { in: titles } },
-    select: { id: true },
+    select: { id: true, title: true },
   });
   const existingIds = existing.map((e) => e.id);
+  // Keep each event's id across runs: re-seeding is how the dates are
+  // refreshed, and an id that moved would leave every open tab, bookmark and
+  // pasted link pointing at an event that no longer exists.
+  const idByTitle = new Map(existing.map((e) => [e.title, e.id]));
 
   if (existingIds.length > 0) {
     const quotas = await prisma.quota.findMany({
@@ -279,22 +363,23 @@ async function addTestEvents() {
     await prisma.raffleSimulation.deleteMany({
       where: { eventId: { in: existingIds } },
     });
-    await prisma.event.deleteMany({ where: { id: { in: existingIds } } });
 
-    console.log(`Poistettiin ${existingIds.length} aiempaa testitapahtumaa`);
+    console.log(`Tyhjennettiin ${existingIds.length} aiempaa testitapahtumaa`);
   }
 
   for (const seed of eventSeeds) {
     const { quotas, questions, ...eventData } = seed;
+    const data = {
+      ...eventData,
+      extraCapacity: eventData.extraCapacity ?? 0,
+      draft: eventData.draft ?? false,
+      verificationEmail: "Kiitos ilmoittautumisesta! Nähdään tapahtumassa.",
+    };
+    const existingId = idByTitle.get(seed.title);
 
-    const event = await prisma.event.create({
-      data: {
-        ...eventData,
-        extraCapacity: eventData.extraCapacity ?? 0,
-        draft: eventData.draft ?? false,
-        verificationEmail: "Kiitos ilmoittautumisesta! Nähdään tapahtumassa.",
-      },
-    });
+    const event = existingId
+      ? await prisma.event.update({ where: { id: existingId }, data })
+      : await prisma.event.create({ data });
 
     const createdQuestions = questions?.length
       ? await Promise.all(
@@ -325,7 +410,9 @@ async function addTestEvents() {
         },
       });
 
-      for (let s = 0; s < quotaSeed.signups; s++) {
+      const confirmed = quotaSeed.signups;
+      const waitlisted = quotaSeed.waitlisted ?? 0;
+      for (let s = 0; s < confirmed + waitlisted; s++) {
         const signup = await prisma.signup.create({
           data: {
             quotaId: quota.id,
@@ -335,7 +422,7 @@ async function addTestEvents() {
             completedAt: moment()
               .subtract(faker.number.int({ min: 1, max: 5000 }), "minutes")
               .toDate(),
-            status: "CONFIRMED",
+            status: s < confirmed ? "CONFIRMED" : "WAITLISTED",
           },
         });
 

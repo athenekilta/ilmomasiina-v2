@@ -23,6 +23,9 @@ import { Icon } from "@/components/Icon";
 import { Divider } from "@/components/Divider";
 import { getEventImage } from "@/features/eventCard/eventCardImage";
 import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
+import { QuotaBars } from "@/features/events/quotaBars/QuotaBars";
+import { buildQuotaBars } from "@/features/events/quotaBars/quotaBarModel";
+import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
 
 type SignupConflictChoice = {
   candidateSignupId: string;
@@ -40,15 +43,6 @@ type SignupConflictChoice = {
     position: number;
   };
 };
-
-const quotaSegmentColors = [
-  { className: "bg-brand-primary" },
-  { className: "bg-[#66859a]" },
-  { className: "bg-[#a18452]" },
-  { className: "bg-[#806f91]" },
-  { className: "bg-[#a56f63]" },
-  { className: "bg-[#568b85]" },
-];
 
 function Registration({
   event,
@@ -93,41 +87,15 @@ function Registration({
   const signupStatus = signupStatusQuery.data;
   const hasExistingSignup = signupStatus !== null && signupStatus !== undefined;
 
-  const quotas = event.Quotas.filter((quota) => quota.id !== "queue");
-  const finiteQuotas = quotas.filter(
-    (quota): quota is typeof quota & { size: number } => quota.size !== null,
-  );
-  const hasUnlimitedQuota = finiteQuotas.length !== quotas.length;
+  const quotas = event.Quotas.filter((quota) => quota.id !== QUEUE_QUOTA_ID);
   const seatHoldingSignupCount = (quota: (typeof quotas)[number]) =>
     quota.seatHoldingSignupCount;
-  const totalCapacity =
-    finiteQuotas.reduce((sum, quota) => sum + quota.size, 0) +
-    event.extraCapacity;
-  const occupiedPlaces = finiteQuotas.reduce(
-    (sum, quota) => sum + seatHoldingSignupCount(quota),
-    0,
-  );
-  const protectedPlacesInUse = finiteQuotas.reduce(
-    (sum, quota) => sum + Math.min(seatHoldingSignupCount(quota), quota.size),
-    0,
-  );
-  const sharedPlacesInUse = Math.max(occupiedPlaces - protectedPlacesInUse, 0);
-  const sharedPlacesRemaining = Math.max(
-    event.extraCapacity - sharedPlacesInUse,
-    0,
-  );
-  const sharedPlacesAreFull = sharedPlacesRemaining === 0;
-  const quotaCapacitySegments = finiteQuotas.map((quota, index) => {
-    const signupCount = seatHoldingSignupCount(quota);
-    const protectedPlacesUsed = Math.min(signupCount, quota.size);
-
-    return {
-      quota,
-      signupCount,
-      reservedPlacesRemaining: quota.size - protectedPlacesUsed,
-      color: quotaSegmentColors[index % quotaSegmentColors.length]!,
-    };
-  });
+  // One source of truth for the capacity arithmetic: the bars draw this same
+  // model, so the buttons and the bars can never disagree about whether a
+  // signup still fits.
+  const quotaBars = buildQuotaBars(event);
+  const sharedPlacesAreFull =
+    quotaBars.shared === null || quotaBars.shared.remaining === 0;
 
   // if no stored user, start in editing mode
   useEffect(() => {
@@ -218,15 +186,23 @@ function Registration({
   return (
     <div className="mb-5">
       <div>
-        <h2 className="text-brand-dark mb-1 text-lg font-semibold">Ilmo</h2>
-        <p className="text-brand-primary mb-1 text-sm font-medium">
-          {formatRegistration(
-            event.registrationStartDate,
-            event.registrationEndDate,
-          )}
-        </p>
+        {/* One card for the whole signup: what this is, when it closes, who
+            you are, and the choice. Split across four blocks it repeated its
+            own heading twice and left the deadline owned by nothing. */}
+        <div className="surface-panel mb-3 flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-brand-dark text-base font-extrabold tracking-[0.015em] uppercase">
+              Ilmo
+            </h2>
+            <p className="text-brand-primary text-[13px] font-semibold">
+              {formatRegistration(
+                event.registrationStartDate,
+                event.registrationEndDate,
+              )}
+            </p>
+          </div>
         {isEditingUserData ? (
-          <form className="surface-muted mb-3 p-4" onSubmit={saveUserData}>
+          <form className="surface-muted p-4" onSubmit={saveUserData}>
             <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
               Täydennä ilmotietosi
             </h3>
@@ -286,7 +262,7 @@ function Registration({
           </form>
         ) : signupStatus?.state === "COMPLETED" ? (
           <div
-            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+            className="surface-muted text-brand-dark/80 px-3 py-2 text-sm"
             role="status"
           >
             <p>
@@ -308,7 +284,7 @@ function Registration({
           </div>
         ) : signupStatus?.state === "IN_PROGRESS" ? (
           <div
-            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+            className="surface-muted text-brand-dark/80 px-3 py-2 text-sm"
             role="status"
           >
             <p>
@@ -334,146 +310,54 @@ function Registration({
             </div>
           </div>
         ) : (
-          <p className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm">
-            Hei{" "}
-            <span className="font-medium text-gray-900">
-              {storedUser?.name}
-            </span>
-            , olet ilmoamassa sähköpostilla{" "}
-            <span className="text-gray-900">{storedUser?.email}</span>.{" "}
-            <button
+          <div className="surface-muted flex items-center justify-between gap-3 p-3">
+            <p className="text-brand-dark/80 min-w-0 text-[12.5px] leading-snug">
+              Ilmoat nimellä{" "}
+              <span className="text-brand-dark font-bold">
+                {storedUser?.name}
+              </span>
+              <br />
+              <span className="break-all">{storedUser?.email}</span>
+            </p>
+            <Button
+              type="button"
+              size="small"
+              color="neutral"
+              variant="bordered"
+              className="shrink-0"
               onClick={() => setIsEditingUserData(true)}
-              className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
             >
               Vaihda
-            </button>
-          </p>
+            </Button>
+          </div>
         )}
-        <div className="surface-muted mb-3 space-y-2 p-3 text-sm">
-          {hasUnlimitedQuota ? (
-            <>
-              <p className="text-brand-dark font-semibold">
-                Paikkamäärää ei ole rajattu
-              </p>
-              <ul className="space-y-0.5 text-xs text-gray-600">
-                {quotas.map((quota) => (
-                  <li key={quota.id}>
-                    {quota.title}: {seatHoldingSignupCount(quota)} ilmonnutta
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <>
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-brand-dark font-semibold">
-                  Paikkoja yhteensä: {totalCapacity}
-                </p>
-                <span className="shrink-0 text-xs text-gray-600 tabular-nums">
-                  {occupiedPlaces} / {totalCapacity} varattu
-                </span>
-              </div>
+        {/* A rule and a label between the identity panel and the buttons: a
+            beige box running straight into a stack of green read as one
+            undifferentiated block. The label carries the context and the
+            button carries what varies — the quota names when there is a
+            choice, the verb when there is only one quota. */}
+        {(!hasExistingSignup || showDemoControls) && !isEditingUserData && (
+          <div className="flex flex-col gap-3 border-t border-stone-100 pt-4">
+            <h3 className="text-sm font-bold tracking-[0.06em] text-stone-600 uppercase">
+              {quotas.length > 1
+                ? "Ilmoa omaan kiintiöösi"
+                : (quotas[0]?.title ?? "Ilmo")}
+            </h3>
+            <div className="flex flex-col gap-2">
+              {quotas.map((quota) => {
+                const protectedPlacesAreFull =
+                  quota.size !== null &&
+                  seatHoldingSignupCount(quota) >= quota.size;
+                const signupGoesToQueue =
+                  protectedPlacesAreFull &&
+                  (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
+                    sharedPlacesAreFull);
+                // With one quota the heading above already names it, so the
+                // button says the act instead of repeating the name.
+                const label = quotas.length > 1 ? quota.title : "Ilmoa";
 
-              <div>
-                <div
-                  className="flex h-3 overflow-hidden rounded-full bg-stone-200"
-                  role="img"
-                  aria-label={`${occupiedPlaces} / ${totalCapacity} paikkaa varattu`}
-                >
-                  {quotaCapacitySegments
-                    .filter(({ signupCount }) => signupCount > 0)
-                    .map(({ quota, signupCount, color }) => (
-                      <div
-                        key={`occupied-${quota.id}`}
-                        className={`h-full shrink-0 border-r border-white last:border-r-0 ${color.className}`}
-                        style={{
-                          width: `${(signupCount / totalCapacity) * 100}%`,
-                        }}
-                        title={`${quota.title}: ${signupCount} ilmonnutta`}
-                      />
-                    ))}
-                </div>
-                <div className="flex h-0.5 overflow-hidden rounded-full">
-                  <div
-                    className="h-full shrink-0"
-                    style={{
-                      width: `${(occupiedPlaces / totalCapacity) * 100}%`,
-                    }}
-                  />
-                  {quotaCapacitySegments
-                    .filter(
-                      ({ reservedPlacesRemaining }) =>
-                        reservedPlacesRemaining > 0,
-                    )
-                    .map(({ quota, reservedPlacesRemaining, color }) => (
-                      <div
-                        key={`reserved-${quota.id}`}
-                        className={`h-full shrink-0 ${color.className}`}
-                        style={{
-                          width: `${(reservedPlacesRemaining / totalCapacity) * 100}%`,
-                        }}
-                        title={`${quota.title}: ${reservedPlacesRemaining} kiintiöpaikkaa jäljellä`}
-                      />
-                    ))}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-                {quotaCapacitySegments.map(({ quota, color }) => (
-                  <span
-                    key={quota.id}
-                    className="flex shrink-0 items-center gap-1.5"
-                  >
-                    <span
-                      className={`h-2.5 w-2.5 rounded-sm ${color.className}`}
-                      aria-hidden
-                    />
-                    {quota.title}
-                  </span>
-                ))}
-                <span className="flex shrink-0 items-center gap-1.5">
-                  <span className="flex h-2.5 w-4 items-end" aria-hidden>
-                    <span className="bg-brand-primary h-0.5 w-full rounded-full" />
-                  </span>
-                  Kiintiölle varatut paikat
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-        {!isEditingUserData && (
-          <div className="flex flex-col gap-2">
-            {quotas.map((quota) => {
-              const signupCount = seatHoldingSignupCount(quota);
-              const protectedPlacesAreFull =
-                quota.size !== null && signupCount >= quota.size;
-              const showExactAvailablePlaces =
-                quota.size !== null &&
-                (quota.sharedPlacesAllocation === "NEVER" ||
-                  event.extraCapacity === 0);
-              const signupGoesToQueue =
-                protectedPlacesAreFull &&
-                (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
-                  sharedPlacesAreFull);
-
-              return (
-                <div
-                  key={quota.id}
-                  className="surface-muted flex items-center justify-between gap-3 p-2 sm:px-3 sm:py-2"
-                >
-                  <div className="min-w-0">
-                    <h3 className="text-brand-dark truncate text-sm font-semibold">
-                      {quota.title}
-                    </h3>
-                    <p className="text-xs text-gray-600 tabular-nums">
-                      {showExactAvailablePlaces
-                        ? `${signupCount} / ${quota.size} ilmonnutta`
-                        : `${signupCount} ilmonnutta`}
-                      {quota.waitlistedSignupCount > 0 &&
-                        ` · ${quota.waitlistedSignupCount} jonossa`}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                return (
+                  <div key={quota.id} className="flex items-center gap-1">
                     {showDemoControls && (
                       <Button
                         type="button"
@@ -484,9 +368,7 @@ function Registration({
                         title={`Poista demoilmo kiintiöstä ${quota.title}`}
                         aria-label={`Poista demoilmo kiintiöstä ${quota.title}`}
                         onClick={() =>
-                          removeDemoSignupMutation.mutate({
-                            quotaId: quota.id,
-                          })
+                          removeDemoSignupMutation.mutate({ quotaId: quota.id })
                         }
                         disabled={
                           addDemoSignupMutation.isPending ||
@@ -501,19 +383,30 @@ function Registration({
                         −1
                       </Button>
                     )}
-                    {!hasExistingSignup && (
+                    {hasExistingSignup ? (
+                      // Already signed up: nothing to click, but the demo
+                      // controls still need to say which quota they act on.
+                      <span className="min-w-0 grow truncate px-2 text-sm font-semibold text-stone-500">
+                        {quota.title}
+                      </span>
+                    ) : (
                       <Button
-                        size="small"
-                        className="shrink-0 px-3"
+                        className="min-w-0 grow"
                         color="primary"
                         onClick={handleSubmit(getHandleSignup(quota.id))}
-                        disabled={!isRegistrationOpen || !isValid || isSubmitting}
+                        disabled={
+                          !isRegistrationOpen || !isValid || isSubmitting
+                        }
                         loading={
                           isSubmitting &&
                           createSignupMutation.variables?.quotaId === quota.id
                         }
                       >
-                        {signupGoesToQueue ? "Ilmoa jonoon" : "Ilmoa"}
+                        <span className="truncate">
+                          {signupGoesToQueue
+                            ? `${label} — jonoon`
+                            : label}
+                        </span>
                       </Button>
                     )}
                     {showDemoControls && (
@@ -541,11 +434,14 @@ function Registration({
                       </Button>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        )}
+          )}
+        </div>
+
+        <QuotaBars event={event} />
       </div>
 
       {signupConflict && (
