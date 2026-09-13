@@ -24,8 +24,8 @@ export function checkUploadAccess(
   applicationUrl: string,
   role?: string,
 ) {
-  if (role !== "admin")
-    throw new ImageRequestError(403, "Vain ylläpitäjä voi lisätä kuvia.");
+  if (role !== "event_editor" && role !== "superadmin")
+    throw new ImageRequestError(403, "Vain tapahtuman muokkaaja voi lisätä kuvia.");
   if (origin !== new URL(applicationUrl).origin)
     throw new ImageRequestError(403, "Virheellinen pyynnön alkuperä.");
 }

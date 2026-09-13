@@ -12,15 +12,16 @@ function request(headers = {}) {
   }) as unknown as IncomingMessage & PassThrough;
 }
 
-test("requires a current admin role and exact configured origin", () => {
-  assert.doesNotThrow(() =>
-    checkUploadAccess(
-      "https://events.example",
-      "https://events.example/path",
-      "admin",
-    ),
-  );
-  for (const role of [undefined, "user"])
+test("requires an event editor or superadmin role and exact configured origin", () => {
+  for (const role of ["event_editor", "superadmin"])
+    assert.doesNotThrow(() =>
+      checkUploadAccess(
+        "https://events.example",
+        "https://events.example/path",
+        role,
+      ),
+    );
+  for (const role of [undefined, "user", "admin"])
     assert.throws(
       () =>
         checkUploadAccess(
@@ -37,7 +38,7 @@ test("requires a current admin role and exact configured origin", () => {
     "http://events.example",
   ])
     assert.throws(
-      () => checkUploadAccess(origin, "https://events.example", "admin"),
+      () => checkUploadAccess(origin, "https://events.example", "event_editor"),
       ImageRequestError,
     );
 });
