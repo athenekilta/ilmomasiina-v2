@@ -4,6 +4,7 @@ import { Button } from "@/components/Button";
 import { FieldSet } from "@/components/FieldSet";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
+import { getEventImage } from "@/features/eventCard/eventCardImage";
 import type { BadgeTone } from "@/generated/prisma/client";
 import {
   EVENT_IMAGE_ACCEPT,
@@ -38,7 +39,7 @@ function ImageControls({
         >
           {selection.image ? "Vaihda kuva" : "Valitse kuva"}
         </Button>
-        {location === "banner" && (
+        {location === "banner" && selection.image && (
           <Button
             ref={removeButtonRef}
             type="button"
@@ -124,22 +125,22 @@ export function EventImageField({
 
 export function EventImageBanner({
   selection,
+  eventId,
   badgeText,
   badgeTone,
 }: {
   selection: EventImageSelection;
+  eventId?: number;
   badgeText?: string;
   badgeTone: BadgeTone;
 }) {
-  if (!selection.image) return null;
-
   return (
     <div>
       <div className="bg-brand-sand rounded-t-card relative aspect-[5/2] w-full overflow-hidden">
         {/* A local blob URL needs no server image optimization. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={selection.image.url}
+          src={selection.image?.url ?? getEventImage(eventId ?? 0)}
           alt="Tapahtumakuvan esikatselu"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />

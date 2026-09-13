@@ -209,6 +209,7 @@ export function EventForm({ editId }: EventFormProps) {
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
       <EventImageBanner
         selection={imageSelection}
+        eventId={editId}
         badgeText={badgeText}
         badgeTone={badgeTone}
       />
