@@ -19,6 +19,7 @@
     "add-fake-data": "tsx src/scripts/add-fake-data.ts",
     "add-test-events": "tsx src/scripts/add-test-events.ts",
     "delete-signups": "tsx src/scripts/delete-signups.ts",
+    "test:quota-bars": "node --import tsx --test src/features/events/quotaBars/*.test.ts",
     "test:questions": "tsx --test src/features/events/utils/questionAnswers.test.ts",
     "studio": "prisma studio",
     "test:images": "node --import tsx --test src/server/features/eventImages/*.test.ts"

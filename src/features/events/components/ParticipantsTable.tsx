@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { SignupRow } from "@/features/events/components/SingupRow";
 import { OriginalQuotaTitle } from "@/features/events/utils/utils";
 import type { RouteOutput } from "@/types/types";
+import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
 
 export function ParticipantsTable({
   event,
@@ -20,11 +21,11 @@ export function ParticipantsTable({
     <div className="space-y-5">
       <h2 className="text-brand-dark text-lg font-semibold">Ilmonneet</h2>
       {event.Quotas.map(
-        (quota) => !(quota.id == "queue" && quota.signupCount == 0) && (
+        (quota) => !(quota.id === QUEUE_QUOTA_ID && quota.signupCount == 0) && (
             <div key={quota.id} className="surface-muted overflow-hidden">
               <div className="text-brand-dark flex items-center justify-between border-b border-stone-300/70 px-4 py-3 text-base font-semibold">
                 <h3 className="truncate">{quota.title}</h3>
-                {quota.id !== "queue" ? (
+                {quota.id !== QUEUE_QUOTA_ID ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
                     {quota.signupCount} ilmonnutta
                   </span>
@@ -59,7 +60,7 @@ export function ParticipantsTable({
                         <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                           Ilmoittautumisaika
                         </th>
-                        {quota.id === "queue" && (
+                        {quota.id === QUEUE_QUOTA_ID && (
                           <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
                             Kiintiö
                           </th>
@@ -97,7 +98,7 @@ export function ParticipantsTable({
                               );
                             })}
                             <SignupRow signup={signup} rowStyle={rowStyle} />
-                            {quota.id === "queue" && (
+                            {quota.id === QUEUE_QUOTA_ID && (
                               <td className={rowStyle}>
                                 {OriginalQuotaTitle(
                                   event.Quotas,
@@ -112,7 +113,7 @@ export function ParticipantsTable({
                   </table>
                 ) : (
                   <p className="px-3 py-3 text-sm text-gray-600">
-                    {quota.id === "queue" && quota.signupCount > 0
+                    {quota.id === QUEUE_QUOTA_ID && quota.signupCount > 0
                       ? "Ilmoittajien tiedot näkyvät vahvistuksen jälkeen"
                       : "Ei vielä osallistujia"}
                   </p>

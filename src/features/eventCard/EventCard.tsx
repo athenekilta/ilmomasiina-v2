@@ -9,7 +9,7 @@ import { type EnrichedEvent } from "./eventCardVariant";
 import { getEventImage } from "./eventCardImage";
 import { getEventFill } from "./eventFill";
 import { BADGE_TONE_CLASS } from "./badgeTone";
-import { EventFillIndicator } from "./EventFillIndicator";
+import { EventCapacityBar } from "./EventCapacityBar";
 import { getRegistrationStatus } from "./registrationStatus";
 
 /* A real, fixed aspect ratio rather than a min-height fighting for
@@ -191,12 +191,20 @@ export function EventCard({
                  three, which is what lets these cards sit quietly at the
                  bottom of the page. */
               <div className="mt-3 min-w-0">
-                {!isClosed && <EventFillIndicator fill={fill} />}
-                <p
-                  className={`truncate text-sm text-gray-500 ${isClosed ? "" : "mt-1.5"}`}
-                >
-                  {fill.countText}
-                </p>
+                {isClosed ? (
+                  <EventCapacityBar fill={fill} closed />
+                ) : (
+                  <>
+                    <EventCapacityBar fill={fill} />
+                    {/* The only place the card says this, and the fading bar
+                        is a mark nothing on the front page explains. */}
+                    {fill.capacity === null && (
+                      <p className="mt-1.5 truncate text-xs text-gray-400">
+                        Ei paikkarajaa
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
