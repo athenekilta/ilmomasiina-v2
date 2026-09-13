@@ -61,7 +61,10 @@ function Registration({
 }) {
   const router = useRouter();
   const apiContext = api.useContext();
-  const { isRegistrationOpen } = RegistrationDate(event, now ?? undefined);
+  const { isRegistrationOpen, isRegistrationClosed } = RegistrationDate(
+    event,
+    now ?? undefined,
+  );
 
   const alert = useAlert();
 
@@ -250,7 +253,7 @@ function Registration({
             event.registrationEndDate,
           )}
         </p>
-        {isEditingUserData ? (
+        {isEditingUserData && !isRegistrationClosed ? (
           <form className="surface-muted mb-3 p-4" onSubmit={saveUserData}>
             <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
               Täydennä ilmotietosi
@@ -319,37 +322,46 @@ function Registration({
               <br />
               Olet ilmonnut sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
-              {!signupStatus.canEditDirectly &&
-                " Muokkaa ilmoa sähköpostista löytyvällä linkillä."}
-            </p>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              {signupStatus.canEditDirectly && signupStatus.id ? (
-                <Link
-                  href={`/events/${event.id}/${signupStatus.id}`}
-                  className="text-brand-primary hover:underline"
-                >
-                  Muokkaa ilmoa
-                </Link>
+              {isRegistrationClosed ? (
+                <>
+                  <br />
+                  Ilmo on päättynyt, eikä ilmoa voi enää muokata.
+                </>
               ) : (
+                !signupStatus.canEditDirectly &&
+                " Muokkaa ilmoa sähköpostista löytyvällä linkillä."
+              )}
+            </p>
+            {!isRegistrationClosed && (
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                {signupStatus.canEditDirectly && signupStatus.id ? (
+                  <Link
+                    href={`/events/${event.id}/${signupStatus.id}`}
+                    className="text-brand-primary hover:underline"
+                  >
+                    Muokkaa ilmoa
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestSignupAccessEmail}
+                    disabled={sendSignupAccessEmailMutation.isPending}
+                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {sendSignupAccessEmailMutation.isPending
+                      ? "Lähetetään linkkiä…"
+                      : "Lähetä muokkauslinkki"}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={requestSignupAccessEmail}
-                  disabled={sendSignupAccessEmailMutation.isPending}
-                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                  onClick={() => setIsEditingUserData(true)}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
                 >
-                  {sendSignupAccessEmailMutation.isPending
-                    ? "Lähetetään linkkiä…"
-                    : "Lähetä muokkauslinkki"}
+                  Uusi ilmo
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setIsEditingUserData(true)}
-                className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
-              >
-                Uusi ilmo
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         ) : signupStatus?.state === "IN_PROGRESS" ? (
           <div
@@ -359,39 +371,54 @@ function Registration({
             <p>
               <span className="font-medium text-gray-900">Ilmo kesken!</span>
               <br />
-              Sinulla on keskeneräinen ilmoittautuminen sähköpostilla{" "}
+              Sinulla on keskeneräinen ilmo sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
+              {isRegistrationClosed && (
+                <>
+                  <br />
+                  Ilmo on päättynyt, eikä ilmoa voi enää muokata.
+                </>
+              )}
             </p>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-              {signupStatus.canEditDirectly && signupStatus.id ? (
-                <Link
-                  href={`/events/${event.id}/${signupStatus.id}`}
-                  className="text-brand-primary hover:underline"
-                >
-                  Viimeistele ilmo
-                </Link>
-              ) : (
+            {!isRegistrationClosed && (
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                {signupStatus.canEditDirectly && signupStatus.id ? (
+                  <Link
+                    href={`/events/${event.id}/${signupStatus.id}`}
+                    className="text-brand-primary hover:underline"
+                  >
+                    Viimeistele ilmo
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestSignupAccessEmail}
+                    disabled={sendSignupAccessEmailMutation.isPending}
+                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {sendSignupAccessEmailMutation.isPending
+                      ? "Lähetetään linkkiä…"
+                      : "Lähetä muokkauslinkki"}
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  onClick={requestSignupAccessEmail}
-                  disabled={sendSignupAccessEmailMutation.isPending}
-                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                  onClick={() => setIsEditingUserData(true)}
+                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
                 >
-                  {sendSignupAccessEmailMutation.isPending
-                    ? "Lähetetään linkkiä…"
-                    : "Lähetä muokkauslinkki"}
+                  Uusi ilmo
                 </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setIsEditingUserData(true)}
-                className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
-              >
-                Uusi ilmo
-              </button>
-            </div>
+              </div>
+            )}
           </div>
+        ) : isRegistrationClosed ? (
+          <p
+            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+            role="status"
+          >
+            Ilmo on päättynyt, eikä ilmoa voi enää muokata.
+          </p>
         ) : (
           <p className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm">
             Hei{" "}
@@ -560,7 +587,7 @@ function Registration({
                         −1
                       </Button>
                     )}
-                    {!hasExistingSignup && (
+                    {!hasExistingSignup && !isRegistrationClosed && (
                       <Button
                         size="small"
                         className="shrink-0 px-3"

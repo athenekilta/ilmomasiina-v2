@@ -131,7 +131,7 @@ export const getServerSideProps: GetServerSideProps<
   const definitions = [
     {
       id: "event-signup",
-      name: "Vahvistettu ilmoittautuminen",
+      name: "Vahvistettu ilmo",
       subject: EventSignupEmail.getSubject(eventProps),
       element: createElement(EventSignupEmail, eventProps),
     },

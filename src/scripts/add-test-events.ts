@@ -120,7 +120,7 @@ const eventSeeds: EventSeed[] = [
     registrationStartDate: days(-20),
     registrationEndDate: days(-2), // ilmo sulkeutunut
     extraCapacity: 0,
-    description: "Ilmoittautuminen on jo sulkeutunut, tervetuloa paikalle.",
+    description: "Ilmo on jo sulkeutunut, tervetuloa paikalle.",
     price: "12 €",
     location: "Zoom",
     signupsPublic: true,
@@ -138,7 +138,7 @@ const eventSeeds: EventSeed[] = [
     registrationStartDate: days(5), // ilmo aukeaa vasta
     registrationEndDate: days(25),
     extraCapacity: 8,
-    description: "Ilmoittautuminen aukeaa myöhemmin. Merkkaa kalenteriin!",
+    description: "Ilmo aukeaa myöhemmin. Merkkaa kalenteriin!",
     price: "0 €",
     location: "Flamingo",
     signupsPublic: true,

@@ -10,7 +10,7 @@ export type EventSignupAccessEmailProps = EventSignupDetailsProps & {
 };
 
 function getSubject(props: EventSignupAccessEmailProps) {
-  return `Muokkaa ilmoittautumistasi: ${props.eventName}`;
+  return `Muokkaa ilmoasi: ${props.eventName}`;
 }
 
 const EventSignupAccessEmail = Object.assign(
@@ -18,7 +18,7 @@ const EventSignupAccessEmail = Object.assign(
     return (
       <Email
         title={getSubject(props)}
-        preview={`Linkki tapahtuman ${props.eventName} ilmoittautumiseen`}
+        preview={`Linkki tapahtuman ${props.eventName} ilmoosi`}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
           Ilmolinkkisi

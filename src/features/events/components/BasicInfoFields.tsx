@@ -91,7 +91,7 @@ export function BasicInfoFields({
           />
         </div>
       </FieldSet>
-      <FieldSet title="Ilmoittautuminen alkaa">
+      <FieldSet title="Ilmo alkaa">
         <div className="grid w-full grid-cols-1 gap-6">
           <DateInput
             control={control}
@@ -107,7 +107,7 @@ export function BasicInfoFields({
           />
         </div>
       </FieldSet>
-      <FieldSet title="Ilmoittautuminen päättyy">
+      <FieldSet title="Ilmo päättyy">
         <div className="grid w-full grid-cols-1 gap-6">
           <DateInput
             control={control}
@@ -124,7 +124,7 @@ export function BasicInfoFields({
         </div>
       </FieldSet>
 
-      <FieldSet title="Ilmoittautumiset julkisia">
+      <FieldSet title="Ilmot julkisia">
         <Switch
           value={watch("signupsPublic")}
           onChange={(value) => setValue("signupsPublic", value)}

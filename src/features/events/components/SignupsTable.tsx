@@ -70,7 +70,7 @@ export function SignupsTable({
     [questions],
   );
   const moveSignup = api.signups.moveSignupToQuota.useMutation({
-    onSuccess: () => alert.success("Ilmoittautuminen siirretty"),
+    onSuccess: () => alert.success("Ilmo siirretty"),
     onError: (error) => alert.error(error.message),
   });
   const deleteSignup = api.signups.deleteSignupAsAdmin.useMutation({
@@ -82,7 +82,7 @@ export function SignupsTable({
         return next;
       });
       void apiContext.signups.getSignupByEventIds.invalidate({ eventId });
-      alert.success("Ilmoittautuminen poistettu");
+      alert.success("Ilmo poistettu");
     },
     onError: (error) => alert.error(error.message),
   });
@@ -225,13 +225,13 @@ export function SignupsTable({
 
       {signupToDelete && (
         <ConfirmationDialog
-          title="Poista ilmoittautuminen?"
+          title="Poista ilmo?"
           message={!currentDeleteTarget
-            ? "Ilmoittautuminen on jo poistettu muualla."
+            ? "Ilmo on jo poistettu muualla."
             : deleteTargetChanged
               ? `Ilmoittautumista on muutettu muualla. Tarkista käyttäjän ${currentDeleteTarget.name} uusimmat tiedot ennen poistoa. Kiintiö: ${quotas.find((quota) => quota.id === currentDeleteTarget.quotaId)?.title ?? currentDeleteTarget.quotaId}.`
               : `Haluatko varmasti poistaa käyttäjän ${signupToDelete.name} ilmoittautumisen? Tätä ei voi perua.`}
-          confirmLabel={!currentDeleteTarget ? "Sulje" : deleteTargetChanged ? "Tarkista uusimmat tiedot" : "Poista ilmoittautuminen"}
+          confirmLabel={!currentDeleteTarget ? "Sulje" : deleteTargetChanged ? "Tarkista uusimmat tiedot" : "Poista ilmo"}
           pending={deleteSignup.isPending}
           onCancelAction={() => setSignupToDelete(null)}
           onConfirmAction={() => {
@@ -356,7 +356,7 @@ function SignupTableRows({
           <button
             type="button"
             className="text-danger rounded-control focus-visible:ring-danger flex size-8 cursor-pointer items-center justify-center hover:bg-red-50 focus-visible:ring-2 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={`Poista käyttäjän ${signup.name} ilmoittautuminen`}
+            aria-label={`Poista käyttäjän ${signup.name} ilmo`}
             disabled={isDeleting}
             onClick={onDelete}
           >

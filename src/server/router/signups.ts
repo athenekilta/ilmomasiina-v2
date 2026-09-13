@@ -64,6 +64,16 @@ function ensureDevelopment() {
   }
 }
 
+
+function requireRegistrationNotClosed(registrationEndDate: Date) {
+  if (registrationEndDate.getTime() <= Date.now()) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Ilmo on päättynyt, eikä ilmoa voi enää muokata.",
+    });
+  }
+}
+
 async function deleteSignupAndReconcile(
   tx: Prisma.TransactionClient,
   signupId: string,
@@ -201,8 +211,10 @@ export const signupsRouter = router({
           })
         : null;
 
-      // Deliberately return the same response whether a matching signup exists.
-      if (!signup) return;
+      // Deliberately return the same response whether a matching signup exists
+      // or its registration has already closed.
+      if (!signup || RegistrationDate(signup.Quota.Event).isRegistrationClosed)
+        return;
 
       await (
         await ctx.mail.templates.eventSignupAccess({
@@ -578,7 +590,10 @@ export const signupsRouter = router({
 
         const candidate = await tx.signup.findUnique({
           where: { id: input.candidateSignupId },
-          include: { identity: { select: { email: true } } },
+          include: {
+            identity: { select: { email: true } },
+            Quota: { include: { Event: true } },
+          },
         });
         if (
           !candidate ||
@@ -592,6 +607,7 @@ export const signupsRouter = router({
         }
 
         await requireUserSignupAccess(tx, ctx.userSession, candidate);
+        requireRegistrationNotClosed(candidate.Quota.Event.registrationEndDate);
 
         const otherSignups = await tx.signup.findMany({
           where: {
@@ -683,6 +699,9 @@ export const signupsRouter = router({
           }
 
           await requireUserSignupAccess(tx, ctx.userSession, currentSignup);
+          requireRegistrationNotClosed(
+            currentSignup.Quota.Event.registrationEndDate,
+          );
 
           const questions = currentSignup.Quota.Event.Questions;
           const hasInvalidChoiceConfiguration = questions.some((question) => {
@@ -808,7 +827,12 @@ export const signupsRouter = router({
       const result = await ctx.prisma.$transaction(async (tx) => {
         const signup = await tx.signup.findUnique({
           where: { id: input.signupId },
-          select: { id: true },
+          select: {
+            id: true,
+            Quota: {
+              select: { Event: { select: { registrationEndDate: true } } },
+            },
+          },
         });
         if (!signup) {
           throw new TRPCError({
@@ -817,6 +841,7 @@ export const signupsRouter = router({
           });
         }
         await requireUserSignupAccess(tx, ctx.userSession, signup);
+        requireRegistrationNotClosed(signup.Quota.Event.registrationEndDate);
         return deleteSignupAndReconcile(tx, input.signupId);
       });
 

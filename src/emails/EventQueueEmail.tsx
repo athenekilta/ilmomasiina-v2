@@ -29,7 +29,7 @@ const EventQueueEmail = Object.assign(
     return (
       <Email
         title={getSubject(props)}
-        preview={`Ilmoittautumisesi tapahtumaan ${props.eventName} on jonossa`}
+        preview={`Ilmosi tapahtumaan ${props.eventName} on jonossa`}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
           Ilmosi on jonossa

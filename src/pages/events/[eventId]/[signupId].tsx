@@ -18,6 +18,8 @@ import { Layout } from "@/features/layout/Layout";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { PageHead } from "@/features/layout/PageHead";
+import { RegistrationDate } from "@/features/events/utils/utils";
+import { useNow } from "@/hooks/useNow";
 import Link from "next/link";
 import {
   decodeCheckboxAnswer,
@@ -27,6 +29,7 @@ import {
 
 function EditSignup() {
   const router = useRouter();
+  const now = useNow();
   const { eventId, signupId } = useQueryParams();
   const { existing } = router.query;
   const updateMutation = api.signups.updateSignup.useMutation();
@@ -82,6 +85,9 @@ function EditSignup() {
   );
 
   const { data: signup, isLoading, error } = signupQuery;
+  const isSignupEditingClosed =
+    !!signup &&
+    RegistrationDate(signup.event, now ?? undefined).isRegistrationClosed;
   const incoming = useMemo(
     () => (signup && !error ? signupDraftSnapshot(signup) : undefined),
     [signup, error],
@@ -137,7 +143,8 @@ function EditSignup() {
       draft.changedElsewhere ||
       needsReload ||
       error ||
-      deleteMutation.isPending
+      deleteMutation.isPending ||
+      isSignupEditingClosed
     )
       return;
     clearErrors("answers");
@@ -203,7 +210,8 @@ function EditSignup() {
       operationPending.current ||
       error ||
       isSubmitting ||
-      deleteMutation.isPending
+      deleteMutation.isPending ||
+      isSignupEditingClosed
     )
       return;
     operationPending.current = true;
@@ -255,7 +263,7 @@ function EditSignup() {
           <div className="surface-panel p-8 text-center sm:p-10">
             <p className="text-brand-dark text-base font-medium">
               {accessError
-                ? "Ilmoittautumislinkki ei ole voimassa."
+                ? "I ei ole voimassa."
                 : error?.data?.code === "FORBIDDEN" ||
                     error?.data?.code === "UNAUTHORIZED"
                   ? "Sinulla ei ole oikeutta nähdä tätä ilmoa."
@@ -302,24 +310,40 @@ function EditSignup() {
 
           <header className="mb-6">
             <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
-              {signup.completedAt === null ? "Viimeistele ilmo" : "Muokkaa ilmoa"}
+              {isSignupEditingClosed
+                ? "Ilmon tiedot"
+                : signup.completedAt === null
+                  ? "Viimeistele ilmo"
+                  : "Muokkaa ilmoa"}
             </h1>
             <p className="text-brand-primary mt-2 text-sm font-semibold sm:text-base">
               {signup.event.title}
             </p>
           </header>
 
-          {isExistingSignup && signup.completedAt === null && (
+          {isSignupEditingClosed && (
             <div
               className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"
             >
-              Löysimme jo sinun vahvistamattoman ilmosi tähän tapahtumaan.
-              Täydennä tai muokkaa tietoja alla ja vahvista lopuksi.
-              <br />
-              Väärä kiintiö? Poista ilmo ja tee uusi.
+              Ilmoittautuminen on päättynyt, eikä ilmoa voi enää muokata. Ilmosi
+              tiedot näkyvät alla.
             </div>
           )}
+
+          {isExistingSignup &&
+            signup.completedAt === null &&
+            !isSignupEditingClosed && (
+              <div
+                className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
+                role="status"
+              >
+                Löysimme jo sinun vahvistamattoman ilmosi tähän tapahtumaan.
+                Täydennä tai muokkaa tietoja alla ja vahvista lopuksi.
+                <br />
+                Väärä kiintiö? Poista ilmo ja tee uusi.
+              </div>
+            )}
 
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
             <div className="surface-muted p-4">
@@ -363,8 +387,18 @@ function EditSignup() {
           )}
           <form onSubmit={onSubmit} className="space-y-0">
             <fieldset
-              disabled={isSubmitting || deleteMutation.isPending || isReloading}
-              inert={isSubmitting || deleteMutation.isPending || isReloading}
+              disabled={
+                isSubmitting ||
+                deleteMutation.isPending ||
+                isReloading ||
+                isSignupEditingClosed
+              }
+              inert={
+                isSubmitting ||
+                deleteMutation.isPending ||
+                isReloading ||
+                isSignupEditingClosed
+              }
               className="min-w-0 border-0 p-0"
             >
               <input type="hidden" {...register("name")} />
@@ -556,40 +590,42 @@ function EditSignup() {
                 </p>
               </div>
 
-              <div className="space-y-4 border-t border-stone-200 pt-6">
-                <Button
-                  type="submit"
-                  color="primary"
-                  className="w-full py-2.5 text-[0.95rem]"
-                  loading={isSubmitting}
-                  disabled={
-                    draft.changedElsewhere ||
-                    needsReload ||
-                    !!error ||
-                    deleteMutation.isPending
-                  }
-                >
-                  Vahvista ilmo
-                </Button>
-                <p className="text-center text-xs text-stone-500 sm:text-left">
-                  <button
-                    type="button"
-                    className="text-danger font-medium underline-offset-2 transition-colors hover:text-rose-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
-                    onClick={() => setShowDeleteConfirm(true)}
+              {!isSignupEditingClosed && (
+                <div className="space-y-4 border-t border-stone-200 pt-6">
+                  <Button
+                    type="submit"
+                    color="primary"
+                    className="w-full py-2.5 text-[0.95rem]"
+                    loading={isSubmitting}
                     disabled={
-                      deleteMutation.isPending || isSubmitting || !!error
+                      draft.changedElsewhere ||
+                      needsReload ||
+                      !!error ||
+                      deleteMutation.isPending
                     }
                   >
-                    {deleteMutation.isPending ? "Poistetaan…" : "Poista ilmo"}
-                  </button>
-                </p>
-              </div>
+                    Vahvista ilmo
+                  </Button>
+                  <p className="text-center text-xs text-stone-500 sm:text-left">
+                    <button
+                      type="button"
+                      className="text-danger font-medium underline-offset-2 transition-colors hover:text-rose-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={
+                        deleteMutation.isPending || isSubmitting || !!error
+                      }
+                    >
+                      {deleteMutation.isPending ? "Poistetaan…" : "Poista ilmo"}
+                    </button>
+                  </p>
+                </div>
+              )}
             </fieldset>
           </form>
 
           {showDeleteConfirm && (
             <ConfirmationDialog
-              title="Poista ilmoittautuminen?"
+              title="Poista ilmo?"
               message="Haluatko varmasti poistaa ilmosi? Tätä ei voi perua."
               confirmLabel="Poista ilmo"
               onConfirmAction={handleDelete}

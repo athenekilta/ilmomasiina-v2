@@ -37,7 +37,7 @@ const EventQueueAcceptedEmail = Object.assign(
           Sait paikan tapahtumasta
         </Heading>
         <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
-          Tapahtumaan vapautui paikka, ja ilmoittautumisesi on nyt vahvistettu.
+          Tapahtumaan vapautui paikka, ja ilmosi on nyt vahvistettu.
         </Text>
 
         <EventSignupDetails {...props} />

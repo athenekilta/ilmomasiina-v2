@@ -19,7 +19,7 @@ const defaultProps: EventSignupEmailProps = {
 };
 
 function getSubject(props: EventSignupEmailProps) {
-  return `Ilmoittautumisesi on vahvistettu: ${props.eventName}`;
+  return `Ilmosi on vahvistettu: ${props.eventName}`;
 }
 
 const EventSignupEmail = Object.assign(
@@ -29,7 +29,7 @@ const EventSignupEmail = Object.assign(
     return (
       <Email
         title={getSubject(props)}
-        preview={`Ilmoittautumisesi tapahtumaan ${props.eventName} on vahvistettu`}
+        preview={`Ilmosi tapahtumaan ${props.eventName} on vahvistettu`}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
           Ilmo vahvistettu
