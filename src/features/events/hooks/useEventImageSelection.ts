@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export const EVENT_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+import {
+  EVENT_IMAGE_ACCEPT,
+  EVENT_IMAGE_ID_PATTERN,
+  MAX_IMAGE_BYTES,
+} from "../utils/eventImage";
+export { EVENT_IMAGE_ACCEPT } from "../utils/eventImage";
 
 type SelectedEventImage = { file: File; url: string };
 
-/** Local preview state only; files must not enter the event's JSON payload. */
-export function useEventImageSelection() {
+/** Files stay outside tRPC JSON; only processed upload IDs enter an event save. */
+export function useEventImageSelection(existingImageId: string | null = null) {
+  const [action, setAction] = useState<"keep" | "replace" | "remove">("keep");
+  const expectedImageId = useRef<string | null>(null);
+  const uploaded = useRef<{
+    file: File;
+    imageId: string;
+    expiresAt: number;
+  } | null>(null);
   const [image, setImage] = useState<SelectedEventImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDecoding, setIsDecoding] = useState(false);
@@ -82,6 +93,9 @@ export function useEventImageSelection() {
       }
       if (currentRequest !== requestId.current) return;
 
+      if (action === "keep") expectedImageId.current = existingImageId;
+      uploaded.current = null;
+      setAction("replace");
       setImage({ file, url });
       accepted = true;
     } catch {
@@ -97,6 +111,9 @@ export function useEventImageSelection() {
   }
 
   function removeImage() {
+    if (action === "keep") expectedImageId.current = existingImageId;
+    setAction("remove");
+    uploaded.current = null;
     requestId.current += 1;
     setImage(null);
     setError(null);
@@ -104,8 +121,75 @@ export function useEventImageSelection() {
     selectButtonRef.current?.focus({ preventScroll: true });
   }
 
+  async function uploadForSave(): Promise<{
+    imageId?: string | null;
+    expectedImageId?: string | null;
+  }> {
+    if (action === "keep") return {};
+    if (action === "remove")
+      return { imageId: null, expectedImageId: expectedImageId.current };
+    if (!image) throw new Error("Valitse kuvatiedosto.");
+    setError(null);
+    try {
+      if (
+        !uploaded.current ||
+        uploaded.current.file !== image.file ||
+        uploaded.current.expiresAt <= Date.now()
+      ) {
+        const response = await fetch("/api/event-images", {
+          method: "POST",
+          credentials: "same-origin",
+          body: image.file,
+          headers: { "Content-Type": image.file.type },
+        });
+        const result = (await response.json().catch(() => null)) as {
+          imageId?: string;
+          error?: string;
+        } | null;
+        if (
+          !response.ok ||
+          !result?.imageId ||
+          !EVENT_IMAGE_ID_PATTERN.test(result.imageId)
+        ) {
+          throw new Error(
+            result?.error || "Kuvan lataus epäonnistui. Yritä uudelleen.",
+          );
+        }
+        uploaded.current = {
+          file: image.file,
+          imageId: result.imageId,
+          expiresAt: Date.now() + 23 * 60 * 60 * 1000,
+        };
+      }
+      return {
+        imageId: uploaded.current.imageId,
+        expectedImageId: expectedImageId.current,
+      };
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Kuvan lataus epäonnistui.",
+      );
+      throw error;
+    }
+  }
+
+  function markSaved() {
+    requestId.current++;
+    setImage(null);
+    setAction("keep");
+    uploaded.current = null;
+    setError(null);
+  }
+
   return {
     image,
+    hasImage: !!image || (action !== "remove" && !!existingImageId),
+    savedImageId: action === "remove" ? null : existingImageId,
+    uploadForSave,
+    markSaved,
+    forgetUpload: () => {
+      uploaded.current = null;
+    },
     error,
     isDecoding,
     setInputRef,

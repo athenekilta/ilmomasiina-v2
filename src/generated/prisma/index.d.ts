@@ -49,6 +49,11 @@ export type EmailVerificationToken = $Result.DefaultSelection<Prisma.$EmailVerif
  */
 export type PasswordChangeToken = $Result.DefaultSelection<Prisma.$PasswordChangeTokenPayload>
 /**
+ * Model EventImage
+ * 
+ */
+export type EventImage = $Result.DefaultSelection<Prisma.$EventImagePayload>
+/**
  * Model Event
  * 
  */
@@ -110,6 +115,16 @@ export const RaffleStatus: {
 export type RaffleStatus = (typeof RaffleStatus)[keyof typeof RaffleStatus]
 
 
+export const EventImageState: {
+  PENDING: 'PENDING',
+  ATTACHED: 'ATTACHED',
+  RETIRED: 'RETIRED',
+  DELETING: 'DELETING'
+};
+
+export type EventImageState = (typeof EventImageState)[keyof typeof EventImageState]
+
+
 export const QuestionType: {
   text: 'text',
   textarea: 'textarea',
@@ -152,6 +167,10 @@ export const BadgeTone: typeof $Enums.BadgeTone
 export type RaffleStatus = $Enums.RaffleStatus
 
 export const RaffleStatus: typeof $Enums.RaffleStatus
+
+export type EventImageState = $Enums.EventImageState
+
+export const EventImageState: typeof $Enums.EventImageState
 
 export type QuestionType = $Enums.QuestionType
 
@@ -351,6 +370,16 @@ export class PrismaClient<
     * ```
     */
   get passwordChangeToken(): Prisma.PasswordChangeTokenDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.eventImage`: Exposes CRUD operations for the **EventImage** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EventImages
+    * const eventImages = await prisma.eventImage.findMany()
+    * ```
+    */
+  get eventImage(): Prisma.EventImageDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.event`: Exposes CRUD operations for the **Event** model.
@@ -852,6 +881,7 @@ export namespace Prisma {
     Verification: 'Verification',
     EmailVerificationToken: 'EmailVerificationToken',
     PasswordChangeToken: 'PasswordChangeToken',
+    EventImage: 'EventImage',
     Event: 'Event',
     Question: 'Question',
     Answer: 'Answer',
@@ -873,7 +903,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "example" | "user" | "account" | "session" | "verification" | "emailVerificationToken" | "passwordChangeToken" | "event" | "question" | "answer" | "signup" | "raffleSimulation" | "quota"
+      modelProps: "example" | "user" | "account" | "session" | "verification" | "emailVerificationToken" | "passwordChangeToken" | "eventImage" | "event" | "question" | "answer" | "signup" | "raffleSimulation" | "quota"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1392,6 +1422,80 @@ export namespace Prisma {
           count: {
             args: Prisma.PasswordChangeTokenCountArgs<ExtArgs>
             result: $Utils.Optional<PasswordChangeTokenCountAggregateOutputType> | number
+          }
+        }
+      }
+      EventImage: {
+        payload: Prisma.$EventImagePayload<ExtArgs>
+        fields: Prisma.EventImageFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EventImageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EventImageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          findFirst: {
+            args: Prisma.EventImageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EventImageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          findMany: {
+            args: Prisma.EventImageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>[]
+          }
+          create: {
+            args: Prisma.EventImageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          createMany: {
+            args: Prisma.EventImageCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EventImageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>[]
+          }
+          delete: {
+            args: Prisma.EventImageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          update: {
+            args: Prisma.EventImageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          deleteMany: {
+            args: Prisma.EventImageDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EventImageUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EventImageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>[]
+          }
+          upsert: {
+            args: Prisma.EventImageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventImagePayload>
+          }
+          aggregate: {
+            args: Prisma.EventImageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEventImage>
+          }
+          groupBy: {
+            args: Prisma.EventImageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EventImageGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EventImageCountArgs<ExtArgs>
+            result: $Utils.Optional<EventImageCountAggregateOutputType> | number
           }
         }
       }
@@ -1954,6 +2058,7 @@ export namespace Prisma {
     verification?: VerificationOmit
     emailVerificationToken?: EmailVerificationTokenOmit
     passwordChangeToken?: PasswordChangeTokenOmit
+    eventImage?: EventImageOmit
     event?: EventOmit
     question?: QuestionOmit
     answer?: AnswerOmit
@@ -9568,6 +9673,1069 @@ export namespace Prisma {
 
 
   /**
+   * Model EventImage
+   */
+
+  export type AggregateEventImage = {
+    _count: EventImageCountAggregateOutputType | null
+    _min: EventImageMinAggregateOutputType | null
+    _max: EventImageMaxAggregateOutputType | null
+  }
+
+  export type EventImageMinAggregateOutputType = {
+    id: string | null
+    uploaderId: string | null
+    createdAt: Date | null
+    state: $Enums.EventImageState | null
+    deleteAfter: Date | null
+  }
+
+  export type EventImageMaxAggregateOutputType = {
+    id: string | null
+    uploaderId: string | null
+    createdAt: Date | null
+    state: $Enums.EventImageState | null
+    deleteAfter: Date | null
+  }
+
+  export type EventImageCountAggregateOutputType = {
+    id: number
+    uploaderId: number
+    createdAt: number
+    state: number
+    deleteAfter: number
+    _all: number
+  }
+
+
+  export type EventImageMinAggregateInputType = {
+    id?: true
+    uploaderId?: true
+    createdAt?: true
+    state?: true
+    deleteAfter?: true
+  }
+
+  export type EventImageMaxAggregateInputType = {
+    id?: true
+    uploaderId?: true
+    createdAt?: true
+    state?: true
+    deleteAfter?: true
+  }
+
+  export type EventImageCountAggregateInputType = {
+    id?: true
+    uploaderId?: true
+    createdAt?: true
+    state?: true
+    deleteAfter?: true
+    _all?: true
+  }
+
+  export type EventImageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventImage to aggregate.
+     */
+    where?: EventImageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventImages to fetch.
+     */
+    orderBy?: EventImageOrderByWithRelationInput | EventImageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EventImageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventImages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventImages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EventImages
+    **/
+    _count?: true | EventImageCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EventImageMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EventImageMaxAggregateInputType
+  }
+
+  export type GetEventImageAggregateType<T extends EventImageAggregateArgs> = {
+        [P in keyof T & keyof AggregateEventImage]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEventImage[P]>
+      : GetScalarType<T[P], AggregateEventImage[P]>
+  }
+
+
+
+
+  export type EventImageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventImageWhereInput
+    orderBy?: EventImageOrderByWithAggregationInput | EventImageOrderByWithAggregationInput[]
+    by: EventImageScalarFieldEnum[] | EventImageScalarFieldEnum
+    having?: EventImageScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EventImageCountAggregateInputType | true
+    _min?: EventImageMinAggregateInputType
+    _max?: EventImageMaxAggregateInputType
+  }
+
+  export type EventImageGroupByOutputType = {
+    id: string
+    uploaderId: string
+    createdAt: Date
+    state: $Enums.EventImageState
+    deleteAfter: Date | null
+    _count: EventImageCountAggregateOutputType | null
+    _min: EventImageMinAggregateOutputType | null
+    _max: EventImageMaxAggregateOutputType | null
+  }
+
+  type GetEventImageGroupByPayload<T extends EventImageGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EventImageGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EventImageGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EventImageGroupByOutputType[P]>
+            : GetScalarType<T[P], EventImageGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EventImageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    uploaderId?: boolean
+    createdAt?: boolean
+    state?: boolean
+    deleteAfter?: boolean
+    event?: boolean | EventImage$eventArgs<ExtArgs>
+  }, ExtArgs["result"]["eventImage"]>
+
+  export type EventImageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    uploaderId?: boolean
+    createdAt?: boolean
+    state?: boolean
+    deleteAfter?: boolean
+  }, ExtArgs["result"]["eventImage"]>
+
+  export type EventImageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    uploaderId?: boolean
+    createdAt?: boolean
+    state?: boolean
+    deleteAfter?: boolean
+  }, ExtArgs["result"]["eventImage"]>
+
+  export type EventImageSelectScalar = {
+    id?: boolean
+    uploaderId?: boolean
+    createdAt?: boolean
+    state?: boolean
+    deleteAfter?: boolean
+  }
+
+  export type EventImageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "uploaderId" | "createdAt" | "state" | "deleteAfter", ExtArgs["result"]["eventImage"]>
+  export type EventImageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    event?: boolean | EventImage$eventArgs<ExtArgs>
+  }
+  export type EventImageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type EventImageIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $EventImagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EventImage"
+    objects: {
+      event: Prisma.$EventPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      uploaderId: string
+      createdAt: Date
+      state: $Enums.EventImageState
+      deleteAfter: Date | null
+    }, ExtArgs["result"]["eventImage"]>
+    composites: {}
+  }
+
+  type EventImageGetPayload<S extends boolean | null | undefined | EventImageDefaultArgs> = $Result.GetResult<Prisma.$EventImagePayload, S>
+
+  type EventImageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EventImageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EventImageCountAggregateInputType | true
+    }
+
+  export interface EventImageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EventImage'], meta: { name: 'EventImage' } }
+    /**
+     * Find zero or one EventImage that matches the filter.
+     * @param {EventImageFindUniqueArgs} args - Arguments to find a EventImage
+     * @example
+     * // Get one EventImage
+     * const eventImage = await prisma.eventImage.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EventImageFindUniqueArgs>(args: SelectSubset<T, EventImageFindUniqueArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EventImage that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EventImageFindUniqueOrThrowArgs} args - Arguments to find a EventImage
+     * @example
+     * // Get one EventImage
+     * const eventImage = await prisma.eventImage.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EventImageFindUniqueOrThrowArgs>(args: SelectSubset<T, EventImageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventImage that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageFindFirstArgs} args - Arguments to find a EventImage
+     * @example
+     * // Get one EventImage
+     * const eventImage = await prisma.eventImage.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EventImageFindFirstArgs>(args?: SelectSubset<T, EventImageFindFirstArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventImage that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageFindFirstOrThrowArgs} args - Arguments to find a EventImage
+     * @example
+     * // Get one EventImage
+     * const eventImage = await prisma.eventImage.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EventImageFindFirstOrThrowArgs>(args?: SelectSubset<T, EventImageFindFirstOrThrowArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EventImages that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EventImages
+     * const eventImages = await prisma.eventImage.findMany()
+     * 
+     * // Get first 10 EventImages
+     * const eventImages = await prisma.eventImage.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const eventImageWithIdOnly = await prisma.eventImage.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EventImageFindManyArgs>(args?: SelectSubset<T, EventImageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EventImage.
+     * @param {EventImageCreateArgs} args - Arguments to create a EventImage.
+     * @example
+     * // Create one EventImage
+     * const EventImage = await prisma.eventImage.create({
+     *   data: {
+     *     // ... data to create a EventImage
+     *   }
+     * })
+     * 
+     */
+    create<T extends EventImageCreateArgs>(args: SelectSubset<T, EventImageCreateArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EventImages.
+     * @param {EventImageCreateManyArgs} args - Arguments to create many EventImages.
+     * @example
+     * // Create many EventImages
+     * const eventImage = await prisma.eventImage.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EventImageCreateManyArgs>(args?: SelectSubset<T, EventImageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EventImages and returns the data saved in the database.
+     * @param {EventImageCreateManyAndReturnArgs} args - Arguments to create many EventImages.
+     * @example
+     * // Create many EventImages
+     * const eventImage = await prisma.eventImage.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EventImages and only return the `id`
+     * const eventImageWithIdOnly = await prisma.eventImage.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EventImageCreateManyAndReturnArgs>(args?: SelectSubset<T, EventImageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EventImage.
+     * @param {EventImageDeleteArgs} args - Arguments to delete one EventImage.
+     * @example
+     * // Delete one EventImage
+     * const EventImage = await prisma.eventImage.delete({
+     *   where: {
+     *     // ... filter to delete one EventImage
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EventImageDeleteArgs>(args: SelectSubset<T, EventImageDeleteArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EventImage.
+     * @param {EventImageUpdateArgs} args - Arguments to update one EventImage.
+     * @example
+     * // Update one EventImage
+     * const eventImage = await prisma.eventImage.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EventImageUpdateArgs>(args: SelectSubset<T, EventImageUpdateArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EventImages.
+     * @param {EventImageDeleteManyArgs} args - Arguments to filter EventImages to delete.
+     * @example
+     * // Delete a few EventImages
+     * const { count } = await prisma.eventImage.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EventImageDeleteManyArgs>(args?: SelectSubset<T, EventImageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventImages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EventImages
+     * const eventImage = await prisma.eventImage.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EventImageUpdateManyArgs>(args: SelectSubset<T, EventImageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventImages and returns the data updated in the database.
+     * @param {EventImageUpdateManyAndReturnArgs} args - Arguments to update many EventImages.
+     * @example
+     * // Update many EventImages
+     * const eventImage = await prisma.eventImage.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EventImages and only return the `id`
+     * const eventImageWithIdOnly = await prisma.eventImage.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EventImageUpdateManyAndReturnArgs>(args: SelectSubset<T, EventImageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EventImage.
+     * @param {EventImageUpsertArgs} args - Arguments to update or create a EventImage.
+     * @example
+     * // Update or create a EventImage
+     * const eventImage = await prisma.eventImage.upsert({
+     *   create: {
+     *     // ... data to create a EventImage
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EventImage we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EventImageUpsertArgs>(args: SelectSubset<T, EventImageUpsertArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EventImages.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageCountArgs} args - Arguments to filter EventImages to count.
+     * @example
+     * // Count the number of EventImages
+     * const count = await prisma.eventImage.count({
+     *   where: {
+     *     // ... the filter for the EventImages we want to count
+     *   }
+     * })
+    **/
+    count<T extends EventImageCountArgs>(
+      args?: Subset<T, EventImageCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EventImageCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EventImage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EventImageAggregateArgs>(args: Subset<T, EventImageAggregateArgs>): Prisma.PrismaPromise<GetEventImageAggregateType<T>>
+
+    /**
+     * Group by EventImage.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventImageGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EventImageGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EventImageGroupByArgs['orderBy'] }
+        : { orderBy?: EventImageGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EventImageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEventImageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EventImage model
+   */
+  readonly fields: EventImageFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EventImage.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EventImageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    event<T extends EventImage$eventArgs<ExtArgs> = {}>(args?: Subset<T, EventImage$eventArgs<ExtArgs>>): Prisma__EventClient<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EventImage model
+   */
+  interface EventImageFieldRefs {
+    readonly id: FieldRef<"EventImage", 'String'>
+    readonly uploaderId: FieldRef<"EventImage", 'String'>
+    readonly createdAt: FieldRef<"EventImage", 'DateTime'>
+    readonly state: FieldRef<"EventImage", 'EventImageState'>
+    readonly deleteAfter: FieldRef<"EventImage", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EventImage findUnique
+   */
+  export type EventImageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter, which EventImage to fetch.
+     */
+    where: EventImageWhereUniqueInput
+  }
+
+  /**
+   * EventImage findUniqueOrThrow
+   */
+  export type EventImageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter, which EventImage to fetch.
+     */
+    where: EventImageWhereUniqueInput
+  }
+
+  /**
+   * EventImage findFirst
+   */
+  export type EventImageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter, which EventImage to fetch.
+     */
+    where?: EventImageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventImages to fetch.
+     */
+    orderBy?: EventImageOrderByWithRelationInput | EventImageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventImages.
+     */
+    cursor?: EventImageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventImages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventImages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventImages.
+     */
+    distinct?: EventImageScalarFieldEnum | EventImageScalarFieldEnum[]
+  }
+
+  /**
+   * EventImage findFirstOrThrow
+   */
+  export type EventImageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter, which EventImage to fetch.
+     */
+    where?: EventImageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventImages to fetch.
+     */
+    orderBy?: EventImageOrderByWithRelationInput | EventImageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventImages.
+     */
+    cursor?: EventImageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventImages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventImages.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventImages.
+     */
+    distinct?: EventImageScalarFieldEnum | EventImageScalarFieldEnum[]
+  }
+
+  /**
+   * EventImage findMany
+   */
+  export type EventImageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter, which EventImages to fetch.
+     */
+    where?: EventImageWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventImages to fetch.
+     */
+    orderBy?: EventImageOrderByWithRelationInput | EventImageOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EventImages.
+     */
+    cursor?: EventImageWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventImages from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventImages.
+     */
+    skip?: number
+    distinct?: EventImageScalarFieldEnum | EventImageScalarFieldEnum[]
+  }
+
+  /**
+   * EventImage create
+   */
+  export type EventImageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EventImage.
+     */
+    data: XOR<EventImageCreateInput, EventImageUncheckedCreateInput>
+  }
+
+  /**
+   * EventImage createMany
+   */
+  export type EventImageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EventImages.
+     */
+    data: EventImageCreateManyInput | EventImageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventImage createManyAndReturn
+   */
+  export type EventImageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * The data used to create many EventImages.
+     */
+    data: EventImageCreateManyInput | EventImageCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventImage update
+   */
+  export type EventImageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EventImage.
+     */
+    data: XOR<EventImageUpdateInput, EventImageUncheckedUpdateInput>
+    /**
+     * Choose, which EventImage to update.
+     */
+    where: EventImageWhereUniqueInput
+  }
+
+  /**
+   * EventImage updateMany
+   */
+  export type EventImageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EventImages.
+     */
+    data: XOR<EventImageUpdateManyMutationInput, EventImageUncheckedUpdateManyInput>
+    /**
+     * Filter which EventImages to update
+     */
+    where?: EventImageWhereInput
+    /**
+     * Limit how many EventImages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventImage updateManyAndReturn
+   */
+  export type EventImageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * The data used to update EventImages.
+     */
+    data: XOR<EventImageUpdateManyMutationInput, EventImageUncheckedUpdateManyInput>
+    /**
+     * Filter which EventImages to update
+     */
+    where?: EventImageWhereInput
+    /**
+     * Limit how many EventImages to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventImage upsert
+   */
+  export type EventImageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EventImage to update in case it exists.
+     */
+    where: EventImageWhereUniqueInput
+    /**
+     * In case the EventImage found by the `where` argument doesn't exist, create a new EventImage with this data.
+     */
+    create: XOR<EventImageCreateInput, EventImageUncheckedCreateInput>
+    /**
+     * In case the EventImage was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EventImageUpdateInput, EventImageUncheckedUpdateInput>
+  }
+
+  /**
+   * EventImage delete
+   */
+  export type EventImageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    /**
+     * Filter which EventImage to delete.
+     */
+    where: EventImageWhereUniqueInput
+  }
+
+  /**
+   * EventImage deleteMany
+   */
+  export type EventImageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventImages to delete
+     */
+    where?: EventImageWhereInput
+    /**
+     * Limit how many EventImages to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventImage.event
+   */
+  export type EventImage$eventArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Event
+     */
+    select?: EventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Event
+     */
+    omit?: EventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventInclude<ExtArgs> | null
+    where?: EventWhereInput
+  }
+
+  /**
+   * EventImage without action
+   */
+  export type EventImageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Event
    */
 
@@ -9592,6 +10760,8 @@ export namespace Prisma {
   }
 
   export type EventMinAggregateOutputType = {
+    imageId: string | null
+    creationRequestId: string | null
     id: number | null
     title: string | null
     badgeText: string | null
@@ -9618,6 +10788,8 @@ export namespace Prisma {
   }
 
   export type EventMaxAggregateOutputType = {
+    imageId: string | null
+    creationRequestId: string | null
     id: number | null
     title: string | null
     badgeText: string | null
@@ -9644,6 +10816,8 @@ export namespace Prisma {
   }
 
   export type EventCountAggregateOutputType = {
+    imageId: number
+    creationRequestId: number
     id: number
     title: number
     badgeText: number
@@ -9684,6 +10858,8 @@ export namespace Prisma {
   }
 
   export type EventMinAggregateInputType = {
+    imageId?: true
+    creationRequestId?: true
     id?: true
     title?: true
     badgeText?: true
@@ -9710,6 +10886,8 @@ export namespace Prisma {
   }
 
   export type EventMaxAggregateInputType = {
+    imageId?: true
+    creationRequestId?: true
     id?: true
     title?: true
     badgeText?: true
@@ -9736,6 +10914,8 @@ export namespace Prisma {
   }
 
   export type EventCountAggregateInputType = {
+    imageId?: true
+    creationRequestId?: true
     id?: true
     title?: true
     badgeText?: true
@@ -9849,6 +11029,8 @@ export namespace Prisma {
   }
 
   export type EventGroupByOutputType = {
+    imageId: string | null
+    creationRequestId: string | null
     id: number
     title: string
     badgeText: string | null
@@ -9894,6 +11076,8 @@ export namespace Prisma {
 
 
   export type EventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    imageId?: boolean
+    creationRequestId?: boolean
     id?: boolean
     title?: boolean
     badgeText?: boolean
@@ -9917,6 +11101,7 @@ export namespace Prisma {
     raffleStartTime?: boolean
     raffleEndTime?: boolean
     raffleStatus?: boolean
+    image?: boolean | Event$imageArgs<ExtArgs>
     Questions?: boolean | Event$QuestionsArgs<ExtArgs>
     Quotas?: boolean | Event$QuotasArgs<ExtArgs>
     raffleSimulations?: boolean | Event$raffleSimulationsArgs<ExtArgs>
@@ -9924,6 +11109,8 @@ export namespace Prisma {
   }, ExtArgs["result"]["event"]>
 
   export type EventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    imageId?: boolean
+    creationRequestId?: boolean
     id?: boolean
     title?: boolean
     badgeText?: boolean
@@ -9947,9 +11134,12 @@ export namespace Prisma {
     raffleStartTime?: boolean
     raffleEndTime?: boolean
     raffleStatus?: boolean
+    image?: boolean | Event$imageArgs<ExtArgs>
   }, ExtArgs["result"]["event"]>
 
   export type EventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    imageId?: boolean
+    creationRequestId?: boolean
     id?: boolean
     title?: boolean
     badgeText?: boolean
@@ -9973,9 +11163,12 @@ export namespace Prisma {
     raffleStartTime?: boolean
     raffleEndTime?: boolean
     raffleStatus?: boolean
+    image?: boolean | Event$imageArgs<ExtArgs>
   }, ExtArgs["result"]["event"]>
 
   export type EventSelectScalar = {
+    imageId?: boolean
+    creationRequestId?: boolean
     id?: boolean
     title?: boolean
     badgeText?: boolean
@@ -10001,24 +11194,32 @@ export namespace Prisma {
     raffleStatus?: boolean
   }
 
-  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "badgeText" | "badgeTone" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "extraCapacity" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
+  export type EventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"imageId" | "creationRequestId" | "id" | "title" | "badgeText" | "badgeTone" | "date" | "registrationStartDate" | "registrationEndDate" | "openQuotaSize" | "extraCapacity" | "description" | "price" | "location" | "webpageUrl" | "draft" | "signupsPublic" | "verificationEmail" | "createdAt" | "updatedAt" | "deletedAt" | "raffleEnabled" | "raffleStartTime" | "raffleEndTime" | "raffleStatus", ExtArgs["result"]["event"]>
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    image?: boolean | Event$imageArgs<ExtArgs>
     Questions?: boolean | Event$QuestionsArgs<ExtArgs>
     Quotas?: boolean | Event$QuotasArgs<ExtArgs>
     raffleSimulations?: boolean | Event$raffleSimulationsArgs<ExtArgs>
     _count?: boolean | EventCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type EventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type EventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type EventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    image?: boolean | Event$imageArgs<ExtArgs>
+  }
+  export type EventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    image?: boolean | Event$imageArgs<ExtArgs>
+  }
 
   export type $EventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Event"
     objects: {
+      image: Prisma.$EventImagePayload<ExtArgs> | null
       Questions: Prisma.$QuestionPayload<ExtArgs>[]
       Quotas: Prisma.$QuotaPayload<ExtArgs>[]
       raffleSimulations: Prisma.$RaffleSimulationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
+      imageId: string | null
+      creationRequestId: string | null
       id: number
       title: string
       /**
@@ -10128,8 +11329,8 @@ export namespace Prisma {
      * // Get first 10 Events
      * const events = await prisma.event.findMany({ take: 10 })
      * 
-     * // Only select the `id`
-     * const eventWithIdOnly = await prisma.event.findMany({ select: { id: true } })
+     * // Only select the `imageId`
+     * const eventWithImageIdOnly = await prisma.event.findMany({ select: { imageId: true } })
      * 
      */
     findMany<T extends EventFindManyArgs>(args?: SelectSubset<T, EventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -10173,9 +11374,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Create many Events and only return the `id`
-     * const eventWithIdOnly = await prisma.event.createManyAndReturn({
-     *   select: { id: true },
+     * // Create many Events and only return the `imageId`
+     * const eventWithImageIdOnly = await prisma.event.createManyAndReturn({
+     *   select: { imageId: true },
      *   data: [
      *     // ... provide data here
      *   ]
@@ -10264,9 +11465,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Events and only return the `id`
-     * const eventWithIdOnly = await prisma.event.updateManyAndReturn({
-     *   select: { id: true },
+     * // Update zero or more Events and only return the `imageId`
+     * const eventWithImageIdOnly = await prisma.event.updateManyAndReturn({
+     *   select: { imageId: true },
      *   where: {
      *     // ... provide filter here
      *   },
@@ -10439,6 +11640,7 @@ export namespace Prisma {
    */
   export interface Prisma__EventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    image<T extends Event$imageArgs<ExtArgs> = {}>(args?: Subset<T, Event$imageArgs<ExtArgs>>): Prisma__EventImageClient<$Result.GetResult<Prisma.$EventImagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     Questions<T extends Event$QuestionsArgs<ExtArgs> = {}>(args?: Subset<T, Event$QuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     Quotas<T extends Event$QuotasArgs<ExtArgs> = {}>(args?: Subset<T, Event$QuotasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuotaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     raffleSimulations<T extends Event$raffleSimulationsArgs<ExtArgs> = {}>(args?: Subset<T, Event$raffleSimulationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RaffleSimulationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -10471,6 +11673,8 @@ export namespace Prisma {
    * Fields of the Event model
    */
   interface EventFieldRefs {
+    readonly imageId: FieldRef<"Event", 'String'>
+    readonly creationRequestId: FieldRef<"Event", 'String'>
     readonly id: FieldRef<"Event", 'Int'>
     readonly title: FieldRef<"Event", 'String'>
     readonly badgeText: FieldRef<"Event", 'String'>
@@ -10743,6 +11947,10 @@ export namespace Prisma {
      */
     data: EventCreateManyInput | EventCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -10813,6 +12021,10 @@ export namespace Prisma {
      * Limit how many Events to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -10879,6 +12091,25 @@ export namespace Prisma {
      * Limit how many Events to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Event.image
+   */
+  export type Event$imageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventImage
+     */
+    select?: EventImageSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventImage
+     */
+    omit?: EventImageOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventImageInclude<ExtArgs> | null
+    where?: EventImageWhereInput
   }
 
   /**
@@ -16734,7 +17965,20 @@ export namespace Prisma {
   export type PasswordChangeTokenScalarFieldEnum = (typeof PasswordChangeTokenScalarFieldEnum)[keyof typeof PasswordChangeTokenScalarFieldEnum]
 
 
+  export const EventImageScalarFieldEnum: {
+    id: 'id',
+    uploaderId: 'uploaderId',
+    createdAt: 'createdAt',
+    state: 'state',
+    deleteAfter: 'deleteAfter'
+  };
+
+  export type EventImageScalarFieldEnum = (typeof EventImageScalarFieldEnum)[keyof typeof EventImageScalarFieldEnum]
+
+
   export const EventScalarFieldEnum: {
+    imageId: 'imageId',
+    creationRequestId: 'creationRequestId',
     id: 'id',
     title: 'title',
     badgeText: 'badgeText',
@@ -16919,6 +18163,20 @@ export namespace Prisma {
    * Reference to a field of type 'UserRole[]'
    */
   export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EventImageState'
+   */
+  export type EnumEventImageStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventImageState'>
+    
+
+
+  /**
+   * Reference to a field of type 'EventImageState[]'
+   */
+  export type ListEnumEventImageStateFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventImageState[]'>
     
 
 
@@ -17468,10 +18726,67 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"PasswordChangeToken"> | string
   }
 
+  export type EventImageWhereInput = {
+    AND?: EventImageWhereInput | EventImageWhereInput[]
+    OR?: EventImageWhereInput[]
+    NOT?: EventImageWhereInput | EventImageWhereInput[]
+    id?: UuidFilter<"EventImage"> | string
+    uploaderId?: StringFilter<"EventImage"> | string
+    createdAt?: DateTimeFilter<"EventImage"> | Date | string
+    state?: EnumEventImageStateFilter<"EventImage"> | $Enums.EventImageState
+    deleteAfter?: DateTimeNullableFilter<"EventImage"> | Date | string | null
+    event?: XOR<EventNullableScalarRelationFilter, EventWhereInput> | null
+  }
+
+  export type EventImageOrderByWithRelationInput = {
+    id?: SortOrder
+    uploaderId?: SortOrder
+    createdAt?: SortOrder
+    state?: SortOrder
+    deleteAfter?: SortOrderInput | SortOrder
+    event?: EventOrderByWithRelationInput
+  }
+
+  export type EventImageWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: EventImageWhereInput | EventImageWhereInput[]
+    OR?: EventImageWhereInput[]
+    NOT?: EventImageWhereInput | EventImageWhereInput[]
+    uploaderId?: StringFilter<"EventImage"> | string
+    createdAt?: DateTimeFilter<"EventImage"> | Date | string
+    state?: EnumEventImageStateFilter<"EventImage"> | $Enums.EventImageState
+    deleteAfter?: DateTimeNullableFilter<"EventImage"> | Date | string | null
+    event?: XOR<EventNullableScalarRelationFilter, EventWhereInput> | null
+  }, "id">
+
+  export type EventImageOrderByWithAggregationInput = {
+    id?: SortOrder
+    uploaderId?: SortOrder
+    createdAt?: SortOrder
+    state?: SortOrder
+    deleteAfter?: SortOrderInput | SortOrder
+    _count?: EventImageCountOrderByAggregateInput
+    _max?: EventImageMaxOrderByAggregateInput
+    _min?: EventImageMinOrderByAggregateInput
+  }
+
+  export type EventImageScalarWhereWithAggregatesInput = {
+    AND?: EventImageScalarWhereWithAggregatesInput | EventImageScalarWhereWithAggregatesInput[]
+    OR?: EventImageScalarWhereWithAggregatesInput[]
+    NOT?: EventImageScalarWhereWithAggregatesInput | EventImageScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"EventImage"> | string
+    uploaderId?: StringWithAggregatesFilter<"EventImage"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"EventImage"> | Date | string
+    state?: EnumEventImageStateWithAggregatesFilter<"EventImage"> | $Enums.EventImageState
+    deleteAfter?: DateTimeNullableWithAggregatesFilter<"EventImage"> | Date | string | null
+  }
+
   export type EventWhereInput = {
     AND?: EventWhereInput | EventWhereInput[]
     OR?: EventWhereInput[]
     NOT?: EventWhereInput | EventWhereInput[]
+    imageId?: UuidNullableFilter<"Event"> | string | null
+    creationRequestId?: UuidNullableFilter<"Event"> | string | null
     id?: IntFilter<"Event"> | number
     title?: StringFilter<"Event"> | string
     badgeText?: StringNullableFilter<"Event"> | string | null
@@ -17495,12 +18810,15 @@ export namespace Prisma {
     raffleStartTime?: DateTimeNullableFilter<"Event"> | Date | string | null
     raffleEndTime?: DateTimeNullableFilter<"Event"> | Date | string | null
     raffleStatus?: EnumRaffleStatusFilter<"Event"> | $Enums.RaffleStatus
+    image?: XOR<EventImageNullableScalarRelationFilter, EventImageWhereInput> | null
     Questions?: QuestionListRelationFilter
     Quotas?: QuotaListRelationFilter
     raffleSimulations?: RaffleSimulationListRelationFilter
   }
 
   export type EventOrderByWithRelationInput = {
+    imageId?: SortOrderInput | SortOrder
+    creationRequestId?: SortOrderInput | SortOrder
     id?: SortOrder
     title?: SortOrder
     badgeText?: SortOrderInput | SortOrder
@@ -17524,12 +18842,15 @@ export namespace Prisma {
     raffleStartTime?: SortOrderInput | SortOrder
     raffleEndTime?: SortOrderInput | SortOrder
     raffleStatus?: SortOrder
+    image?: EventImageOrderByWithRelationInput
     Questions?: QuestionOrderByRelationAggregateInput
     Quotas?: QuotaOrderByRelationAggregateInput
     raffleSimulations?: RaffleSimulationOrderByRelationAggregateInput
   }
 
   export type EventWhereUniqueInput = Prisma.AtLeast<{
+    imageId?: string
+    creationRequestId?: string
     id?: number
     AND?: EventWhereInput | EventWhereInput[]
     OR?: EventWhereInput[]
@@ -17556,12 +18877,15 @@ export namespace Prisma {
     raffleStartTime?: DateTimeNullableFilter<"Event"> | Date | string | null
     raffleEndTime?: DateTimeNullableFilter<"Event"> | Date | string | null
     raffleStatus?: EnumRaffleStatusFilter<"Event"> | $Enums.RaffleStatus
+    image?: XOR<EventImageNullableScalarRelationFilter, EventImageWhereInput> | null
     Questions?: QuestionListRelationFilter
     Quotas?: QuotaListRelationFilter
     raffleSimulations?: RaffleSimulationListRelationFilter
-  }, "id">
+  }, "id" | "imageId" | "creationRequestId">
 
   export type EventOrderByWithAggregationInput = {
+    imageId?: SortOrderInput | SortOrder
+    creationRequestId?: SortOrderInput | SortOrder
     id?: SortOrder
     title?: SortOrder
     badgeText?: SortOrderInput | SortOrder
@@ -17596,6 +18920,8 @@ export namespace Prisma {
     AND?: EventScalarWhereWithAggregatesInput | EventScalarWhereWithAggregatesInput[]
     OR?: EventScalarWhereWithAggregatesInput[]
     NOT?: EventScalarWhereWithAggregatesInput | EventScalarWhereWithAggregatesInput[]
+    imageId?: UuidNullableWithAggregatesFilter<"Event"> | string | null
+    creationRequestId?: UuidNullableWithAggregatesFilter<"Event"> | string | null
     id?: IntWithAggregatesFilter<"Event"> | number
     title?: StringWithAggregatesFilter<"Event"> | string
     badgeText?: StringNullableWithAggregatesFilter<"Event"> | string | null
@@ -18446,7 +19772,68 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
   }
 
+  export type EventImageCreateInput = {
+    id: string
+    uploaderId: string
+    createdAt?: Date | string
+    state?: $Enums.EventImageState
+    deleteAfter?: Date | string | null
+    event?: EventCreateNestedOneWithoutImageInput
+  }
+
+  export type EventImageUncheckedCreateInput = {
+    id: string
+    uploaderId: string
+    createdAt?: Date | string
+    state?: $Enums.EventImageState
+    deleteAfter?: Date | string | null
+    event?: EventUncheckedCreateNestedOneWithoutImageInput
+  }
+
+  export type EventImageUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    event?: EventUpdateOneWithoutImageNestedInput
+  }
+
+  export type EventImageUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    event?: EventUncheckedUpdateOneWithoutImageNestedInput
+  }
+
+  export type EventImageCreateManyInput = {
+    id: string
+    uploaderId: string
+    createdAt?: Date | string
+    state?: $Enums.EventImageState
+    deleteAfter?: Date | string | null
+  }
+
+  export type EventImageUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type EventImageUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type EventCreateInput = {
+    creationRequestId?: string | null
     title: string
     badgeText?: string | null
     badgeTone?: $Enums.BadgeTone
@@ -18469,12 +19856,15 @@ export namespace Prisma {
     raffleStartTime?: Date | string | null
     raffleEndTime?: Date | string | null
     raffleStatus?: $Enums.RaffleStatus
+    image?: EventImageCreateNestedOneWithoutEventInput
     Questions?: QuestionCreateNestedManyWithoutEventInput
     Quotas?: QuotaCreateNestedManyWithoutEventInput
     raffleSimulations?: RaffleSimulationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateInput = {
+    imageId?: string | null
+    creationRequestId?: string | null
     id?: number
     title: string
     badgeText?: string | null
@@ -18504,6 +19894,7 @@ export namespace Prisma {
   }
 
   export type EventUpdateInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
     badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
@@ -18526,12 +19917,15 @@ export namespace Prisma {
     raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    image?: EventImageUpdateOneWithoutEventNestedInput
     Questions?: QuestionUpdateManyWithoutEventNestedInput
     Quotas?: QuotaUpdateManyWithoutEventNestedInput
     raffleSimulations?: RaffleSimulationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateInput = {
+    imageId?: NullableStringFieldUpdateOperationsInput | string | null
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18561,6 +19955,8 @@ export namespace Prisma {
   }
 
   export type EventCreateManyInput = {
+    imageId?: string | null
+    creationRequestId?: string | null
     id?: number
     title: string
     badgeText?: string | null
@@ -18587,6 +19983,7 @@ export namespace Prisma {
   }
 
   export type EventUpdateManyMutationInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
     badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
@@ -18612,6 +20009,8 @@ export namespace Prisma {
   }
 
   export type EventUncheckedUpdateManyInput = {
+    imageId?: NullableStringFieldUpdateOperationsInput | string | null
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
@@ -19373,6 +20772,91 @@ export namespace Prisma {
     email?: SortOrder
   }
 
+  export type UuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type EnumEventImageStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventImageState | EnumEventImageStateFieldRefInput<$PrismaModel>
+    in?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumEventImageStateFilter<$PrismaModel> | $Enums.EventImageState
+  }
+
+  export type EventNullableScalarRelationFilter = {
+    is?: EventWhereInput | null
+    isNot?: EventWhereInput | null
+  }
+
+  export type EventImageCountOrderByAggregateInput = {
+    id?: SortOrder
+    uploaderId?: SortOrder
+    createdAt?: SortOrder
+    state?: SortOrder
+    deleteAfter?: SortOrder
+  }
+
+  export type EventImageMaxOrderByAggregateInput = {
+    id?: SortOrder
+    uploaderId?: SortOrder
+    createdAt?: SortOrder
+    state?: SortOrder
+    deleteAfter?: SortOrder
+  }
+
+  export type EventImageMinOrderByAggregateInput = {
+    id?: SortOrder
+    uploaderId?: SortOrder
+    createdAt?: SortOrder
+    state?: SortOrder
+    deleteAfter?: SortOrder
+  }
+
+  export type UuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type EnumEventImageStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventImageState | EnumEventImageStateFieldRefInput<$PrismaModel>
+    in?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumEventImageStateWithAggregatesFilter<$PrismaModel> | $Enums.EventImageState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventImageStateFilter<$PrismaModel>
+    _max?: NestedEnumEventImageStateFilter<$PrismaModel>
+  }
+
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -19396,6 +20880,11 @@ export namespace Prisma {
     in?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumRaffleStatusFilter<$PrismaModel> | $Enums.RaffleStatus
+  }
+
+  export type EventImageNullableScalarRelationFilter = {
+    is?: EventImageWhereInput | null
+    isNot?: EventImageWhereInput | null
   }
 
   export type QuestionListRelationFilter = {
@@ -19429,6 +20918,8 @@ export namespace Prisma {
   }
 
   export type EventCountOrderByAggregateInput = {
+    imageId?: SortOrder
+    creationRequestId?: SortOrder
     id?: SortOrder
     title?: SortOrder
     badgeText?: SortOrder
@@ -19461,6 +20952,8 @@ export namespace Prisma {
   }
 
   export type EventMaxOrderByAggregateInput = {
+    imageId?: SortOrder
+    creationRequestId?: SortOrder
     id?: SortOrder
     title?: SortOrder
     badgeText?: SortOrder
@@ -19487,6 +20980,8 @@ export namespace Prisma {
   }
 
   export type EventMinOrderByAggregateInput = {
+    imageId?: SortOrder
+    creationRequestId?: SortOrder
     id?: SortOrder
     title?: SortOrder
     badgeText?: SortOrder
@@ -19516,6 +21011,21 @@ export namespace Prisma {
     id?: SortOrder
     openQuotaSize?: SortOrder
     extraCapacity?: SortOrder
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -20046,6 +21556,48 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSessionsInput, UserUpdateWithoutSessionsInput>, UserUncheckedUpdateWithoutSessionsInput>
   }
 
+  export type EventCreateNestedOneWithoutImageInput = {
+    create?: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+    connectOrCreate?: EventCreateOrConnectWithoutImageInput
+    connect?: EventWhereUniqueInput
+  }
+
+  export type EventUncheckedCreateNestedOneWithoutImageInput = {
+    create?: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+    connectOrCreate?: EventCreateOrConnectWithoutImageInput
+    connect?: EventWhereUniqueInput
+  }
+
+  export type EnumEventImageStateFieldUpdateOperationsInput = {
+    set?: $Enums.EventImageState
+  }
+
+  export type EventUpdateOneWithoutImageNestedInput = {
+    create?: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+    connectOrCreate?: EventCreateOrConnectWithoutImageInput
+    upsert?: EventUpsertWithoutImageInput
+    disconnect?: EventWhereInput | boolean
+    delete?: EventWhereInput | boolean
+    connect?: EventWhereUniqueInput
+    update?: XOR<XOR<EventUpdateToOneWithWhereWithoutImageInput, EventUpdateWithoutImageInput>, EventUncheckedUpdateWithoutImageInput>
+  }
+
+  export type EventUncheckedUpdateOneWithoutImageNestedInput = {
+    create?: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+    connectOrCreate?: EventCreateOrConnectWithoutImageInput
+    upsert?: EventUpsertWithoutImageInput
+    disconnect?: EventWhereInput | boolean
+    delete?: EventWhereInput | boolean
+    connect?: EventWhereUniqueInput
+    update?: XOR<XOR<EventUpdateToOneWithWhereWithoutImageInput, EventUpdateWithoutImageInput>, EventUncheckedUpdateWithoutImageInput>
+  }
+
+  export type EventImageCreateNestedOneWithoutEventInput = {
+    create?: XOR<EventImageCreateWithoutEventInput, EventImageUncheckedCreateWithoutEventInput>
+    connectOrCreate?: EventImageCreateOrConnectWithoutEventInput
+    connect?: EventImageWhereUniqueInput
+  }
+
   export type QuestionCreateNestedManyWithoutEventInput = {
     create?: XOR<QuestionCreateWithoutEventInput, QuestionUncheckedCreateWithoutEventInput> | QuestionCreateWithoutEventInput[] | QuestionUncheckedCreateWithoutEventInput[]
     connectOrCreate?: QuestionCreateOrConnectWithoutEventInput | QuestionCreateOrConnectWithoutEventInput[]
@@ -20102,6 +21654,16 @@ export namespace Prisma {
 
   export type EnumRaffleStatusFieldUpdateOperationsInput = {
     set?: $Enums.RaffleStatus
+  }
+
+  export type EventImageUpdateOneWithoutEventNestedInput = {
+    create?: XOR<EventImageCreateWithoutEventInput, EventImageUncheckedCreateWithoutEventInput>
+    connectOrCreate?: EventImageCreateOrConnectWithoutEventInput
+    upsert?: EventImageUpsertWithoutEventInput
+    disconnect?: EventImageWhereInput | boolean
+    delete?: EventImageWhereInput | boolean
+    connect?: EventImageWhereUniqueInput
+    update?: XOR<XOR<EventImageUpdateToOneWithWhereWithoutEventInput, EventImageUpdateWithoutEventInput>, EventImageUncheckedUpdateWithoutEventInput>
   }
 
   export type QuestionUpdateManyWithoutEventNestedInput = {
@@ -20647,6 +22209,59 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedUuidFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidFilter<$PrismaModel> | string
+  }
+
+  export type NestedEnumEventImageStateFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventImageState | EnumEventImageStateFieldRefInput<$PrismaModel>
+    in?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumEventImageStateFilter<$PrismaModel> | $Enums.EventImageState
+  }
+
+  export type NestedUuidWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEventImageStateWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventImageState | EnumEventImageStateFieldRefInput<$PrismaModel>
+    in?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EventImageState[] | ListEnumEventImageStateFieldRefInput<$PrismaModel>
+    not?: NestedEnumEventImageStateWithAggregatesFilter<$PrismaModel> | $Enums.EventImageState
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventImageStateFilter<$PrismaModel>
+    _max?: NestedEnumEventImageStateFilter<$PrismaModel>
+  }
+
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type NestedEnumBadgeToneFilter<$PrismaModel = never> = {
     equals?: $Enums.BadgeTone | EnumBadgeToneFieldRefInput<$PrismaModel>
     in?: $Enums.BadgeTone[] | ListEnumBadgeToneFieldRefInput<$PrismaModel>
@@ -20659,6 +22274,20 @@ export namespace Prisma {
     in?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.RaffleStatus[] | ListEnumRaffleStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumRaffleStatusFilter<$PrismaModel> | $Enums.RaffleStatus
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -21072,6 +22701,161 @@ export namespace Prisma {
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
   }
 
+  export type EventCreateWithoutImageInput = {
+    creationRequestId?: string | null
+    title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
+    date: Date | string
+    registrationStartDate: Date | string
+    registrationEndDate: Date | string
+    openQuotaSize?: number
+    extraCapacity?: number
+    description?: string | null
+    price?: string | null
+    location?: string | null
+    webpageUrl?: string | null
+    draft?: boolean
+    signupsPublic?: boolean
+    verificationEmail?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    raffleEnabled?: boolean
+    raffleStartTime?: Date | string | null
+    raffleEndTime?: Date | string | null
+    raffleStatus?: $Enums.RaffleStatus
+    Questions?: QuestionCreateNestedManyWithoutEventInput
+    Quotas?: QuotaCreateNestedManyWithoutEventInput
+    raffleSimulations?: RaffleSimulationCreateNestedManyWithoutEventInput
+  }
+
+  export type EventUncheckedCreateWithoutImageInput = {
+    creationRequestId?: string | null
+    id?: number
+    title: string
+    badgeText?: string | null
+    badgeTone?: $Enums.BadgeTone
+    date: Date | string
+    registrationStartDate: Date | string
+    registrationEndDate: Date | string
+    openQuotaSize?: number
+    extraCapacity?: number
+    description?: string | null
+    price?: string | null
+    location?: string | null
+    webpageUrl?: string | null
+    draft?: boolean
+    signupsPublic?: boolean
+    verificationEmail?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    raffleEnabled?: boolean
+    raffleStartTime?: Date | string | null
+    raffleEndTime?: Date | string | null
+    raffleStatus?: $Enums.RaffleStatus
+    Questions?: QuestionUncheckedCreateNestedManyWithoutEventInput
+    Quotas?: QuotaUncheckedCreateNestedManyWithoutEventInput
+    raffleSimulations?: RaffleSimulationUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutImageInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+  }
+
+  export type EventUpsertWithoutImageInput = {
+    update: XOR<EventUpdateWithoutImageInput, EventUncheckedUpdateWithoutImageInput>
+    create: XOR<EventCreateWithoutImageInput, EventUncheckedCreateWithoutImageInput>
+    where?: EventWhereInput
+  }
+
+  export type EventUpdateToOneWithWhereWithoutImageInput = {
+    where?: EventWhereInput
+    data: XOR<EventUpdateWithoutImageInput, EventUncheckedUpdateWithoutImageInput>
+  }
+
+  export type EventUpdateWithoutImageInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    webpageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    draft?: BoolFieldUpdateOperationsInput | boolean
+    signupsPublic?: BoolFieldUpdateOperationsInput | boolean
+    verificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleEnabled?: BoolFieldUpdateOperationsInput | boolean
+    raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    Questions?: QuestionUpdateManyWithoutEventNestedInput
+    Quotas?: QuotaUpdateManyWithoutEventNestedInput
+    raffleSimulations?: RaffleSimulationUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateWithoutImageInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    id?: IntFieldUpdateOperationsInput | number
+    title?: StringFieldUpdateOperationsInput | string
+    badgeText?: NullableStringFieldUpdateOperationsInput | string | null
+    badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrationStartDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrationEndDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    openQuotaSize?: IntFieldUpdateOperationsInput | number
+    extraCapacity?: IntFieldUpdateOperationsInput | number
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    webpageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    draft?: BoolFieldUpdateOperationsInput | boolean
+    signupsPublic?: BoolFieldUpdateOperationsInput | boolean
+    verificationEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleEnabled?: BoolFieldUpdateOperationsInput | boolean
+    raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    Questions?: QuestionUncheckedUpdateManyWithoutEventNestedInput
+    Quotas?: QuotaUncheckedUpdateManyWithoutEventNestedInput
+    raffleSimulations?: RaffleSimulationUncheckedUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventImageCreateWithoutEventInput = {
+    id: string
+    uploaderId: string
+    createdAt?: Date | string
+    state?: $Enums.EventImageState
+    deleteAfter?: Date | string | null
+  }
+
+  export type EventImageUncheckedCreateWithoutEventInput = {
+    id: string
+    uploaderId: string
+    createdAt?: Date | string
+    state?: $Enums.EventImageState
+    deleteAfter?: Date | string | null
+  }
+
+  export type EventImageCreateOrConnectWithoutEventInput = {
+    where: EventImageWhereUniqueInput
+    create: XOR<EventImageCreateWithoutEventInput, EventImageUncheckedCreateWithoutEventInput>
+  }
+
   export type QuestionCreateWithoutEventInput = {
     id?: string
     question: string
@@ -21162,6 +22946,33 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type EventImageUpsertWithoutEventInput = {
+    update: XOR<EventImageUpdateWithoutEventInput, EventImageUncheckedUpdateWithoutEventInput>
+    create: XOR<EventImageCreateWithoutEventInput, EventImageUncheckedCreateWithoutEventInput>
+    where?: EventImageWhereInput
+  }
+
+  export type EventImageUpdateToOneWithWhereWithoutEventInput = {
+    where?: EventImageWhereInput
+    data: XOR<EventImageUpdateWithoutEventInput, EventImageUncheckedUpdateWithoutEventInput>
+  }
+
+  export type EventImageUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type EventImageUncheckedUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    uploaderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    state?: EnumEventImageStateFieldUpdateOperationsInput | $Enums.EventImageState
+    deleteAfter?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type QuestionUpsertWithWhereUniqueWithoutEventInput = {
     where: QuestionWhereUniqueInput
     update: XOR<QuestionUpdateWithoutEventInput, QuestionUncheckedUpdateWithoutEventInput>
@@ -21250,6 +23061,7 @@ export namespace Prisma {
   }
 
   export type EventCreateWithoutQuestionsInput = {
+    creationRequestId?: string | null
     title: string
     badgeText?: string | null
     badgeTone?: $Enums.BadgeTone
@@ -21272,11 +23084,14 @@ export namespace Prisma {
     raffleStartTime?: Date | string | null
     raffleEndTime?: Date | string | null
     raffleStatus?: $Enums.RaffleStatus
+    image?: EventImageCreateNestedOneWithoutEventInput
     Quotas?: QuotaCreateNestedManyWithoutEventInput
     raffleSimulations?: RaffleSimulationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateWithoutQuestionsInput = {
+    imageId?: string | null
+    creationRequestId?: string | null
     id?: number
     title: string
     badgeText?: string | null
@@ -21343,6 +23158,7 @@ export namespace Prisma {
   }
 
   export type EventUpdateWithoutQuestionsInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
     badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
@@ -21365,11 +23181,14 @@ export namespace Prisma {
     raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    image?: EventImageUpdateOneWithoutEventNestedInput
     Quotas?: QuotaUpdateManyWithoutEventNestedInput
     raffleSimulations?: RaffleSimulationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutQuestionsInput = {
+    imageId?: NullableStringFieldUpdateOperationsInput | string | null
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21702,6 +23521,7 @@ export namespace Prisma {
   }
 
   export type EventCreateWithoutRaffleSimulationsInput = {
+    creationRequestId?: string | null
     title: string
     badgeText?: string | null
     badgeTone?: $Enums.BadgeTone
@@ -21724,11 +23544,14 @@ export namespace Prisma {
     raffleStartTime?: Date | string | null
     raffleEndTime?: Date | string | null
     raffleStatus?: $Enums.RaffleStatus
+    image?: EventImageCreateNestedOneWithoutEventInput
     Questions?: QuestionCreateNestedManyWithoutEventInput
     Quotas?: QuotaCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateWithoutRaffleSimulationsInput = {
+    imageId?: string | null
+    creationRequestId?: string | null
     id?: number
     title: string
     badgeText?: string | null
@@ -21773,6 +23596,7 @@ export namespace Prisma {
   }
 
   export type EventUpdateWithoutRaffleSimulationsInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
     badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
@@ -21795,11 +23619,14 @@ export namespace Prisma {
     raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    image?: EventImageUpdateOneWithoutEventNestedInput
     Questions?: QuestionUpdateManyWithoutEventNestedInput
     Quotas?: QuotaUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutRaffleSimulationsInput = {
+    imageId?: NullableStringFieldUpdateOperationsInput | string | null
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
@@ -21828,6 +23655,7 @@ export namespace Prisma {
   }
 
   export type EventCreateWithoutQuotasInput = {
+    creationRequestId?: string | null
     title: string
     badgeText?: string | null
     badgeTone?: $Enums.BadgeTone
@@ -21850,11 +23678,14 @@ export namespace Prisma {
     raffleStartTime?: Date | string | null
     raffleEndTime?: Date | string | null
     raffleStatus?: $Enums.RaffleStatus
+    image?: EventImageCreateNestedOneWithoutEventInput
     Questions?: QuestionCreateNestedManyWithoutEventInput
     raffleSimulations?: RaffleSimulationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateWithoutQuotasInput = {
+    imageId?: string | null
+    creationRequestId?: string | null
     id?: number
     title: string
     badgeText?: string | null
@@ -21971,6 +23802,7 @@ export namespace Prisma {
   }
 
   export type EventUpdateWithoutQuotasInput = {
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null
     badgeTone?: EnumBadgeToneFieldUpdateOperationsInput | $Enums.BadgeTone
@@ -21993,11 +23825,14 @@ export namespace Prisma {
     raffleStartTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleEndTime?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     raffleStatus?: EnumRaffleStatusFieldUpdateOperationsInput | $Enums.RaffleStatus
+    image?: EventImageUpdateOneWithoutEventNestedInput
     Questions?: QuestionUpdateManyWithoutEventNestedInput
     raffleSimulations?: RaffleSimulationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutQuotasInput = {
+    imageId?: NullableStringFieldUpdateOperationsInput | string | null
+    creationRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     id?: IntFieldUpdateOperationsInput | number
     title?: StringFieldUpdateOperationsInput | string
     badgeText?: NullableStringFieldUpdateOperationsInput | string | null

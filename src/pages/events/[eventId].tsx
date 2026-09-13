@@ -300,8 +300,7 @@ function Registration({
               <ul className="space-y-0.5 text-xs text-gray-600">
                 {quotas.map((quota) => (
                   <li key={quota.id}>
-                    {quota.title}: {seatHoldingSignupCount(quota)}{" "}
-                    ilmonnutta
+                    {quota.title}: {seatHoldingSignupCount(quota)} ilmonnutta
                   </li>
                 ))}
               </ul>
@@ -569,19 +568,25 @@ function Registration({
 
 /* Unmounts itself when the file is missing, so the sand background shows
    through instead of the browser's broken-image glyph. */
-function EventBannerImage({ src }: { src: string }) {
-  const [failed, setFailed] = useState(false);
+function EventBannerImage({
+  src,
+  fallback,
+}: {
+  src: string;
+  fallback: string;
+}) {
+  const [failures, setFailures] = useState(0);
 
-  if (failed) return null;
+  if (failures > 1) return null;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={failures ? fallback : src}
       alt=""
       aria-hidden
       className="absolute inset-0 h-full w-full object-cover"
-      onError={() => setFailed(true)}
+      onError={() => setFailures((count) => count + 1)}
     />
   );
 }
@@ -635,7 +640,13 @@ export default function EventPage() {
                 the editorial badge in the corner. Only the proportions
                 banner keeps the same 5:2 proportions as the cards. */}
             <div className="bg-brand-sand relative aspect-[5/2] w-full overflow-hidden">
-              {event && <EventBannerImage src={getEventImage(event.id)} />}
+              {event && (
+                <EventBannerImage
+                  key={event.imageId ?? "placeholder"}
+                  src={getEventImage(event.id, event.imageId)}
+                  fallback={getEventImage(event.id)}
+                />
+              )}
 
               {event?.badgeText && !registrationClosed && (
                 <span

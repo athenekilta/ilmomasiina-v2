@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { addDays, set } from "date-fns";
 import { useForm, useWatch } from "react-hook-form";
@@ -36,7 +37,9 @@ export type EventFormProps = {
 type EventFormValues = z.input<typeof eventFormSchema>;
 
 export function EventForm({ editId }: EventFormProps) {
-  const imageSelection = useEventImageSelection();
+  const creationRequestId = useRef<string | null>(null);
+  const submitting = useRef(false);
+  const utils = api.useUtils();
   const createMutation = api.events.createEvent.useMutation();
   const updateMutation = api.events.updateEvent.useMutation();
   const router = useRouter();
@@ -63,8 +66,10 @@ export function EventForm({ editId }: EventFormProps) {
     },
     {
       enabled: !!editId,
+      refetchOnWindowFocus: false,
     },
   );
+  const imageSelection = useEventImageSelection(editEvent?.imageId ?? null);
 
   const {
     register,
@@ -165,22 +170,63 @@ export function EventForm({ editId }: EventFormProps) {
       registrationEndDate,
     };
 
-    if (editId) {
-      await updateMutation.mutateAsync({
-        ...formData,
-        id: editId,
-        quotas: data.Quotas,
-        questions,
-      });
-      alert.success("Event updated successfully");
-    } else {
-      const event = await createMutation.mutateAsync({
-        ...formData,
-        quotas: data.Quotas,
-        questions,
-      });
-      alert.success("Event created successfully");
-      router.push(`/events/${event.id}/edit`);
+    if (submitting.current || imageSelection.isDecoding) return;
+    submitting.current = true;
+    try {
+      const imageChange = await imageSelection.uploadForSave();
+      if (editId) {
+        const event = await updateMutation.mutateAsync({
+          ...formData,
+          ...imageChange,
+          id: editId,
+          quotas: data.Quotas,
+          questions,
+        });
+        // Refresh the persisted preview before releasing the local blob URL.
+        utils.events.getEventEditId.setData({ eventId: editId }, (previous) =>
+          previous ? { ...previous, ...event } : previous,
+        );
+        imageSelection.markSaved();
+        alert.success("Event updated successfully");
+        if (event.notificationWarning)
+          alert.warning(
+            "Tapahtuma tallennettiin, mutta jonopaikan sähköposti-ilmoitusten lähetys epäonnistui.",
+          );
+      } else {
+        creationRequestId.current ??= crypto.randomUUID();
+        const event = await createMutation.mutateAsync({
+          ...formData,
+          ...imageChange,
+          creationRequestId: creationRequestId.current,
+          quotas: data.Quotas,
+          questions,
+        });
+        alert.success("Event created successfully");
+        await router.push(`/events/${event.id}/edit`);
+      }
+      // Cache refresh failure must not turn a committed save into a save error.
+      void Promise.all([
+        utils.events.getEventEditId.invalidate(),
+        utils.events.getEvents.invalidate(),
+        utils.events.getEventsAdmin.invalidate(),
+        utils.events.getEventByID.invalidate(),
+      ]).catch(() => undefined);
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "data" in error &&
+        (error.data as { code?: string } | undefined)?.code === "BAD_REQUEST"
+      ) {
+        imageSelection.forgetUpload();
+      }
+      alert.error(
+        error instanceof Error
+          ? error.message
+          : "Tapahtuman tallennus epäonnistui.",
+      );
+    } finally {
+      submitting.current = false;
     }
   });
 
@@ -209,6 +255,7 @@ export function EventForm({ editId }: EventFormProps) {
       {Object.keys(errors).length > 0 && <ValidationSummary errors={errors} />}
       <EventImageBanner
         selection={imageSelection}
+        disabled={isSubmitting}
         eventId={editId}
         badgeText={badgeText}
         badgeTone={badgeTone}
@@ -221,17 +268,27 @@ export function EventForm({ editId }: EventFormProps) {
 
           <div className="flex flex-wrap gap-2">
             {!editId ? (
-              <Button type="submit" loading={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={imageSelection.isDecoding}
+                loading={isSubmitting}
+              >
                 Tallenna luonnoksena
               </Button>
             ) : (
               <>
-                <Button type="submit" loading={isSubmitting} color="primary">
+                <Button
+                  type="submit"
+                  disabled={imageSelection.isDecoding}
+                  loading={isSubmitting}
+                  color="primary"
+                >
                   Tallenna muutokset
                 </Button>
                 <Button
                   type="submit"
                   onClick={() => setValue("draft", !isDraft)}
+                  disabled={imageSelection.isDecoding}
                   loading={isSubmitting}
                   variant="bordered"
                 >

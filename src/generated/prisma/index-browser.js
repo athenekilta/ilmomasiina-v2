@@ -187,7 +187,17 @@ exports.Prisma.PasswordChangeTokenScalarFieldEnum = {
   email: 'email'
 };
 
+exports.Prisma.EventImageScalarFieldEnum = {
+  id: 'id',
+  uploaderId: 'uploaderId',
+  createdAt: 'createdAt',
+  state: 'state',
+  deleteAfter: 'deleteAfter'
+};
+
 exports.Prisma.EventScalarFieldEnum = {
+  imageId: 'imageId',
+  creationRequestId: 'creationRequestId',
   id: 'id',
   title: 'title',
   badgeText: 'badgeText',
@@ -292,6 +302,13 @@ exports.UserRole = exports.$Enums.UserRole = {
   admin: 'admin'
 };
 
+exports.EventImageState = exports.$Enums.EventImageState = {
+  PENDING: 'PENDING',
+  ATTACHED: 'ATTACHED',
+  RETIRED: 'RETIRED',
+  DELETING: 'DELETING'
+};
+
 exports.BadgeTone = exports.$Enums.BadgeTone = {
   GREEN: 'GREEN',
   PINK: 'PINK',
@@ -334,6 +351,7 @@ exports.Prisma.ModelName = {
   Verification: 'Verification',
   EmailVerificationToken: 'EmailVerificationToken',
   PasswordChangeToken: 'PasswordChangeToken',
+  EventImage: 'EventImage',
   Event: 'Event',
   Question: 'Question',
   Answer: 'Answer',

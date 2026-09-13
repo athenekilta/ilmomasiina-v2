@@ -22,22 +22,30 @@ const BANNER_ASPECT = "aspect-[5/2]";
 
 /* Unmounts itself when the file is missing, so the gradient behind it
    shows through instead of the browser's broken-image glyph. */
-function BannerImage({ src, muted }: { src: string; muted: boolean }) {
-  const [failed, setFailed] = useState(false);
+function BannerImage({
+  src,
+  fallback,
+  muted,
+}: {
+  src: string;
+  fallback: string;
+  muted: boolean;
+}) {
+  const [failures, setFailures] = useState(0);
 
-  if (failed) return null;
+  if (failures > 1) return null;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={failures ? fallback : src}
       alt=""
       aria-hidden
       loading="lazy"
       className={`absolute inset-0 h-full w-full object-cover ${
         muted ? "opacity-60 grayscale" : ""
       }`}
-      onError={() => setFailed(true)}
+      onError={() => setFailures((count) => count + 1)}
     />
   );
 }
@@ -71,7 +79,12 @@ export function EventCard({
             isClosed ? "bg-stone-200" : "bg-brand-sand"
           }`}
         >
-          <BannerImage src={getEventImage(event.id)} muted={isClosed} />
+          <BannerImage
+            key={event.imageId ?? "placeholder"}
+            src={getEventImage(event.id, event.imageId, "card")}
+            fallback={getEventImage(event.id)}
+            muted={isClosed}
+          />
 
           {event.draft && (
             <span className="absolute top-0 left-0 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">

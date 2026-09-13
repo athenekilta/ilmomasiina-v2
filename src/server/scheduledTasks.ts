@@ -1,3 +1,4 @@
+import { cleanupEventImages } from "./features/eventImages/lifecycle";
 import { prisma } from "@/server/external/prisma";
 import { checkRaffles } from "./jobs/checkRaffles";
 
@@ -10,6 +11,7 @@ export async function runScheduledTasks() {
   try {
     await Promise.all([
       checkRaffles(prisma),
+      cleanupEventImages(prisma),
       cleanupExpiredInProgressSignups(prisma),
       finalizeClosedEventAllocations(prisma),
     ]);

@@ -1,3 +1,5 @@
+import { TRPCError } from "@trpc/server";
+import { changeEventImage } from "../features/eventImages/lifecycle";
 import { z } from "zod";
 import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
@@ -201,6 +203,8 @@ export const eventsRouter = router({
   createEvent: adminProcedure
     .input(
       z.object({
+        creationRequestId: z.uuid(),
+        imageId: z.uuid().nullable().optional(),
         title: z.string(),
         badgeText: z.string().optional(),
         badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
@@ -225,55 +229,73 @@ export const eventsRouter = router({
       const openQuotaSize =
         input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
-      const event = await ctx.prisma.event.create({
-        data: {
-          title: input.title,
-          // Empty input means "no badge" rather than an empty pill.
-          badgeText: input.badgeText?.trim() || null,
-          badgeTone: input.badgeTone ?? "GREEN",
-          date: input.date,
-          registrationStartDate: input.registrationStartDate,
-          registrationEndDate: input.registrationEndDate,
-          description: input.description,
-          location: input.location,
-          price: input.price,
-          webpageUrl: input.webpageUrl,
-          draft: input.draft,
-          signupsPublic: input.signupsPublic,
-          verificationEmail: input.verificationEmail,
-          raffleEnabled: input.raffle,
-          openQuotaSize: openQuotaSize,
-          extraCapacity: input.extraCapacity,
-        },
+      return ctx.prisma.$transaction(async (tx) => {
+        // Namespace this lock separately from numeric event allocation locks.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(7301, hashtext(${input.creationRequestId}))`;
+        const existing = await tx.event.findUnique({
+          where: { creationRequestId: input.creationRequestId },
+        });
+        if (existing) return existing;
+        await changeEventImage(tx, {
+          currentId: null,
+          expectedImageId: null,
+          imageId: input.imageId,
+          uploaderId: ctx.user.id,
+        });
+        const event = await tx.event.create({
+          data: {
+            creationRequestId: input.creationRequestId,
+            imageId: input.imageId,
+            title: input.title,
+            // Empty input means "no badge" rather than an empty pill.
+            badgeText: input.badgeText?.trim() || null,
+            badgeTone: input.badgeTone ?? "GREEN",
+            date: input.date,
+            registrationStartDate: input.registrationStartDate,
+            registrationEndDate: input.registrationEndDate,
+            description: input.description,
+            location: input.location,
+            price: input.price,
+            webpageUrl: input.webpageUrl,
+            draft: input.draft,
+            signupsPublic: input.signupsPublic,
+            verificationEmail: input.verificationEmail,
+            raffleEnabled: input.raffle,
+            openQuotaSize: openQuotaSize,
+            extraCapacity: input.extraCapacity,
+          },
+        });
+
+        const quotas = input.quotas.map((quota) => ({
+          ...quota,
+          eventId: event.id,
+          id: quota.id.includes("public-quota")
+            ? "public-quota-" + event.id
+            : quota.id,
+        }));
+
+        const questions = normalizedQuestions.map((question) => ({
+          ...question,
+          eventId: event.id,
+        }));
+
+        await tx.quota.createMany({
+          data: quotas,
+        });
+
+        await tx.question.createMany({
+          data: questions,
+        });
+        return event;
       });
-
-      const quotas = input.quotas.map((quota) => ({
-        ...quota,
-        eventId: event.id,
-        id: quota.id.includes("public-quota")
-          ? "public-quota-" + event.id
-          : quota.id,
-      }));
-
-      const questions = normalizedQuestions.map((question) => ({
-        ...question,
-        eventId: event.id,
-      }));
-
-      await ctx.prisma.quota.createMany({
-        data: quotas,
-      });
-
-      await ctx.prisma.question.createMany({
-        data: questions,
-      });
-      return event;
     }),
 
   updateEvent: adminProcedure
     .input(
       z.object({
         id: z.number(),
+        imageId: z.uuid().nullable().optional(),
+        expectedImageId: z.uuid().nullable().optional(),
         title: z.string(),
         badgeText: z.string().optional(),
         badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
@@ -294,56 +316,69 @@ export const eventsRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
-      // Delete quotas by IDs that are not in the input anymore and do not have signups
-      const existingQuotas = await ctx.prisma.quota.findMany({
-        where: { eventId: input.id },
-        include: {
-          Signups: true,
-        },
-      });
-      const existingQuotaIds = new Set(existingQuotas.map((quota) => quota.id));
-      const quotasToDelete = existingQuotas.filter(
-        (eq) =>
-          !input.quotas.some((iq) => iq.id === eq.id) &&
-          eq.Signups.length === 0,
-      );
-      const newQuotas = input.quotas.filter((quota) => {
-        return !existingQuotaIds.has(quota.id);
-      });
-      const existingQuotasToUpdate = input.quotas.filter((quota) => {
-        return existingQuotaIds.has(quota.id);
-      });
-
-      // Delete questions that are not in the input anymore
-      const existingQuestions = await ctx.prisma.question.findMany({
-        where: { eventId: input.id },
-      });
-      const existingQuestionIds = new Set(
-        existingQuestions.map((question) => question.id),
-      );
-      const questionsToDelete = existingQuestions.filter(
-        (eq) => !normalizedQuestions.some((iq) => iq.id === eq.id),
-      );
-      const questionsToUpdate = normalizedQuestions.filter((question) => {
-        return existingQuestionIds.has(question.id);
-      });
-      const newQuestions = normalizedQuestions.filter((question) => {
-        return !existingQuestionIds.has(question.id);
-      });
-
-      const openQuotaSize =
-        input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
-
-      // Apply allocation-affecting changes and reconcile signup statuses
-      // atomically so the event cannot expose a partially updated state.
       const { updatedEvent, queueAcceptedNotification } =
         await ctx.prisma.$transaction(async (tx) => {
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(${input.id})`;
+          const current = await tx.event.findUnique({
+            where: { id: input.id },
+          });
+          if (!current) throw new TRPCError({ code: "NOT_FOUND" });
+          await changeEventImage(tx, {
+            currentId: current.imageId,
+            imageId: input.imageId,
+            expectedImageId: input.expectedImageId,
+            uploaderId: ctx.user.id,
+          });
+          // Delete quotas by IDs that are not in the input anymore and do not have signups
+          const existingQuotas = await tx.quota.findMany({
+            where: { eventId: input.id },
+            include: {
+              Signups: true,
+            },
+          });
+          const existingQuotaIds = new Set(
+            existingQuotas.map((quota) => quota.id),
+          );
+          const quotasToDelete = existingQuotas.filter(
+            (eq) =>
+              !input.quotas.some((iq) => iq.id === eq.id) &&
+              eq.Signups.length === 0,
+          );
+          const newQuotas = input.quotas.filter((quota) => {
+            return !existingQuotaIds.has(quota.id);
+          });
+          const existingQuotasToUpdate = input.quotas.filter((quota) => {
+            return existingQuotaIds.has(quota.id);
+          });
+
+          // Delete questions that are not in the input anymore
+          const existingQuestions = await tx.question.findMany({
+            where: { eventId: input.id },
+          });
+          const existingQuestionIds = new Set(
+            existingQuestions.map((question) => question.id),
+          );
+          const questionsToDelete = existingQuestions.filter(
+            (eq) => !normalizedQuestions.some((iq) => iq.id === eq.id),
+          );
+          const questionsToUpdate = normalizedQuestions.filter((question) => {
+            return existingQuestionIds.has(question.id);
+          });
+          const newQuestions = normalizedQuestions.filter((question) => {
+            return !existingQuestionIds.has(question.id);
+          });
+
+          const openQuotaSize =
+            input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
+
+          // Apply allocation-affecting changes and reconcile signup statuses
+          // atomically so the event cannot expose a partially updated state.
           const event = await tx.event.update({
             where: {
               id: input.id,
             },
             data: {
+              imageId: input.imageId,
               title: input.title,
               badgeText: input.badgeText?.trim() || null,
               badgeTone: input.badgeTone ?? "GREEN",
@@ -413,8 +448,17 @@ export const eventsRouter = router({
           };
         });
 
-      await sendQueueAcceptedEmails(queueAcceptedNotification);
-      return updatedEvent;
+      let notificationWarning = false;
+      try {
+        await sendQueueAcceptedEmails(queueAcceptedNotification);
+      } catch (error) {
+        notificationWarning = true;
+        console.error("Event saved but queue notification failed", {
+          eventId: input.id,
+          error,
+        });
+      }
+      return { ...updatedEvent, notificationWarning };
     }),
   startRaffle: adminProcedure
     .input(

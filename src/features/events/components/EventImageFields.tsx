@@ -10,7 +10,13 @@ import {
   type EventImageSelection,
 } from "../hooks/useEventImageSelection";
 
-function ImageControls({ selection }: { selection: EventImageSelection }) {
+function ImageControls({
+  selection,
+  disabled,
+}: {
+  selection: EventImageSelection;
+  disabled: boolean;
+}) {
   const id = useId();
   const [confirmRemoval, setConfirmRemoval] = useState(false);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
@@ -25,6 +31,7 @@ function ImageControls({ selection }: { selection: EventImageSelection }) {
         accept={EVENT_IMAGE_ACCEPT}
         aria-label="Valitse tapahtumakuva"
         hidden
+        disabled={disabled}
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
           // Clearing the native input allows choosing the same file again.
@@ -34,6 +41,7 @@ function ImageControls({ selection }: { selection: EventImageSelection }) {
       />
       <div className="flex flex-wrap items-center gap-2">
         <Button
+          disabled={disabled}
           ref={selectButtonRef}
           type="button"
           variant="bordered"
@@ -41,11 +49,12 @@ function ImageControls({ selection }: { selection: EventImageSelection }) {
           aria-describedby={error ? `${id}-error` : undefined}
           onClick={selection.openPicker}
         >
-          {selection.image ? "Vaihda kuva" : "Valitse kuva"}
+          {selection.hasImage ? "Vaihda kuva" : "Valitse kuva"}
         </Button>
         <div className="flex items-center gap-2">
-          {selection.image && (
+          {selection.hasImage && (
             <Button
+              disabled={disabled}
               ref={removeButtonRef}
               type="button"
               variant="text"
@@ -97,7 +106,7 @@ function ImageControls({ selection }: { selection: EventImageSelection }) {
         <ConfirmationDialog
           title="Poista tapahtumakuva?"
           confirmLabel="Poista kuva"
-          pending={false}
+          pending={disabled}
           onCancelAction={() => {
             setConfirmRemoval(false);
             removeButtonRef.current?.focus({ preventScroll: true });
@@ -117,7 +126,9 @@ export function EventImageBanner({
   eventId,
   badgeText,
   badgeTone,
+  disabled = false,
 }: {
+  disabled?: boolean;
   selection: EventImageSelection;
   eventId?: number;
   badgeText?: string;
@@ -129,7 +140,16 @@ export function EventImageBanner({
         {/* A local blob URL needs no server image optimization. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={selection.image?.url ?? getEventImage(eventId ?? 0)}
+          key={selection.image?.url ?? selection.savedImageId ?? "placeholder"}
+          onError={(event) => {
+            const fallback = getEventImage(eventId ?? 0);
+            if (!event.currentTarget.src.endsWith(fallback))
+              event.currentTarget.src = fallback;
+          }}
+          src={
+            selection.image?.url ??
+            getEventImage(eventId ?? 0, selection.savedImageId)
+          }
           alt="Tapahtumakuvan esikatselu"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
@@ -142,7 +162,7 @@ export function EventImageBanner({
         )}
       </div>
       <div className="px-4 pt-4 sm:px-7">
-        <ImageControls selection={selection} />
+        <ImageControls selection={selection} disabled={disabled} />
       </div>
     </div>
   );

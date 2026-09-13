@@ -10,7 +10,10 @@ services:
       - "127.0.0.1:3000:3000"
     env_file:
       - .env
+    volumes:
+      - event-images:/app/data/event-images
     environment:
+      - EVENT_IMAGE_STORAGE_DIR=/app/data/event-images
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/ilmomasiina?schema=public
     depends_on:
       db:
@@ -24,7 +27,10 @@ services:
     init: true
     env_file:
       - .env
+    volumes:
+      - event-images:/app/data/event-images
     environment:
+      - EVENT_IMAGE_STORAGE_DIR=/app/data/event-images
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/ilmomasiina?schema=public
     depends_on:
       db:
@@ -44,4 +50,5 @@ services:
       - postgres-data:/var/lib/postgresql
 
 volumes:
+  event-images:
   postgres-data:

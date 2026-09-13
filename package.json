@@ -20,7 +20,8 @@
     "test:raffle": "tsx src/scripts/test-raffle.ts",
     "test:raffle-simulation": "tsx src/scripts/test-raffle-simulation.ts",
     "test:questions": "tsx --test src/features/events/utils/questionAnswers.test.ts",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "test:images": "node --import tsx --test src/server/features/eventImages/*.test.ts"
   },
   "dependencies": {
     "@azure/communication-email": "^1.1.0",
@@ -67,7 +68,8 @@
     "tailwind-current-hue": "^0.0.5",
     "ts-node": "^10.9.2",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "sharp": "^0.34.4"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

@@ -126,7 +126,28 @@ enum RaffleStatus {
   COMPLETED
 }
 
+enum EventImageState {
+  PENDING
+  ATTACHED
+  RETIRED
+  DELETING
+}
+
+model EventImage {
+  id          String          @id @db.Uuid
+  uploaderId  String
+  createdAt   DateTime        @default(now())
+  state       EventImageState @default(PENDING)
+  deleteAfter DateTime?
+  event       Event?
+
+  @@index([state, deleteAfter])
+}
+
 model Event {
+  imageId               String?            @unique @db.Uuid
+  image                 EventImage?        @relation(fields: [imageId], references: [id])
+  creationRequestId     String?            @unique @db.Uuid
   id                    Int                @id @default(autoincrement())
   title                 String
   /// Free-form marketing tag shown on the event card, e.g. "Vuoden haippisin"

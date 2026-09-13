@@ -28,10 +28,10 @@ export const createStaticContext = () => {
 export const createContextInner = async (opts: CreateContextOptions) => {
   const user = opts.session?.user?.id
     ? await prisma.user.findUnique({
-      where: {
-        id: opts.session.user.id,
-      },
-    })
+        where: {
+          id: opts.session.user.id,
+        },
+      })
     : undefined;
 
   return {
@@ -46,8 +46,10 @@ export const createContextInner = async (opts: CreateContextOptions) => {
  * This is the actual context you'll use in your router
  * @link https://trpc.io/docs/context
  **/
-export const createContext = async (opts: CreateNextContextOptions) => {
-  const { req, res } = opts;
+export const createContext = async (
+  opts: Pick<CreateNextContextOptions, "req" | "res">,
+) => {
+  const { req } = opts;
 
   // Get the session from the server using the getServerSession wrapper function
   const session = await getServerAuthSession({
@@ -59,4 +61,4 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 
-export type StaticContext =  Awaited<ReturnType<typeof createStaticContext>>;
+export type StaticContext = Awaited<ReturnType<typeof createStaticContext>>;

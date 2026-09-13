@@ -26,6 +26,8 @@ COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
+RUN mkdir -p /app/data/event-images && chown -R node:node /app/data
+
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
@@ -39,6 +41,8 @@ COPY --chown=node:node package.json tsconfig.json prisma.config.ts ./
 COPY --chown=node:node prisma ./prisma
 COPY --chown=node:node src ./src
 COPY --from=dependencies --chown=node:node /app/src/generated ./src/generated
+
+RUN mkdir -p /app/data/event-images && chown -R node:node /app/data
 
 USER node
 CMD ["./node_modules/.bin/tsx", "src/server/worker.ts"]
