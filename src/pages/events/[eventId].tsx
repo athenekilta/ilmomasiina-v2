@@ -339,7 +339,7 @@ function Registration({
                 >
                   {sendSignupAccessEmailMutation.isPending
                     ? "Lähetetään linkkiä…"
-                    : "Lähetä muokkauslinkki sähköpostiin"}
+                    : "Lähetä muokkauslinkki"}
                 </button>
               )}
               <button
