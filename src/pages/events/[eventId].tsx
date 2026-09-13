@@ -98,10 +98,7 @@ function Registration({
   );
   const hasUnlimitedQuota = finiteQuotas.length !== quotas.length;
   const seatHoldingSignupCount = (quota: (typeof quotas)[number]) =>
-    quota.Signups.filter(
-      (signup) =>
-        signup.status === "CONFIRMED" || signup.status === "IN_PROGRESS",
-    ).length;
+    quota.seatHoldingSignupCount;
   const totalCapacity =
     finiteQuotas.reduce((sum, quota) => sum + quota.size, 0) +
     event.extraCapacity;
@@ -467,15 +464,13 @@ function Registration({
                     <h3 className="text-brand-dark truncate text-sm font-semibold">
                       {quota.title}
                     </h3>
-                    {showExactAvailablePlaces ? (
-                      <p className="text-xs text-gray-600 tabular-nums">
-                        {signupCount} / {quota.size} ilmonnutta
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-600 tabular-nums">
-                        {signupCount} ilmonnutta
-                      </p>
-                    )}
+                    <p className="text-xs text-gray-600 tabular-nums">
+                      {showExactAvailablePlaces
+                        ? `${signupCount} / ${quota.size} ilmonnutta`
+                        : `${signupCount} ilmonnutta`}
+                      {quota.waitlistedSignupCount > 0 &&
+                        ` · ${quota.waitlistedSignupCount} jonossa`}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     {showDemoControls && (

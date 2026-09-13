@@ -20,18 +20,17 @@ export function ParticipantsTable({
     <div className="space-y-5">
       <h2 className="text-brand-dark text-lg font-semibold">Ilmonneet</h2>
       {event.Quotas.map(
-        (quota) =>
-          !(quota.id == "queue" && quota.Signups.length == 0) && (
+        (quota) => !(quota.id == "queue" && quota.signupCount == 0) && (
             <div key={quota.id} className="surface-muted overflow-hidden">
               <div className="text-brand-dark flex items-center justify-between border-b border-stone-300/70 px-4 py-3 text-base font-semibold">
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== "queue" ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.Signups.length} ilmonnutta
+                    {quota.signupCount} ilmonnutta
                   </span>
                 ) : (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.Signups.length} jonossa
+                    {quota.signupCount} jonossa
                   </span>
                 )}
               </div>
@@ -73,9 +72,13 @@ export function ParticipantsTable({
                           ? "px-3 py-1.5"
                           : "px-3 py-1.5 text-gray-500";
                         return (
-                          <tr key={signup.id}>
+                          <tr key={signup.id ?? `${quota.id}-${index}`}>
                             <td className={rowStyle}>{index + 1}.</td>
-                            <td className={rowStyle}>{signup.name}</td>
+                            <td className={rowStyle}>
+                              {signup.completedAt
+                                ? signup.name
+                                : "Vahvistamaton ilmo"}
+                            </td>
                             {publicQuestions.map((q) => {
                               const raw = q.Answers.find(
                                 (a) => a.signupId === signup.id,
@@ -109,7 +112,9 @@ export function ParticipantsTable({
                   </table>
                 ) : (
                   <p className="px-3 py-3 text-sm text-gray-600">
-                    Ei vielä osallistujia
+                    {quota.id === "queue" && quota.signupCount > 0
+                      ? "Ilmoittajien tiedot näkyvät vahvistuksen jälkeen"
+                      : "Ei vielä osallistujia"}
                   </p>
                 )}
               </div>

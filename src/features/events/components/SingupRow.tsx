@@ -6,7 +6,7 @@ export function SignupRow({
   signup,
   rowStyle,
 }: {
-  signup: Signup;
+  signup: Pick<Signup, "createdAt">;
   rowStyle: string;
 }) {
   const [showMilliseconds, setShowMilliseconds] = useState(false);

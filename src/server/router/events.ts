@@ -137,16 +137,6 @@ export const eventsRouter = router({
         throw new Error("Event not found");
       }
 
-      // Hide unnecessary fields from signups
-      event.Quotas.forEach((quota) => ({
-        ...quota,
-        Signups: quota.Signups.map((signup) => ({
-          // if unconfirmed, remove name
-          name: signup.completedAt ? signup.name : "",
-          completedAt: signup.completedAt,
-          createdAt: signup.createdAt,
-        })),
-      }));
 
       // Create queue quota. NOTE! This is only a presentation and does not actually exist on the DB level.
       event.Quotas.push({
@@ -159,16 +149,35 @@ export const eventsRouter = router({
         sharedPlacesAllocation: "NEVER",
       });
 
-      // Queue placement follows persisted allocation state. Incomplete forms
-      // stay in their selected quota so an active seat hold remains visible.
+      const seatHoldingSignupCounts = new Map(
+        event.Quotas.map((quota) => [
+          quota.id,
+          quota.Signups.filter(
+            (signup) =>
+              signup.status === SignupStatus.CONFIRMED ||
+              signup.status === SignupStatus.IN_PROGRESS,
+          ).length,
+        ]),
+      );
+      const waitlistedSignupCounts = new Map(
+        event.Quotas.map((quota) => [
+          quota.id,
+          quota.Signups.filter(
+            (signup) => signup.status === SignupStatus.WAITLISTED,
+          ).length,
+        ]),
+      );
+
+      // Signups waiting for allocation are represented in the queue.
+      // In-progress signups stay in their quota because they hold a seat there.
+      // Their details remain private in the public event response below.
       const queueQuota = event.Quotas.find((quota) => quota.id === "queue");
       if (!queueQuota) throw new Error("Queue quota not found");
       for (const quota of event.Quotas.filter((item) => item.id !== "queue")) {
         const queued = quota.Signups.filter(
           (signup) =>
-            signup.completedAt !== null &&
-            (signup.status === SignupStatus.PENDING ||
-              signup.status === SignupStatus.WAITLISTED),
+            signup.status === SignupStatus.PENDING ||
+            signup.status === SignupStatus.WAITLISTED,
         );
         queueQuota.Signups.push(...queued);
         quota.Signups = quota.Signups.filter(
@@ -176,27 +185,63 @@ export const eventsRouter = router({
         );
       }
 
-      // Return event if singups are public
-      if (event.signupsPublic) return event;
-
-      // If signups are not public, return event with quotas that have signup counts
-
-      const filteredEvent = {
+      const completedSignupIds = new Set(
+        event.Quotas.flatMap((quota) =>
+          quota.Signups
+            .filter((signup) => signup.completedAt !== null)
+            .map((signup) => signup.id),
+        ),
+      );
+      const eventWithPublicSignups = {
         ...event,
         Quotas: event.Quotas.map((quota) => ({
           ...quota,
           signupCount: quota.Signups.length,
+          seatHoldingSignupCount: seatHoldingSignupCounts.get(quota.id) ?? 0,
+          waitlistedSignupCount: waitlistedSignupCounts.get(quota.id) ?? 0,
+          Signups: quota.Signups.map((signup) =>
+            signup.completedAt !== null
+              ? {
+                  id: signup.id,
+                  name: signup.name,
+                  completedAt: signup.completedAt,
+                  createdAt: signup.createdAt,
+                  originalQuotaId: signup.originalQuotaId,
+                }
+              : {
+                  id: null,
+                  name: null,
+                  completedAt: null,
+                  createdAt: signup.createdAt,
+                  originalQuotaId: signup.originalQuotaId,
+                },
+          ),
         })),
         Questions: event.Questions.map((question) => ({
           ...question,
-          Answers: question.Answers.map((answer) => ({
-            ...answer,
-            answer: null,
-          })),
+          Answers: question.public
+            ? question.Answers.filter((answer) =>
+                completedSignupIds.has(answer.signupId),
+              ).map(({ signupId, answer }) => ({ signupId, answer }))
+            : [],
         })),
       };
 
-      return filteredEvent;
+      // Incomplete signups expose only a placeholder timestamp and quota.
+      // Names, identifiers, statuses, and answers stay out of the client payload.
+      if (event.signupsPublic) return eventWithPublicSignups;
+
+      return {
+        ...eventWithPublicSignups,
+        Quotas: eventWithPublicSignups.Quotas.map((quota) => ({
+          ...quota,
+          Signups: [],
+        })),
+        Questions: eventWithPublicSignups.Questions.map((question) => ({
+          ...question,
+          Answers: [],
+        })),
+      };
     }),
   createEvent: eventEditorProcedure
     .input(
