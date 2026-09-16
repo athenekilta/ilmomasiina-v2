@@ -36,6 +36,9 @@ const RADIUS = 7;
 const WALL = 1.5;
 const SURFACE = "#ffffff";
 const GREY = "#d8d3cc";
+/** The hairline between two quotas inside the open bar. Thinner than the
+ *  wall around the bar: it separates rather than encloses. */
+const SEAM = 1;
 const FIGURE = "#5c564f";
 /**
  * Enough for "22 / 40" and its padding. The filled zone never goes below it,
@@ -259,12 +262,25 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
                 .map((holder, index) => (
                   <div
                     key={holder.id}
-                    style={zoneStyle(
-                      index,
-                      getQuotaColor(holder.colorIndex).fill,
-                      share(holder.count, taken),
-                      2 * RADIUS,
-                    )}
+                    style={{
+                      ...zoneStyle(
+                        index,
+                        getQuotaColor(holder.colorIndex).fill,
+                        share(holder.count, taken),
+                        2 * RADIUS,
+                      ),
+                      // A hairline at every seam inside this bar, in the
+                      // pool's own grey rather than the card's white: it
+                      // reads as the open places showing through between two
+                      // quotas, not as the card cutting the bar in half.
+                      // Elsewhere a seam divides a colour from its own pale
+                      // and needs nothing; here two quotas' fills meet at
+                      // full strength and the notch alone is nearly
+                      // invisible. Offset rather than spread, so it traces
+                      // the rounded end and paints over the zone beneath
+                      // instead of eating into this one.
+                      boxShadow: `${SEAM}px 0 0 0 ${GREY}`,
+                    }}
                   />
                 ))}
               {/* Above the holders: they carry z-indexes of their own, and a

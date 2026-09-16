@@ -86,13 +86,13 @@
        ramp, and splitting it in two is what made it step. */
     --event-overlay-fade-height: 0px;
     --event-overlay-tint: var(--event-overlay-color);
-    --event-overlay-caption-lead: 24px;
+    --event-overlay-caption-lead: 26px;
     --event-overlay-caption-fade: 26px;
   }
 
   .event-banner--detail {
     /* The detail title is larger, so the band has to reach that bit higher. */
-    --event-overlay-caption-lead: 26px;
+    --event-overlay-caption-lead: 28px;
   }
 
   .event-banner--muted {
@@ -143,10 +143,10 @@
        and every banner gets the same warmth. */
     background:
       linear-gradient(
-        color-mix(in srgb, var(--event-overlay-tint) 22%, transparent),
-        color-mix(in srgb, var(--event-overlay-tint) 22%, transparent)
+        color-mix(in srgb, var(--event-overlay-tint) 24%, transparent),
+        color-mix(in srgb, var(--event-overlay-tint) 24%, transparent)
       ),
-      rgb(255 255 255 / 0.55);
+      rgb(255 255 255 / 0.6);
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
