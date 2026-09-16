@@ -94,7 +94,7 @@ export function EventCard({
                 actionable — the drained image and this padlock say so
                 before any text is read. */}
             {isClosed && (
-              <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase sm:text-[0.8125rem]">
+              <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-2.5 py-1 text-[0.6875rem] font-bold tracking-wide text-white uppercase sm:text-xs">
                 <Lock size={13} strokeWidth={2.75} aria-hidden />
                 Ilmo päättynyt
               </span>
@@ -107,7 +107,7 @@ export function EventCard({
                 pills crowd the image for no gain. */}
             {event.badgeText && !isClosed && (
               <span
-                className={`shadow-card max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                className={`shadow-card max-w-full truncate rounded-full px-2.5 py-1 text-[0.6875rem] font-bold tracking-wide uppercase sm:text-xs ${BADGE_TONE_CLASS[event.badgeTone]}`}
               >
                 {event.badgeText}
               </span>
@@ -119,9 +119,19 @@ export function EventCard({
           <div className="absolute inset-x-0 bottom-0">
             <div className="event-banner-fade" aria-hidden />
             <div className="event-banner-caption px-4 pb-3 sm:px-5">
+              <div
+                className="event-banner-blur backdrop-blur-[3px]"
+                aria-hidden
+              />
               <h2
-                className={`line-clamp-2 text-base font-bold tracking-tight sm:text-lg ${
-                  isClosed ? "text-stone-600" : "text-brand-secondary"
+                // Same voice as the event page's own title — extrabold and
+                // uppercase — so the card reads as the small version of the
+                // page it opens rather than as a different kind of thing.
+                // A size down from it, and the tight tracking dropped: caps
+                // are already dense, and squeezing them costs legibility at
+                // this size.
+                className={`line-clamp-2 text-base font-extrabold uppercase sm:text-lg ${
+                  isClosed ? "text-stone-600" : "text-brand-dark"
                 }`}
               >
                 {event.title}

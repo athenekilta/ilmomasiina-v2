@@ -154,6 +154,7 @@ export const signupsRouter = router({
         select: {
           id: true,
           completedAt: true,
+          Quota: { select: { title: true } },
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
@@ -183,6 +184,7 @@ export const signupsRouter = router({
         ...(signup.canEditDirectly ? { id: signup.id } : {}),
         state: signup.completedAt === null ? "IN_PROGRESS" : "COMPLETED",
         canEditDirectly: signup.canEditDirectly,
+        quotaTitle: signup.Quota.title,
       };
     }),
 

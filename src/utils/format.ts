@@ -55,6 +55,30 @@ export const formatEventDateTime = (value: DateValue) => {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
+/**
+ * Signup time for the participants list: "16.9. 11.08.33".
+ *
+ * The list has to fit one signup per line on a phone, and the year is the
+ * part that never earns its width — every signup on an event page is from
+ * the same few days, and the year is already in the event's own date. The
+ * seconds stay: in a popular event they are the thing people compare.
+ */
+export const formatSignupTime = (value: DateValue) => {
+  const date = asDate(value);
+  const day = date.toLocaleDateString(APP_LOCALE, {
+    timeZone: APP_TIME_ZONE,
+    day: "numeric",
+    month: "numeric",
+  });
+  const time = date.toLocaleTimeString(APP_LOCALE, {
+    timeZone: APP_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  return `${day} ${time}`;
+};
+
 export const formatRegistration = (start: Date, end: Date) => {
   const now = new Date();
   const startDate = new Date(start);

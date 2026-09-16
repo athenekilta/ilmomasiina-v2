@@ -297,7 +297,12 @@ function Registration({
             <p>
               <span className="font-medium text-gray-900">Ilmo kunnossa!</span>
               <br />
-              Olet ilmonnut sähköpostilla{" "}
+              Olet ilmonnut kiintiöön{" "}
+              <span className="font-semibold text-gray-900">
+                {signupStatus.quotaTitle}
+              </span>
+              <br />
+              sähköpostilla{" "}
               <span className="text-gray-900">{storedUser?.email}</span>.
               {isRegistrationClosed ? (
                 <>
@@ -745,6 +750,10 @@ export default function EventPage() {
                 <div className="absolute inset-x-0 bottom-0">
                   <div className="event-banner-fade" aria-hidden />
                   <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
+                    <div
+                      className="event-banner-blur backdrop-blur-[3px]"
+                      aria-hidden
+                    />
                     <h1 className="text-brand-dark text-2xl font-extrabold uppercase sm:text-3xl">
                       {event.title}
                     </h1>

@@ -63,7 +63,7 @@ export function IdentityPromptCard() {
           Aloita täydentämällä ilmotietosi
         </h2>
         <p className="text-brand-dark mt-1 text-sm sm:text-base">
-          Näillä tiedoilla ilmoat tapahtumiin jatkossa automaattisesti
+          Näillä tiedoilla ilmoat tapahtumiin automaattisesti, ei tarvetta kirjoittaa niitä aina uusiksi!
         </p>
       </div>
 

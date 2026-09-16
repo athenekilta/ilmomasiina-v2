@@ -1,6 +1,5 @@
-import React, { useState } from "react";
 import type { Signup } from "@/generated/prisma";
-import { formatDateTime } from "@/utils/format";
+import { formatDateTime, formatSignupTime } from "@/utils/format";
 
 export function SignupRow({
   signup,
@@ -9,33 +8,16 @@ export function SignupRow({
   signup: Pick<Signup, "createdAt">;
   rowStyle: string;
 }) {
-  const [showMilliseconds, setShowMilliseconds] = useState(false);
-
-  const handleMouseEnter = () => {
-    setShowMilliseconds(true);
-  };
-
-  const handleMouseLeave = () => {
-    setShowMilliseconds(false);
-  };
-
-  const formattedDate = formatDateTime(signup.createdAt, {
+  // The cell shows the short form so the row fits one line; the full stamp,
+  // milliseconds and all, is one hover away for anyone comparing places.
+  const exact = `${formatDateTime(signup.createdAt, {
     dateStyle: "short",
     timeStyle: "medium",
-  });
-  const milliseconds = signup.createdAt
-    .getMilliseconds()
-    .toString()
-    .padStart(3, "0");
-  const dateWithMilliseconds = `${formattedDate}.${milliseconds}`;
+  })}.${signup.createdAt.getMilliseconds().toString().padStart(3, "0")}`;
 
   return (
-    <td
-      className={rowStyle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {formattedDate}
+    <td className={`${rowStyle} truncate tabular-nums`} title={exact}>
+      {formatSignupTime(signup.createdAt)}
     </td>
   );
 }

@@ -4,6 +4,41 @@ import { OriginalQuotaTitle } from "@/features/events/utils/utils";
 import type { RouteOutput } from "@/types/types";
 import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
 
+/**
+ * Every row is exactly one line high: the phone has no width to spare, and a
+ * list where each signup wraps to two or three lines stops reading as a list.
+ *
+ * The layout is fixed rather than automatic, so each column's share is decided
+ * here instead of by whatever the longest value in it happens to be. Left to
+ * itself the browser gave a free-text answer whatever it wanted and squeezed
+ * the name down to two letters with no ellipsis to show for it.
+ *
+ * The name is the column the list exists for, so it takes everything the
+ * others do not need. The others are all things whose width is knowable: a
+ * position, a timestamp. Free-text answers are not, so on a phone they step
+ * aside entirely rather than eat the name — they come back at `sm`, where
+ * there is room for them.
+ *
+ * The widths below are what they are because the content decides them: "999."
+ * is 32px and the widest possible stamp, "31.12. 23.59.59", is 113px at
+ * `text-xs`. Both are given their measured need and not a pixel more, because
+ * every pixel they do not take is a pixel of name.
+ *
+ * Only the outer edges keep the card's 16px gutter — the columns between
+ * share 8px, which is another twenty-odd characters of name on a phone.
+ */
+const POSITION = "w-12 pl-4 pr-0";
+const NAME = "px-2";
+const ANSWER = "w-[26%] px-2";
+/** The timestamp is metadata, and metadata can be a size down. */
+const TIME = "w-[8.3125rem] pl-1 pr-4 text-xs";
+const ORIGIN = "w-[6.5rem] px-2 sm:pr-4";
+/** Only from `sm` up: below it the name needs every pixel these would take. */
+const WIDE_ONLY = "hidden sm:table-cell";
+
+const headStyle =
+  "text-brand-dark py-2 text-left text-xs font-semibold tracking-wide uppercase truncate";
+
 export function ParticipantsTable({
   event,
 }: {
@@ -22,8 +57,11 @@ export function ParticipantsTable({
       <h2 className="text-brand-dark text-lg font-semibold">Ilmonneet</h2>
       {event.Quotas.map(
         (quota) => !(quota.id === QUEUE_QUOTA_ID && quota.signupCount == 0) && (
-            <div key={quota.id} className="surface-muted overflow-hidden">
-              <div className="text-brand-dark flex items-center justify-between border-b border-stone-300/70 px-4 py-3 text-base font-semibold">
+            <div
+              key={quota.id}
+              className="rounded-inner overflow-hidden border border-stone-200 bg-white"
+            >
+              <div className="text-brand-dark flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50 px-4 py-2 text-sm font-semibold">
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== QUEUE_QUOTA_ID ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
@@ -37,31 +75,26 @@ export function ParticipantsTable({
               </div>
               <div className="overflow-x-auto">
                 {quota.Signups.length > 0 ? (
-                  <table className="min-w-full text-sm">
+                  <table className="w-full table-fixed text-sm">
                     <thead>
                       <tr className="border-b border-stone-300/70">
-                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Sija
-                        </th>
-                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Nimi
-                        </th>
+                        <th className={`${headStyle} ${POSITION}`}>Sija</th>
+                        {/* No width: the name takes whatever the rest leave. */}
+                        <th className={`${headStyle} ${NAME}`}>Nimi</th>
                         {publicQuestions.map((q) => (
                           <th
                             key={q.id}
-                            className="text-brand-dark max-w-44 px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase"
+                            className={`${headStyle} ${ANSWER} ${WIDE_ONLY}`}
                             title={q.question}
                           >
-                            <span className="line-clamp-3 whitespace-normal">
-                              {q.question}
-                            </span>
+                            {q.question}
                           </th>
                         ))}
-                        <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Ilmoittautumisaika
-                        </th>
+                        <th className={`${headStyle} ${TIME}`}>Aika</th>
                         {quota.id === QUEUE_QUOTA_ID && (
-                          <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
+                          <th
+                            className={`${headStyle} ${ORIGIN} ${WIDE_ONLY}`}
+                          >
                             Kiintiö
                           </th>
                         )}
@@ -70,15 +103,23 @@ export function ParticipantsTable({
                     <tbody className="divide-y divide-stone-300/50">
                       {quota.Signups.map((signup, index) => {
                         const rowStyle = signup.completedAt
-                          ? "px-3 py-1.5"
-                          : "px-3 py-1.5 text-gray-500";
+                          ? "py-1.5"
+                          : "py-1.5 text-gray-500";
+                        const name = signup.completedAt
+                          ? signup.name
+                          : "Vahvistamaton ilmo";
                         return (
                           <tr key={signup.id ?? `${quota.id}-${index}`}>
-                            <td className={rowStyle}>{index + 1}.</td>
-                            <td className={rowStyle}>
-                              {signup.completedAt
-                                ? signup.name
-                                : "Vahvistamaton ilmo"}
+                            <td
+                              className={`${rowStyle} ${POSITION} truncate tabular-nums`}
+                            >
+                              {index + 1}.
+                            </td>
+                            <td
+                              className={`${rowStyle} ${NAME} truncate`}
+                              title={name ?? undefined}
+                            >
+                              {name}
                             </td>
                             {publicQuestions.map((q) => {
                               const raw = q.Answers.find(
@@ -88,18 +129,21 @@ export function ParticipantsTable({
                               return (
                                 <td
                                   key={q.id}
-                                  className={`${rowStyle} max-w-44`}
+                                  className={`${rowStyle} ${ANSWER} ${WIDE_ONLY} truncate`}
                                   title={text || undefined}
                                 >
-                                  <span className="line-clamp-3 wrap-break-word whitespace-pre-wrap">
-                                    {text || "—"}
-                                  </span>
+                                  {text || "—"}
                                 </td>
                               );
                             })}
-                            <SignupRow signup={signup} rowStyle={rowStyle} />
+                            <SignupRow
+                              signup={signup}
+                              rowStyle={`${rowStyle} ${TIME}`}
+                            />
                             {quota.id === QUEUE_QUOTA_ID && (
-                              <td className={rowStyle}>
+                              <td
+                                className={`${rowStyle} ${ORIGIN} ${WIDE_ONLY} truncate`}
+                              >
                                 {OriginalQuotaTitle(
                                   event.Quotas,
                                   signup.originalQuotaId,
@@ -112,7 +156,7 @@ export function ParticipantsTable({
                     </tbody>
                   </table>
                 ) : (
-                  <p className="px-3 py-3 text-sm text-gray-600">
+                  <p className="px-4 py-3 text-sm text-gray-600">
                     {quota.id === QUEUE_QUOTA_ID && quota.signupCount > 0
                       ? "Ilmoittajien tiedot näkyvät vahvistuksen jälkeen"
                       : "Ei vielä osallistujia"}

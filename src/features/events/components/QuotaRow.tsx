@@ -31,6 +31,9 @@ export function QuotaRow({
   errors: FieldErrorsImpl<Quota> | undefined;
 }) {
   const canDelete = quotasLength >= 2 && signupCount === 0;
+  // A lone quota has no one to share with, so the event has no shared places
+  // and the controls that only exist to steer them have nothing to steer.
+  const hasSharedPlaces = quotasLength >= 2;
   const protectedPlacesUsed =
     quota.size === null
       ? seatHoldingSignupCount
@@ -64,7 +67,10 @@ export function QuotaRow({
         />
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+      <div
+        className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4"
+        hidden={!hasSharedPlaces}
+      >
         <label className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
           Jokeripaikat
         </label>
@@ -163,7 +169,7 @@ export function QuotaRow({
               />
             </div>
           </div>
-          <div>
+          <div hidden={!hasSharedPlaces}>
             <Button
               type="button"
               size="small"

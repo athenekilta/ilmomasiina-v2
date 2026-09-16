@@ -44,6 +44,11 @@ export function Quotas({
   const [extraCapacityInput, setExtraCapacityInput] = useState<string | null>(
     null,
   );
+  // Shared places need someone to be shared with: with a single quota they
+  // are that quota's own places under another name, so the event does not
+  // have them at all. Kept as a stored value rather than zeroed here, so
+  // splitting the quota in two again brings the places back untouched.
+  const hasSharedPlaces = watch("Quotas").length > 1;
 
   const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
@@ -202,27 +207,35 @@ export function Quotas({
 
       <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
         <p>
-        Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. 
-        Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. 
-        Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti, 
+        Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön.
+        Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa.
+        Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti,
         ilmoittautumisen päätyttyä tai ei lainkaan.
         </p>
-        <div className="mt-4 max-w-xs">
-          <label className="mb-1 block font-semibold">Jokeripaikat</label>
-          <Input
-            type="number"
-            min={0}
-            value={extraCapacityInput ?? extraCapacity}
-            onBlur={() => setExtraCapacityInput(null)}
-            onChange={(event) => {
-              const value = event.target.value;
-              setExtraCapacityInput(value);
-              setValue("extraCapacity", value === "" ? 0 : event.target.valueAsNumber);
-            }}
-            error={!!errors.extraCapacity}
-            helperText={errors.extraCapacity?.message}
-          />
-        </div>
+        {hasSharedPlaces ? (
+          <div className="mt-4 max-w-xs">
+            <label className="mb-1 block font-semibold">Jokeripaikat</label>
+            <Input
+              type="number"
+              min={0}
+              value={extraCapacityInput ?? extraCapacity}
+              onBlur={() => setExtraCapacityInput(null)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setExtraCapacityInput(value);
+                setValue("extraCapacity", value === "" ? 0 : event.target.valueAsNumber);
+              }}
+              error={!!errors.extraCapacity}
+              helperText={errors.extraCapacity?.message}
+            />
+          </div>
+        ) : (
+          <p className="mt-4 font-semibold">
+            Yhden kiintiön tapahtumassa ei ole jokeripaikkoja: ne olisivat sen
+            saman kiintiön paikkoja toisella nimellä. Lisää toinen kiintiö, jos
+            haluat jokeripaikkoja.
+          </p>
+        )}
         <p className="mt-3 font-semibold">
           Paikkoja yhteensä:{" "}
           {watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
