@@ -11,6 +11,11 @@ import { getEventFill } from "./eventFill";
 import { BADGE_TONE_CLASS } from "./badgeTone";
 import { EventCapacityBar } from "./EventCapacityBar";
 import { getRegistrationStatus } from "./registrationStatus";
+import {
+  useLocale,
+  useTranslations,
+} from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
 
 /* A real, fixed aspect ratio rather than a min-height fighting for
    leftover flex space — the image itself never stretches to fill a
@@ -57,8 +62,14 @@ export function EventCard({
   event: EnrichedEvent;
   isAdmin: boolean;
 }) {
-  const fill = getEventFill(event);
-  const registration = getRegistrationStatus(event);
+  const locale = useLocale();
+  const messages = useTranslations(publicEventsMessages);
+  const fill = getEventFill(event, messages.card.fill);
+  const registration = getRegistrationStatus(
+    event,
+    locale,
+    messages.card.timing,
+  );
   const isClosed = registration.state === "closed";
 
   return (
@@ -83,7 +94,7 @@ export function EventCard({
 
           {event.draft && (
             <span className="absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
-              Luonnos
+              {messages.card.draft}
             </span>
           )}
 
@@ -96,7 +107,7 @@ export function EventCard({
             {isClosed && (
               <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase sm:text-[0.8125rem]">
                 <Lock size={13} strokeWidth={2.75} aria-hidden />
-                Ilmo päättynyt
+                {messages.card.registrationEnded}
               </span>
             )}
 
@@ -140,7 +151,7 @@ export function EventCard({
                     className="shrink-0 opacity-60"
                   />
                   <span className="min-w-0 truncate">
-                    {formatEventDateTime(event.date)}
+                    {formatEventDateTime(event.date, locale)}
                   </span>
                 </p>
                 {event.location && (
@@ -222,7 +233,7 @@ export function EventCard({
             startIcon={<SquarePen size={18} strokeWidth={2.25} />}
             className="w-auto min-w-30 justify-center"
           >
-            Muokkaa
+            {messages.card.edit}
           </Button.Link>
         </div>
       )}

@@ -1,12 +1,24 @@
-import type { Event, Quota, Signup } from "@/generated/prisma/client";
+import type { BadgeTone } from "@/generated/prisma/client";
 import { RegistrationDate } from "@/features/events/utils/utils";
 
-export type EnrichedQuota = Quota & {
-  Signups: Signup[];
+export type EnrichedQuota = {
+  id: string;
+  size: number | null;
   signupCount: number;
 };
 
-export type EnrichedEvent = Event & {
+export type EnrichedEvent = {
+  id: number;
+  title: string;
+  badgeText: string | null;
+  badgeTone: BadgeTone;
+  imageId: string | null;
+  location: string | null;
+  date: Date;
+  registrationStartDate: Date;
+  registrationEndDate: Date;
+  draft: boolean;
+  extraCapacity: number;
   Quotas: EnrichedQuota[];
 };
 

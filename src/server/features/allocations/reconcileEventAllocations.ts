@@ -237,18 +237,13 @@ export async function reconcileEventAllocations(
     }),
   );
 
-  const queueAcceptedSignups = event.Quotas.flatMap((quota) =>
+  const queueAcceptedSignupIds = event.Quotas.flatMap((quota) =>
     quota.Signups.filter(
       (signup) =>
         (signup.status === SignupStatus.PENDING ||
           signup.status === SignupStatus.WAITLISTED) &&
         allocated.has(signup.id),
-    ).map((signup) => ({
-      id: signup.id,
-      name: signup.name,
-      email: signup.identity.email,
-      quotaName: quota.title,
-    })),
+    ).map((signup) => signup.id),
   );
 
   await Promise.all(updates);
@@ -258,9 +253,7 @@ export async function reconcileEventAllocations(
     allocatedSignupIds: allocated,
     queueAcceptedNotification: {
       eventId: event.id,
-      eventName: event.title,
-      eventDate: event.date,
-      signups: queueAcceptedSignups,
+      signupIds: queueAcceptedSignupIds,
     },
   };
 }

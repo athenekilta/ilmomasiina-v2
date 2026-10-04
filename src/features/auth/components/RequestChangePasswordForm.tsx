@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { userSignUpSchema } from "../utils/userSignUpSchema";
+import { createUserSignUpSchema } from "../utils/userSignUpSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -9,13 +9,15 @@ import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/Button";
 import Link from "next/link";
-
-const formSchema = z.object({
-  email: userSignUpSchema.shape.email,
-});
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { authMessages } from "@/i18n/messages/auth";
 
 export function RequestChangePasswordForm() {
   const router = useRouter();
+  const messages = useTranslations(authMessages);
+  const locale = useLocale();
+  const userSchema = createUserSignUpSchema(messages.validation);
+  const formSchema = z.object({ email: userSchema.shape.email });
 
   const {
     handleSubmit: createHandleSubmit,
@@ -34,7 +36,7 @@ export function RequestChangePasswordForm() {
   const mutation = api.auth.passwordChange.request.useMutation();
 
   const handleSubmit = createHandleSubmit(async (values) => {
-    await mutation.mutateAsync(values);
+    await mutation.mutateAsync({ ...values, locale });
     router.push(routes.auth.password.requested);
   });
 
@@ -44,22 +46,24 @@ export function RequestChangePasswordForm() {
         fullWidth
         {...register("email")}
         startIcon={<Icon icon="mail" />}
-        placeholder="Email"
+        placeholder={messages.fields.email}
         helperText={emailError?.message}
         error={!!emailError}
       />
 
       <Button type="submit" color="primary" loading={isSubmitting}>
-        Request password change link
+        {messages.actions.requestPasswordChange}
       </Button>
 
       {mutation.error && (
-        <p className="text-center text-danger">{mutation.error.message}</p>
+        <p role="alert" className="text-danger text-center">
+          {messages.passwordChange.requestFailed}
+        </p>
       )}
 
       <div className="flex items-center justify-between pt-6 text-black/70">
         <Link className="hover:underline" href={routes.auth.login}>
-          Login
+          {messages.actions.login}
         </Link>
       </div>
     </form>

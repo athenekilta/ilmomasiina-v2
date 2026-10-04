@@ -1,4 +1,7 @@
 import dynamic from "next/dynamic";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
+import { markdownLanguage } from "@/features/events/utils/markdownLocale";
 
 const MdEditor = dynamic(
   () => import("md-editor-rt").then((module) => module.MdEditor),
@@ -15,13 +18,16 @@ export function RichTextEditor({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const locale = useLocale();
+  const messages = useTranslations(eventAdminMessages);
+
   return (
     <MdEditor
       value={value}
       preview
       onChange={(value) => onChange(value)}
-      language="en-US"
-      placeholder="Kirjoita kuvaus"
+      language={markdownLanguage(locale)}
+      placeholder={messages.editor.descriptionPlaceholder}
       toolbarsExclude={[
         "github",
         "htmlPreview",

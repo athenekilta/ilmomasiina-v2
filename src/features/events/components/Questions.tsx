@@ -4,7 +4,6 @@ import { QuestionRow } from "./QuestionRow";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
 import cuid from "cuid";
-import type { Question } from "@/generated/prisma/client";
 import { eventFormSchema } from "../utils/eventFormSchema";
 import type {
   FieldErrors,
@@ -15,8 +14,12 @@ import type {
 } from "react-hook-form";
 import { useCallback } from "react";
 import type { z } from "zod";
+import type { Locale } from "@/i18n/config";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
+type QuestionValue = EventFormValues["Questions"][number];
 
 type QuestionsProps = {
   getValues: UseFormGetValues<EventFormValues>;
@@ -25,6 +28,7 @@ type QuestionsProps = {
   errors: FieldErrors<EventFormValues>;
   eventId?: number;
   signupCount: number;
+  activeLanguage: Locale;
 };
 
 export function Questions({
@@ -34,7 +38,9 @@ export function Questions({
   errors,
   eventId,
   signupCount,
+  activeLanguage,
 }: QuestionsProps) {
+  const messages = useTranslations(eventAdminMessages);
   const createQuestion = useCallback(() => {
     const questions = getValues("Questions");
     const id = cuid();
@@ -44,7 +50,7 @@ export function Questions({
       ...questions,
       {
         id,
-        question: "",
+        translations: { fi: "", en: "" },
         type: "text",
         required: false,
         sortId,
@@ -87,10 +93,10 @@ export function Questions({
   );
 
   return (
-    <FieldSet title="Kysymykset">
+    <FieldSet title={messages.questions.title}>
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuestion()} type="button">
-          Lisää kysymys
+          {messages.questions.add}
         </Button>
       </div>
       <DragDropContext onDragEnd={onDragEndQuestions}>
@@ -119,9 +125,10 @@ export function Questions({
                         }}
                         deleteQuestion={deleteQuestion}
                         signupCount={signupCount}
+                        activeLanguage={activeLanguage}
                         errors={
                           errors.Questions &&
-                          (errors.Questions[index] as FieldErrorsImpl<Question>)
+                          (errors.Questions[index] as FieldErrorsImpl<QuestionValue>)
                         }
                       />
                     </div>

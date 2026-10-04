@@ -1,5 +1,7 @@
 import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
+import { getTranslations } from "@/i18n/messages";
+import { emailMessages } from "@/i18n/messages/emails";
 import {
   EventSignupDetails,
   type EventSignupDetailsProps,
@@ -9,7 +11,7 @@ export type EventQueueEmailProps = EventSignupDetailsProps & {
   editUrl?: string;
 };
 
-const defaultProps: EventQueueEmailProps = {
+const defaultProps: Omit<EventQueueEmailProps, "locale"> = {
   eventName: "Esimerkkitapahtuma",
   eventDate: new Date("2026-09-14T15:00:00Z"),
   signupName: "Matti Meikäläinen",
@@ -19,24 +21,27 @@ const defaultProps: EventQueueEmailProps = {
 };
 
 function getSubject(props: EventQueueEmailProps) {
-  return `Olet jonossa: ${props.eventName}`;
+  return getTranslations(emailMessages, props.locale).eventQueue.subject(
+    props.eventName,
+  );
 }
 
 const EventQueueEmail = Object.assign(
   function EventQueueEmail(originalProps: EventQueueEmailProps) {
     const props = { ...defaultProps, ...originalProps };
+    const messages = getTranslations(emailMessages, props.locale).eventQueue;
 
     return (
       <Email
+        locale={props.locale}
         title={getSubject(props)}
-        preview={`Ilmosi tapahtumaan ${props.eventName} on jonossa`}
+        preview={messages.preview(props.eventName)}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
-          Ilmosi on jonossa
+          {messages.heading}
         </Heading>
         <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
-          Tapahtuman paikat ovat tällä hetkellä täynnä. Ilmoitamme sinulle
-          sähköpostitse, jos saat paikan.
+          {messages.body}
         </Text>
 
         <EventSignupDetails {...props} />
@@ -46,7 +51,7 @@ const EventQueueEmail = Object.assign(
             className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
             href={props.editUrl}
           >
-            Muokkaa ilmoa
+            {messages.button}
           </Button>
         )}
       </Email>

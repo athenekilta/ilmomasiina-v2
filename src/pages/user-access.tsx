@@ -3,9 +3,12 @@ import { useRouter } from "next/router";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Layout } from "@/features/layout/Layout";
 import { PageHead } from "@/features/layout/PageHead";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { accountMessages } from "@/i18n/messages/account";
 
 export default function UserAccessPage() {
   const router = useRouter();
+  const messages = useTranslations(accountMessages);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -34,15 +37,19 @@ export default function UserAccessPage() {
 
   return (
     <Layout>
-      <PageHead title="Ilmoittautumislinkki" />
+      <PageHead title={messages.access.title} />
       <div className="mx-auto w-full max-w-2xl px-1 sm:px-0">
         <div className="surface-panel p-8 text-center sm:p-10">
           {error ? (
             <p className="text-brand-dark font-medium">
-              Ilmoittautumislinkki ei ole voimassa.
+              {messages.access.invalid}
             </p>
           ) : (
-            <div className="flex justify-center py-10">
+            <div
+              className="flex justify-center py-10"
+              role="status"
+              aria-label={messages.access.loading}
+            >
               <LoadingSpinner />
             </div>
           )}

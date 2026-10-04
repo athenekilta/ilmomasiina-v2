@@ -133,6 +133,7 @@ exports.Prisma.ManagementUserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   role: 'role',
+  preferredLocale: 'preferredLocale',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -199,42 +200,68 @@ exports.Prisma.EventScalarFieldEnum = {
   imageId: 'imageId',
   creationRequestId: 'creationRequestId',
   id: 'id',
-  title: 'title',
-  badgeText: 'badgeText',
   badgeTone: 'badgeTone',
   date: 'date',
   registrationStartDate: 'registrationStartDate',
   registrationEndDate: 'registrationEndDate',
   openQuotaSize: 'openQuotaSize',
   extraCapacity: 'extraCapacity',
-  description: 'description',
   price: 'price',
   location: 'location',
   webpageUrl: 'webpageUrl',
   draft: 'draft',
   signupsPublic: 'signupsPublic',
-  verificationEmail: 'verificationEmail',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
 };
 
+exports.Prisma.EventTranslationScalarFieldEnum = {
+  eventId: 'eventId',
+  locale: 'locale',
+  title: 'title',
+  badgeText: 'badgeText',
+  description: 'description',
+  verificationEmail: 'verificationEmail'
+};
+
 exports.Prisma.QuestionScalarFieldEnum = {
   id: 'id',
-  question: 'question',
   type: 'type',
   sortId: 'sortId',
-  options: 'options',
   required: 'required',
   public: 'public',
   eventId: 'eventId'
 };
 
+exports.Prisma.QuestionTranslationScalarFieldEnum = {
+  questionId: 'questionId',
+  locale: 'locale',
+  question: 'question'
+};
+
+exports.Prisma.QuestionOptionScalarFieldEnum = {
+  id: 'id',
+  questionId: 'questionId',
+  sortId: 'sortId'
+};
+
+exports.Prisma.QuestionOptionTranslationScalarFieldEnum = {
+  optionId: 'optionId',
+  locale: 'locale',
+  label: 'label'
+};
+
 exports.Prisma.AnswerScalarFieldEnum = {
   id: 'id',
-  answer: 'answer',
+  textValue: 'textValue',
   questionId: 'questionId',
   signupId: 'signupId'
+};
+
+exports.Prisma.AnswerSelectionScalarFieldEnum = {
+  answerId: 'answerId',
+  optionId: 'optionId'
 };
 
 exports.Prisma.SignupScalarFieldEnum = {
@@ -245,6 +272,7 @@ exports.Prisma.SignupScalarFieldEnum = {
   quotaId: 'quotaId',
   originalQuotaId: 'originalQuotaId',
   status: 'status',
+  communicationLocale: 'communicationLocale',
   allocatedAt: 'allocatedAt',
   identityId: 'identityId'
 };
@@ -289,11 +317,16 @@ exports.Prisma.TokenScalarFieldEnum = {
 
 exports.Prisma.QuotaScalarFieldEnum = {
   id: 'id',
-  title: 'title',
   size: 'size',
   sharedPlacesAllocation: 'sharedPlacesAllocation',
   sortId: 'sortId',
   eventId: 'eventId'
+};
+
+exports.Prisma.QuotaTranslationScalarFieldEnum = {
+  quotaId: 'quotaId',
+  locale: 'locale',
+  title: 'title'
 };
 
 exports.Prisma.SortOrder = {
@@ -360,15 +393,21 @@ exports.Prisma.ModelName = {
   PasswordChangeToken: 'PasswordChangeToken',
   EventImage: 'EventImage',
   Event: 'Event',
+  EventTranslation: 'EventTranslation',
   Question: 'Question',
+  QuestionTranslation: 'QuestionTranslation',
+  QuestionOption: 'QuestionOption',
+  QuestionOptionTranslation: 'QuestionOptionTranslation',
   Answer: 'Answer',
+  AnswerSelection: 'AnswerSelection',
   Signup: 'Signup',
   Identity: 'Identity',
   UserSession: 'UserSession',
   SignupGrant: 'SignupGrant',
   IdentityGrant: 'IdentityGrant',
   Token: 'Token',
-  Quota: 'Quota'
+  Quota: 'Quota',
+  QuotaTranslation: 'QuotaTranslation'
 };
 
 /**

@@ -12,8 +12,8 @@ const config = {
   output: "standalone",
   reactStrictMode: true,
   i18n: {
-    locales: ["en"],
-    defaultLocale: "en",
+    locales: ["fi", "en"],
+    defaultLocale: "fi",
   },
 };
 export default config;

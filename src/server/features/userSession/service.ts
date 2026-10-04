@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { prisma } from "@/server/external/prisma";
 import cuid from "cuid";
+import { localePath, type Locale } from "@/i18n/config";
+import { communicationLocale } from "../localization/content";
 import {
   assertUserSessionOrigin,
   duration,
@@ -190,7 +192,10 @@ export async function requireUserSignupAccess(
   if (!(await canAccessSignup(db, access, signup))) throw accessDenied();
 }
 
-export async function createSignupEditUrl(signupId: string): Promise<string> {
+export async function createSignupEditUrl(
+  signupId: string,
+  locale: Locale,
+): Promise<string> {
   const signup = await prisma.signup.findUnique({
     where: { id: signupId },
     select: { Quota: { select: { eventId: true } } },
@@ -218,7 +223,10 @@ export async function createSignupEditUrl(signupId: string): Promise<string> {
       },
     });
   });
-  return `${trustedOrigin()}/events/${signup.Quota.eventId}/${encodeURIComponent(signupId)}#token=${rawToken}`;
+  return `${trustedOrigin()}${localePath(
+    locale,
+    `/events/${signup.Quota.eventId}/${encodeURIComponent(signupId)}`,
+  )}#token=${rawToken}`;
 }
 
 export async function redeemToken(
@@ -244,6 +252,7 @@ export async function redeemToken(
             signup: {
               select: {
                 name: true,
+                communicationLocale: true,
                 identity: { select: { email: true } },
                 Quota: { select: { eventId: true } },
               },
@@ -278,7 +287,10 @@ export async function redeemToken(
     }
     return {
       session,
-      redirectUrl: `/events/${grant.signup.Quota.eventId}/${encodeURIComponent(grant.signupId)}`,
+      redirectUrl: localePath(
+        communicationLocale(grant.signup.communicationLocale),
+        `/events/${grant.signup.Quota.eventId}/${encodeURIComponent(grant.signupId)}`,
+      ),
     };
   });
 
@@ -309,7 +321,9 @@ export async function cleanupUserSessions(): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await tx.token.deleteMany({ where: { expiresAt: { lte: now } } });
     await tx.userSession.deleteMany({
-      where: { OR: [{ expiresAt: { lte: now } }, { revokedAt: { not: null } }] },
+      where: {
+        OR: [{ expiresAt: { lte: now } }, { revokedAt: { not: null } }],
+      },
     });
     await tx.identity.deleteMany({
       where: { signups: { none: {} }, grants: { none: {} } },

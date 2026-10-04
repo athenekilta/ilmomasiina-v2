@@ -3,12 +3,15 @@ import { SignupRow } from "@/features/events/components/SingupRow";
 import { OriginalQuotaTitle } from "@/features/events/utils/utils";
 import type { RouteOutput } from "@/types/types";
 import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 export function ParticipantsTable({
   event,
 }: {
   event: RouteOutput["events"]["getEventByID"];
 }) {
+  const messages = useTranslations(eventAdminMessages).participants;
   const publicQuestions = useMemo(
     () =>
       [...event.Questions]
@@ -19,19 +22,22 @@ export function ParticipantsTable({
 
   return (
     <div className="space-y-5">
-      <h2 className="text-brand-dark text-lg font-semibold">Ilmonneet</h2>
+      <h2 className="text-brand-dark text-lg font-semibold">
+        {messages.title}
+      </h2>
       {event.Quotas.map(
-        (quota) => !(quota.id === QUEUE_QUOTA_ID && quota.signupCount == 0) && (
+        (quota) =>
+          !(quota.id === QUEUE_QUOTA_ID && quota.signupCount == 0) && (
             <div key={quota.id} className="surface-muted overflow-hidden">
               <div className="text-brand-dark flex items-center justify-between border-b border-stone-300/70 px-4 py-3 text-base font-semibold">
                 <h3 className="truncate">{quota.title}</h3>
                 {quota.id !== QUEUE_QUOTA_ID ? (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.signupCount} ilmonnutta
+                    {messages.signedUp(quota.signupCount)}
                   </span>
                 ) : (
                   <span className="ml-4 shrink-0 text-sm font-medium text-gray-700 tabular-nums">
-                    {quota.signupCount} jonossa
+                    {messages.queued(quota.signupCount)}
                   </span>
                 )}
               </div>
@@ -41,10 +47,10 @@ export function ParticipantsTable({
                     <thead>
                       <tr className="border-b border-stone-300/70">
                         <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Sija
+                          {messages.position}
                         </th>
                         <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Nimi
+                          {messages.name}
                         </th>
                         {publicQuestions.map((q) => (
                           <th
@@ -58,11 +64,11 @@ export function ParticipantsTable({
                           </th>
                         ))}
                         <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                          Ilmoittautumisaika
+                          {messages.signupTime}
                         </th>
                         {quota.id === QUEUE_QUOTA_ID && (
                           <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-                            Kiintiö
+                            {messages.quota}
                           </th>
                         )}
                       </tr>
@@ -78,7 +84,7 @@ export function ParticipantsTable({
                             <td className={rowStyle}>
                               {signup.completedAt
                                 ? signup.name
-                                : "Vahvistamaton ilmo"}
+                                : messages.unconfirmed}
                             </td>
                             {publicQuestions.map((q) => {
                               const raw = q.Answers.find(
@@ -114,8 +120,8 @@ export function ParticipantsTable({
                 ) : (
                   <p className="px-3 py-3 text-sm text-gray-600">
                     {quota.id === QUEUE_QUOTA_ID && quota.signupCount > 0
-                      ? "Ilmoittajien tiedot näkyvät vahvistuksen jälkeen"
-                      : "Ei vielä osallistujia"}
+                      ? messages.hiddenUntilConfirmed
+                      : messages.noParticipants}
                   </p>
                 )}
               </div>

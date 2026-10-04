@@ -13,6 +13,8 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { accountMessages } from "@/i18n/messages/account";
 
 function HeaderDropdownPanel({
   open,
@@ -31,6 +33,8 @@ function HeaderDropdownPanel({
   panelRef: React.RefObject<HTMLDivElement | null>;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
 }) {
+  const messages = useTranslations(accountMessages);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -77,7 +81,7 @@ function HeaderDropdownPanel({
           type="button"
           onClick={onClose}
           className="text-brand-dark rounded-control focus-visible:ring-brand-secondary shrink-0 cursor-pointer p-1 transition-colors hover:bg-stone-200 focus-visible:ring-2 focus-visible:outline-hidden"
-          aria-label="Sulje"
+          aria-label={messages.identity.close}
         >
           <Icon icon="close" className="block text-xl!" size={22} />
         </button>
@@ -88,6 +92,7 @@ function HeaderDropdownPanel({
 }
 
 export function HeaderAccountMenu() {
+  const messages = useTranslations(accountMessages);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -119,8 +124,8 @@ export function HeaderAccountMenu() {
   const displayLine =
     storedUser?.name?.trim() || storedUser?.email?.split("@")[0] || null;
   const subLine = storedUser?.email ?? null;
-  const triggerLabel = displayLine ?? "Ilmotiedot";
-  const triggerSub = subLine ?? "Nimi ja sähköposti puuttuvat";
+  const triggerLabel = displayLine ?? messages.identity.menuLabel;
+  const triggerSub = subLine ?? messages.identity.missingDetails;
 
   return (
     <div className="relative shrink-0">
@@ -132,8 +137,8 @@ export function HeaderAccountMenu() {
         aria-haspopup="dialog"
         aria-label={
           displayLine
-            ? `Ilmotiedot: ${displayLine ?? subLine ?? ""}`
-            : "Aseta ilmotiedot"
+            ? messages.identity.openWithName(displayLine)
+            : messages.identity.openWithoutDetails
         }
         className="rounded-control focus-visible:ring-offset-brand-primary flex cursor-pointer items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
       >
@@ -177,10 +182,10 @@ export function HeaderAccountMenu() {
                 className="text-brand-primary shrink-0"
                 aria-hidden
               />
-              Ilmotiedot kunnossa
+              {messages.identity.ready}
             </span>
           ) : (
-            "Ilmotiedot ei kunnossa"
+            messages.identity.incomplete
           )
         }
         panelRef={panelRef}
@@ -189,27 +194,31 @@ export function HeaderAccountMenu() {
         <form onSubmit={saveGuest} className="flex flex-col gap-3">
           <div>
             <label className="text-brand-dark mb-1 block text-xs font-semibold">
-              Nimi
+              {messages.identity.name}
             </label>
             <Input
               {...register("name")}
-              placeholder="Nimi"
+              placeholder={messages.identity.name}
               fullWidth
               error={!!errors.name}
-              helperText={errors.name?.message}
+              helperText={
+                errors.name ? messages.identity.nameTooShort : undefined
+              }
             />
           </div>
           <div>
             <label className="text-brand-dark mb-1 block text-xs font-semibold">
-              Sähköposti
+              {messages.identity.email}
             </label>
             <Input
               {...register("email")}
               type="email"
-              placeholder="sinä@example.com"
+              placeholder={messages.identity.emailPlaceholder}
               fullWidth
               error={!!errors.email}
-              helperText={errors.email?.message}
+              helperText={
+                errors.email ? messages.identity.invalidEmail : undefined
+              }
             />
           </div>
           <div className="mt-2 flex flex-col gap-2">
@@ -221,7 +230,7 @@ export function HeaderAccountMenu() {
               startIcon={<RefreshCw size={18} strokeWidth={2.25} />}
               className="w-full cursor-pointer justify-center"
             >
-              Päivitä
+              {messages.identity.update}
             </Button>
             <Button
               type="button"
@@ -230,7 +239,7 @@ export function HeaderAccountMenu() {
               className="w-full cursor-pointer justify-center"
               onClick={clearGuest}
             >
-              Tyhjennä tiedot
+              {messages.identity.clear}
             </Button>
           </div>
         </form>

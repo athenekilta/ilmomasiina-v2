@@ -1,8 +1,10 @@
 export const CHOICE_ANSWER_SEPARATOR = "\n";
 
+type ChoiceOption = string | { id: string };
+
 export type AnswerQuestion = {
   type: "text" | "textarea" | "radio" | "checkbox";
-  options: readonly string[];
+  options: readonly ChoiceOption[];
   required: boolean;
 };
 
@@ -22,33 +24,57 @@ export type AnswerValidationResult =
   | { success: true; answer: string }
   | { success: false; message: string };
 
+export type QuestionAnswerValidationMessages = {
+  atLeastTwoOptions: string;
+  optionRequired: string;
+  optionSingleLine: string;
+  optionsUnique: string;
+  answerRequired: string;
+  invalidOption: string;
+  duplicateOption: string;
+  duplicateQuestion: string;
+  unknownQuestion: string;
+  requiredAnswerMissing: string;
+};
+
+const defaultMessages: QuestionAnswerValidationMessages = {
+  atLeastTwoOptions: "Lisää vähintään kaksi vaihtoehtoa",
+  optionRequired: "Vaihtoehto ei voi olla tyhjä",
+  optionSingleLine: "Vaihtoehto ei voi sisältää rivinvaihtoa",
+  optionsUnique: "Vaihtoehtojen on oltava yksilöllisiä",
+  answerRequired: "Vastaus on pakollinen",
+  invalidOption: "Valittu vaihtoehto ei ole kelvollinen",
+  duplicateOption: "Sama vaihtoehto on valittu useita kertoja",
+  duplicateQuestion: "Sama kysymys on vastattu useita kertoja",
+  unknownQuestion: "Vastaus viittaa tuntemattomaan kysymykseen",
+  requiredAnswerMissing: "Pakollinen vastaus puuttuu",
+};
+
+const choiceOptionId = (option: ChoiceOption) =>
+  typeof option === "string" ? option : option.id;
+
 export function normalizeChoiceOptions(options: readonly string[]): string[] {
   return options.map((option) => option.trim());
 }
 
 export function getChoiceConfigurationIssues(
   options: readonly string[],
+  messages: QuestionAnswerValidationMessages = defaultMessages,
 ): ChoiceConfigurationIssue[] {
   const issues: ChoiceConfigurationIssue[] = [];
   if (options.length < 2) {
-    issues.push({ message: "Lisää vähintään kaksi vaihtoehtoa" });
+    issues.push({ message: messages.atLeastTwoOptions });
   }
 
   const normalized = normalizeChoiceOptions(options);
   normalized.forEach((option, index) => {
     if (option === "") {
-      issues.push({ index, message: "Vaihtoehto ei voi olla tyhjä" });
+      issues.push({ index, message: messages.optionRequired });
     } else if (/[\r\n]/.test(option)) {
-      issues.push({
-        index,
-        message: "Vaihtoehto ei voi sisältää rivinvaihtoa",
-      });
+      issues.push({ index, message: messages.optionSingleLine });
     }
     if (normalized.indexOf(option) !== index) {
-      issues.push({
-        index,
-        message: "Vaihtoehtojen on oltava yksilöllisiä",
-      });
+      issues.push({ index, message: messages.optionsUnique });
     }
   });
   return issues;
@@ -65,61 +91,60 @@ export function decodeCheckboxAnswer(
 
 export function encodeCheckboxAnswer(
   selections: readonly string[],
-  options: readonly string[] = selections,
+  options: readonly ChoiceOption[] = selections,
 ): string {
   const selected = new Set(selections);
   return options
-    .filter((option) => selected.has(option))
+    .map(choiceOptionId)
+    .filter((optionId) => selected.has(optionId))
     .join(CHOICE_ANSWER_SEPARATOR);
 }
 
 export function validateAndCanonicalizeQuestionAnswer(
   question: AnswerQuestion,
   answer: string,
+  messages: QuestionAnswerValidationMessages = defaultMessages,
 ): AnswerValidationResult {
   if (question.type === "text" || question.type === "textarea") {
     if (question.required && answer.trim() === "") {
-      return { success: false, message: "Vastaus on pakollinen" };
+      return { success: false, message: messages.answerRequired };
     }
     return { success: true, answer };
   }
 
   if (answer === "") {
     return question.required
-      ? { success: false, message: "Vastaus on pakollinen" }
+      ? { success: false, message: messages.answerRequired }
       : { success: true, answer: "" };
   }
 
+  const optionIds = question.options.map(choiceOptionId);
+
   if (question.type === "radio") {
-    if (!question.options.includes(answer)) {
-      return {
-        success: false,
-        message: "Valittu vaihtoehto ei ole kelvollinen",
-      };
+    if (!optionIds.includes(answer)) {
+      return { success: false, message: messages.invalidOption };
     }
     return { success: true, answer };
   }
 
   const selections = decodeCheckboxAnswer(answer);
   if (new Set(selections).size !== selections.length) {
-    return {
-      success: false,
-      message: "Sama vaihtoehto on valittu useita kertoja",
-    };
+    return { success: false, message: messages.duplicateOption };
   }
-  if (selections.some((selection) => !question.options.includes(selection))) {
-    return { success: false, message: "Valittu vaihtoehto ei ole kelvollinen" };
+  if (selections.some((selection) => !optionIds.includes(selection))) {
+    return { success: false, message: messages.invalidOption };
   }
 
   return {
     success: true,
-    answer: encodeCheckboxAnswer(selections, question.options),
+    answer: encodeCheckboxAnswer(selections, optionIds),
   };
 }
 
 export function validateAndCanonicalizeSignupAnswers(
   questions: readonly IdentifiedAnswerQuestion[],
   answers: readonly SubmittedQuestionAnswer[],
+  messages: QuestionAnswerValidationMessages = defaultMessages,
 ):
   | { success: true; answers: SubmittedQuestionAnswer[] }
   | { success: false; message: string } {
@@ -130,16 +155,10 @@ export function validateAndCanonicalizeSignupAnswers(
 
   for (const answer of answers) {
     if (answerByQuestionId.has(answer.questionId)) {
-      return {
-        success: false,
-        message: "Sama kysymys on vastattu useita kertoja",
-      };
+      return { success: false, message: messages.duplicateQuestion };
     }
     if (!questionById.has(answer.questionId)) {
-      return {
-        success: false,
-        message: "Vastaus viittaa tuntemattomaan kysymykseen",
-      };
+      return { success: false, message: messages.unknownQuestion };
     }
     answerByQuestionId.set(answer.questionId, answer);
   }
@@ -149,7 +168,7 @@ export function validateAndCanonicalizeSignupAnswers(
     const submitted = answerByQuestionId.get(question.id);
     if (!submitted) {
       if (question.required) {
-        return { success: false, message: "Pakollinen vastaus puuttuu" };
+        return { success: false, message: messages.requiredAnswerMissing };
       }
       continue;
     }
@@ -157,6 +176,7 @@ export function validateAndCanonicalizeSignupAnswers(
     const result = validateAndCanonicalizeQuestionAnswer(
       question,
       submitted.answer,
+      messages,
     );
     if (!result.success) return result;
     canonicalAnswers.push({

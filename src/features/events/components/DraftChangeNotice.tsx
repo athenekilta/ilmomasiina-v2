@@ -1,18 +1,29 @@
 import { Button } from "@/components/Button";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
-export function DraftChangeNotice({ onReload, disabled = false }: {
+export function DraftChangeNotice({
+  onReload,
+  disabled = false,
+}: {
   onReload: () => void;
   disabled?: boolean;
 }) {
+  const messages = useTranslations(eventAdminMessages);
+
   return (
-    <div role="status" className="surface-muted mb-4 space-y-3 border border-amber-300 p-4 text-sm">
-      <p>
-        Tietoja on muutettu muualla. Omat muutoksesi ovat tallessa tässä lomakkeessa.
-        Lataa uusimmat tiedot ennen tallentamista. Lataaminen hylkää omat
-        tallentamattomat muutoksesi ja kuvavalintasi.
-      </p>
-      <Button type="button" variant="bordered" disabled={disabled} onClick={onReload}>
-        Hylkää omat muutokset ja lataa uusimmat
+    <div
+      role="status"
+      className="surface-muted mb-4 space-y-3 border border-amber-300 p-4 text-sm"
+    >
+      <p>{messages.draft.notice}</p>
+      <Button
+        type="button"
+        variant="bordered"
+        disabled={disabled}
+        onClick={onReload}
+      >
+        {messages.draft.reload}
       </Button>
     </div>
   );

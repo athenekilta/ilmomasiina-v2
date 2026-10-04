@@ -1,5 +1,9 @@
-const APP_LOCALE = "fi-FI";
-const APP_TIME_ZONE = "Europe/Helsinki";
+import {
+  appTimeZone,
+  defaultLocale,
+  intlLocale,
+  type Locale,
+} from "@/i18n/config";
 
 type DateValue = Date | string | number;
 
@@ -8,71 +12,77 @@ const asDate = (value: DateValue) => new Date(value);
 export const formatDate = (
   value: DateValue,
   options?: Intl.DateTimeFormatOptions,
+  locale: Locale = defaultLocale,
 ) =>
-  asDate(value).toLocaleDateString(APP_LOCALE, {
-    timeZone: APP_TIME_ZONE,
+  new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
     ...options,
-  });
+  }).format(asDate(value));
 
 export const formatTime = (
   value: DateValue,
   options?: Intl.DateTimeFormatOptions,
+  locale: Locale = defaultLocale,
 ) =>
-  asDate(value).toLocaleTimeString(APP_LOCALE, {
-    timeZone: APP_TIME_ZONE,
+  new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
     ...options,
-  });
+  }).format(asDate(value));
 
 export const formatDateTime = (
   value: DateValue,
   options?: Intl.DateTimeFormatOptions,
+  locale: Locale = defaultLocale,
 ) =>
-  asDate(value).toLocaleString(APP_LOCALE, {
-    timeZone: APP_TIME_ZONE,
+  new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
     ...options,
-  });
+  }).format(asDate(value));
 
-/**
- * Event date with the weekday in front: "Su 16.8.2026 klo 17.57".
- *
- * The weekday is the part people plan around ("is it a weekday?"), so it
- * carries more weight than the year. Written out with explicit fields
- * rather than `dateStyle`, since Intl rejects mixing the two — and short
- * rather than long, because Finnish long weekdays come out in the essive
- * ("sunnuntaina"), which reads oddly in front of a date.
- */
-export const formatEventDateTime = (value: DateValue) => {
-  const formatted = asDate(value).toLocaleString(APP_LOCALE, {
-    timeZone: APP_TIME_ZONE,
+/** Event date with a short weekday in front, in Europe/Helsinki. */
+export const formatEventDateTime = (
+  value: DateValue,
+  locale: Locale = defaultLocale,
+) => {
+  const formatted = new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
     weekday: "short",
     day: "numeric",
     month: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }).format(asDate(value));
 
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
-export const formatRegistration = (start: Date, end: Date) => {
-  const now = new Date();
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const isOpen = startDate <= now && endDate >= now;
+type RegistrationFormatMessages = {
+  periodEnded: string;
+  openUntil: (dateTime: string) => string;
+  opensAt: (dateTime: string) => string;
+};
 
-  if (isOpen === false && endDate < now) {
-    return "Ilmo on p\u00E4\u00E4ttynyt.";
-  } else if (isOpen === true && startDate <= now && endDate >= now) {
-    return `Auki ${formatDate(endDate)} klo ${formatTime(endDate, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} asti`;
-  } else if (startDate > now) {
-    return `Ilmo aukeaa ${formatDate(startDate)} klo ${formatTime(startDate, {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}`;
+export const formatRegistration = (
+  start: DateValue,
+  end: DateValue,
+  locale: Locale,
+  messages: RegistrationFormatMessages,
+) => {
+  const now = new Date();
+  const startDate = asDate(start);
+  const endDate = asDate(end);
+  const dateTime = (value: Date) =>
+    `${formatDate(value, undefined, locale)} ${formatTime(
+      value,
+      { hour: "2-digit", minute: "2-digit" },
+      locale,
+    )}`;
+
+  if (endDate < now) return messages.periodEnded;
+  if (startDate <= now && endDate >= now) {
+    return messages.openUntil(dateTime(endDate));
   }
+  if (startDate > now) return messages.opensAt(dateTime(startDate));
   return "";
 };

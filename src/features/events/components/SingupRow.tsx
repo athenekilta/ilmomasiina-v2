@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 import type { Signup } from "@/generated/prisma";
 import { formatDateTime } from "@/utils/format";
+import { useLocale } from "@/i18n/I18nProvider";
 
 export function SignupRow({
   signup,
@@ -9,33 +9,14 @@ export function SignupRow({
   signup: Pick<Signup, "createdAt">;
   rowStyle: string;
 }) {
-  const [showMilliseconds, setShowMilliseconds] = useState(false);
-
-  const handleMouseEnter = () => {
-    setShowMilliseconds(true);
-  };
-
-  const handleMouseLeave = () => {
-    setShowMilliseconds(false);
-  };
-
-  const formattedDate = formatDateTime(signup.createdAt, {
-    dateStyle: "short",
-    timeStyle: "medium",
-  });
-  const milliseconds = signup.createdAt
-    .getMilliseconds()
-    .toString()
-    .padStart(3, "0");
-  const dateWithMilliseconds = `${formattedDate}.${milliseconds}`;
-
-  return (
-    <td
-      className={rowStyle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {formattedDate}
-    </td>
+  const locale = useLocale();
+  const formattedDate = formatDateTime(
+    signup.createdAt,
+    {
+      dateStyle: "short",
+      timeStyle: "medium",
+    },
+    locale,
   );
+  return <td className={rowStyle}>{formattedDate}</td>;
 }

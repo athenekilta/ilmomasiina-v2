@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { api } from "@/utils/api";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
-import { signupFormSchema } from "../../../features/events/utils/signupFormSchema";
+import { createSignupFormSchema } from "../../../features/events/utils/signupFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/Input";
 import { TextArea } from "@/components/TextArea";
@@ -26,10 +26,18 @@ import {
   encodeCheckboxAnswer,
   validateAndCanonicalizeQuestionAnswer,
 } from "@/features/events/utils/questionAnswers";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
 
 function EditSignup() {
   const router = useRouter();
   const now = useNow();
+  const locale = useLocale();
+  const messages = useTranslations(publicEventsMessages);
+  const formSchema = useMemo(
+    () => createSignupFormSchema(messages.validation.signup),
+    [messages.validation.signup],
+  );
   const { eventId, signupId } = useQueryParams();
   const { existing } = router.query;
   const updateMutation = api.signups.updateSignup.useMutation();
@@ -77,6 +85,7 @@ function EditSignup() {
     {
       signupId: signupId!,
       eventId: eventId!,
+      locale,
     },
     {
       enabled:
@@ -101,8 +110,8 @@ function EditSignup() {
     clearErrors,
     reset,
     formState: { errors, isDirty, isSubmitting },
-  } = useForm<z.infer<typeof signupFormSchema>>({
-    resolver: zodResolver(signupFormSchema),
+  } = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: { name: "", email: "", answers: [] },
   });
 
@@ -125,7 +134,7 @@ function EditSignup() {
       const result = await signupQuery.refetch();
       if (result.error || !result.data) {
         alerts.error(
-          "Uusimpien tietojen lataus epäonnistui. Omat vastauksesi säilytettiin.",
+          messages.signup.reloadFailed,
         );
         return;
       }
@@ -154,6 +163,7 @@ function EditSignup() {
       const result = validateAndCanonicalizeQuestionAnswer(
         question,
         values.answers[index]?.answer ?? "",
+        messages.validation.answers,
       );
       if (!result.success) {
         setError(`answers.${index}.answer`, {
@@ -175,29 +185,29 @@ function EditSignup() {
       await updateMutation.mutateAsync({
         signupId: signupId!,
         answers: canonicalAnswers,
+        locale,
       });
       try {
         await utils.signups.getSignupByID.cancel({
           eventId: eventId!,
           signupId: signupId!,
+          locale,
         });
         const saved = await utils.signups.getSignupByID.fetch(
-          { eventId: eventId!, signupId: signupId! },
+          { eventId: eventId!, signupId: signupId!, locale },
           { staleTime: 0 },
         );
         draft.adopt(signupDraftSnapshot(saved));
         setNeedsReload(false);
       } catch {
         setNeedsReload(true);
-        alerts.warning(
-          "Ilmo tallennettiin, mutta uusimpia tietoja ei voitu ladata.",
-        );
+        alerts.warning(messages.signup.savedButReloadFailed);
       }
-      alerts.success("Ilmo onnistui");
+      alerts.success(messages.signup.saved);
       await router.push(`/events/${eventId}`);
     } catch (error) {
       if (error instanceof Error) {
-        alerts.error(error.toString());
+        alerts.error(messages.signup.saveFailed);
       }
       console.error(error);
     } finally {
@@ -219,12 +229,10 @@ function EditSignup() {
       await deleteMutation.mutateAsync({
         signupId: signupId!,
       });
-      alerts.success("Ilmo onnistui");
+      alerts.success(messages.signup.deleted);
       await router.push(`/events/${eventId}`);
     } catch (error) {
-      alerts.error(
-        "Ilmon poisto epäonnistui. Päivitä tiedot ja yritä uudelleen.",
-      );
+      alerts.error(messages.signup.deleteFailed);
       deleteMutation.reset();
       void signupQuery.refetch();
       console.error(error);
@@ -240,7 +248,7 @@ function EditSignup() {
   ) {
     return (
       <>
-        <PageHead title="Ilmo" />
+        <PageHead title={messages.signup.pageTitle} />
         <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
           <div className="surface-panel flex justify-center py-20 sm:py-24">
             <LoadingSpinner />
@@ -258,16 +266,16 @@ function EditSignup() {
   ) {
     return (
       <>
-        <PageHead title="Ilmo" />
+        <PageHead title={messages.signup.pageTitle} />
         <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
           <div className="surface-panel p-8 text-center sm:p-10">
             <p className="text-brand-dark text-base font-medium">
               {accessError
-                ? "I ei ole voimassa."
+                ? messages.signup.invalidLink
                 : error?.data?.code === "FORBIDDEN" ||
                     error?.data?.code === "UNAUTHORIZED"
-                  ? "Sinulla ei ole oikeutta nähdä tätä ilmoa."
-                  : "Ilmoa ei löytynyt, se on poistettu tai sen lataus epäonnistui. Tallentamattomia vastauksia ei lähetetty."}
+                  ? messages.signup.forbidden
+                  : messages.signup.unavailable}
             </p>
             {!deleteMutation.isSuccess && (
               <Button
@@ -275,7 +283,7 @@ function EditSignup() {
                 onClick={() => void signupQuery.refetch()}
                 className="mt-4"
               >
-                Yritä uudelleen
+                {messages.signup.retry}
               </Button>
             )}
             {eventId != null && (
@@ -284,7 +292,7 @@ function EditSignup() {
                 className="mt-6 inline-flex"
                 color="primary"
               >
-                Takaisin tapahtumaan
+                {messages.signup.backToEvent}
               </Button.Link>
             )}
           </div>
@@ -295,7 +303,9 @@ function EditSignup() {
 
   return (
     <>
-      <PageHead title={`${signup.event.title} — Ilmo`} />
+      <PageHead
+        title={`${signup.event.title} — ${messages.signup.pageTitle}`}
+      />
       <div className="mx-auto w-full max-w-2xl min-w-0 px-1 sm:px-0">
         <div className="surface-panel p-5 sm:p-7">
           <Link
@@ -305,16 +315,16 @@ function EditSignup() {
             <span className="shrink-0 text-base" aria-hidden>
               ←
             </span>
-            <span className="min-w-0">Takaisin tapahtumaan</span>
+            <span className="min-w-0">{messages.signup.backToEvent}</span>
           </Link>
 
           <header className="mb-6">
             <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
               {isSignupEditingClosed
-                ? "Ilmon tiedot"
+                ? messages.signup.detailsTitle
                 : signup.completedAt === null
-                  ? "Viimeistele ilmo"
-                  : "Muokkaa ilmoa"}
+                  ? messages.signup.finishTitle
+                  : messages.signup.editTitle}
             </h1>
             <p className="text-brand-primary mt-2 text-sm font-semibold sm:text-base">
               {signup.event.title}
@@ -326,8 +336,7 @@ function EditSignup() {
               className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
               role="status"
             >
-              Ilmoittautuminen on päättynyt, eikä ilmoa voi enää muokata. Ilmosi
-              tiedot näkyvät alla.
+              {messages.signup.editingClosed}
             </div>
           )}
 
@@ -338,17 +347,16 @@ function EditSignup() {
                 className="rounded-inner mb-6 border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950"
                 role="status"
               >
-                Löysimme jo sinun vahvistamattoman ilmosi tähän tapahtumaan.
-                Täydennä tai muokkaa tietoja alla ja vahvista lopuksi.
+                {messages.signup.existingIncomplete}
                 <br />
-                Väärä kiintiö? Poista ilmo ja tee uusi.
+                {messages.signup.wrongQuota}
               </div>
             )}
 
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
             <div className="surface-muted p-4">
               <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
-                Kiintiö
+                {messages.signup.quota}
               </p>
               <p className="text-brand-dark mt-1.5 text-base font-semibold">
                 {signup.Quota.title}
@@ -356,7 +364,9 @@ function EditSignup() {
             </div>
             <div className="surface-muted p-4">
               <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
-                {signup.placement.type === "QUEUE" ? "Jonossa" : "Kiintiössä"}
+                {signup.placement.type === "QUEUE"
+                  ? messages.signup.inQueue
+                  : messages.signup.inQuota}
               </p>
               <p className="text-brand-dark mt-1.5 text-base font-semibold tabular-nums">
                 {signup.placement.position}
@@ -377,11 +387,9 @@ function EditSignup() {
           )}
           {error && (
             <div role="alert" className="surface-muted mb-4 p-4 text-sm">
-              <p>
-                Tietojen päivitys epäonnistui. Omat vastauksesi säilytettiin.
-              </p>
+              <p>{messages.signup.updateFailed}</p>
               <Button type="button" onClick={() => void signupQuery.refetch()}>
-                Yritä uudelleen
+                {messages.signup.retry}
               </Button>
             </div>
           )}
@@ -406,18 +414,20 @@ function EditSignup() {
 
               <section className="surface-muted mb-8 p-4 sm:p-5">
                 <h2 className="text-brand-secondary mb-4 text-[0.65rem] font-bold tracking-widest uppercase">
-                  Osallistuja
+                  {messages.signup.participant}
                 </h2>
                 <dl className="space-y-3 text-sm">
                   <div>
-                    <dt className="text-brand-secondary font-medium">Nimi</dt>
+                    <dt className="text-brand-secondary font-medium">
+                      {messages.signup.name}
+                    </dt>
                     <dd className="text-brand-dark mt-0.5 font-semibold">
                       {signup.name}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-brand-secondary font-medium">
-                      Sähköposti
+                      {messages.signup.email}
                     </dt>
                     <dd className="text-brand-dark mt-0.5 font-semibold break-all">
                       {signup.email}
@@ -425,14 +435,14 @@ function EditSignup() {
                   </div>
                 </dl>
                 <p className="text-brand-secondary mt-4 text-xs leading-relaxed">
-                  Nimeä ja sähköpostia ei voi muuttaa tässä vaiheessa.
+                  {messages.signup.identityLocked}
                 </p>
               </section>
 
               {sortedQuestions.length > 0 && (
                 <section className="mb-8">
                   <h2 className="text-brand-secondary mb-5 text-[0.65rem] font-bold tracking-widest uppercase">
-                    Kysymykset
+                    {messages.signup.questions}
                   </h2>
                   <div className="space-y-6">
                     {sortedQuestions.map((question, idx) => (
@@ -444,19 +454,18 @@ function EditSignup() {
                           <span>{question.question}</span>
                           {question.required ? (
                             <span className="text-danger text-xs font-bold">
-                              pakollinen
+                              {messages.signup.required}
                             </span>
                           ) : null}
                           {question.public ? (
                             <span className="text-brand-secondary text-xs font-semibold">
-                              julkinen
+                              {messages.signup.public}
                             </span>
                           ) : null}
                         </legend>
                         {question.public ? (
                           <p className="text-brand-secondary mb-2 text-xs leading-relaxed">
-                            Tämä vastaus näkyy tapahtuman julkisessa
-                            osallistujalistassa.
+                            {messages.signup.publicAnswer}
                           </p>
                         ) : null}
                         <input
@@ -495,23 +504,25 @@ function EditSignup() {
                                 aria-invalid={!!errors?.answers?.[idx]?.answer}
                               >
                                 {question.options.map((option, optionIdx) => {
-                                  const optionId = `answer-${question.id}-${optionIdx}`;
+                                  const inputId = `answer-${question.id}-${option.id}`;
+                                  const optionIds = question.options.map(
+                                    (item) => item.id,
+                                  );
                                   const selections =
                                     question.type === "checkbox"
-                                      ? decodeCheckboxAnswer(
-                                          field.value,
-                                        ).filter((selection) =>
-                                          question.options.includes(selection),
+                                      ? decodeCheckboxAnswer(field.value).filter(
+                                          (selection) =>
+                                            optionIds.includes(selection),
                                         )
                                       : [];
                                   return (
                                     <label
-                                      key={option}
-                                      htmlFor={optionId}
+                                      key={option.id}
+                                      htmlFor={inputId}
                                       className="text-brand-dark flex cursor-pointer items-start gap-2 text-sm"
                                     >
                                       <input
-                                        id={optionId}
+                                        id={inputId}
                                         ref={
                                           optionIdx === 0
                                             ? field.ref
@@ -519,25 +530,25 @@ function EditSignup() {
                                         }
                                         name={field.name}
                                         type={question.type}
-                                        value={option}
+                                        value={option.id}
                                         checked={
                                           question.type === "radio"
-                                            ? field.value === option
-                                            : selections.includes(option)
+                                            ? field.value === option.id
+                                            : selections.includes(option.id)
                                         }
                                         onBlur={field.onBlur}
                                         onChange={() => {
                                           if (question.type === "radio") {
-                                            field.onChange(option);
+                                            field.onChange(option.id);
                                             return;
                                           }
                                           const nextSelections =
-                                            selections.includes(option)
+                                            selections.includes(option.id)
                                               ? selections.filter(
                                                   (selection) =>
-                                                    selection !== option,
+                                                    selection !== option.id,
                                                 )
-                                              : [...selections, option];
+                                              : [...selections, option.id];
                                           field.onChange(
                                             encodeCheckboxAnswer(
                                               nextSelections,
@@ -547,7 +558,7 @@ function EditSignup() {
                                         }}
                                         className="accent-brand-secondary mt-0.5 size-4"
                                       />
-                                      <span>{option}</span>
+                                      <span>{option.label}</span>
                                     </label>
                                   );
                                 })}
@@ -571,20 +582,17 @@ function EditSignup() {
 
               <div className="surface-muted mb-8 p-4 sm:p-5">
                 <h2 className="text-brand-dark mb-3 text-sm font-semibold">
-                  Ehdot
+                  {messages.signup.termsTitle}
                 </h2>
                 <p className="text-sm leading-relaxed text-gray-700">
-                  Ilmoittautumisen sulkeuduttua ilmoittautuminen on sitova.
-                  Tämän jälkeen ilmoittautunut on velvollinen maksamaan
-                  osallistumismaksun tai löytämään paikalleen toisen
-                  osallistujan. Osallistumalla tapahtumaan sitoudut noudattamaan{" "}
+                  {messages.signup.termsBeforeLink}{" "}
                   <a
                     href="https://athene.fi/periaatteet/"
                     target="_blank"
                     rel="noreferrer"
                     className="text-brand-darkgreen font-medium underline-offset-2 hover:underline"
                   >
-                    Athenen yhteisiä periaatteita
+                    {messages.signup.principles}
                   </a>
                   .
                 </p>
@@ -604,7 +612,7 @@ function EditSignup() {
                       deleteMutation.isPending
                     }
                   >
-                    Vahvista ilmo
+                    {messages.signup.confirm}
                   </Button>
                   <p className="text-center text-xs text-stone-500 sm:text-left">
                     <button
@@ -615,7 +623,9 @@ function EditSignup() {
                         deleteMutation.isPending || isSubmitting || !!error
                       }
                     >
-                      {deleteMutation.isPending ? "Poistetaan…" : "Poista ilmo"}
+                      {deleteMutation.isPending
+                        ? messages.signup.deleting
+                        : messages.signup.delete}
                     </button>
                   </p>
                 </div>
@@ -625,9 +635,9 @@ function EditSignup() {
 
           {showDeleteConfirm && (
             <ConfirmationDialog
-              title="Poista ilmo?"
-              message="Haluatko varmasti poistaa ilmosi? Tätä ei voi perua."
-              confirmLabel="Poista ilmo"
+              title={messages.signup.deleteTitle}
+              message={messages.signup.deleteMessage}
+              confirmLabel={messages.signup.delete}
               onConfirmAction={handleDelete}
               onCancelAction={() => setShowDeleteConfirm(false)}
               pending={deleteMutation.isPending}

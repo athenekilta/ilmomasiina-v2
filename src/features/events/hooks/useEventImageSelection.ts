@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 import {
   EVENT_IMAGE_ACCEPT,
@@ -16,6 +18,7 @@ export function useEventImageSelection(
   existingImageId: string | null = null,
   locked = false,
 ) {
+  const messages = useTranslations(eventAdminMessages);
   const [action, setAction] = useState<"keep" | "replace" | "remove">("keep");
   const expectedImageId = useRef<string | null>(null);
   const uploaded = useRef<{
@@ -77,11 +80,11 @@ export function useEventImageSelection(
     setIsDecoding(false);
 
     if (!EVENT_IMAGE_ACCEPT.split(",").includes(file.type)) {
-      setError("Valitse JPEG-, PNG- tai WebP-kuva.");
+      setError(messages.image.invalidType);
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Kuvan enimmäiskoko on 10 MiB.");
+      setError(messages.image.tooLarge);
       return;
     }
 
@@ -106,7 +109,7 @@ export function useEventImageSelection(
       accepted = true;
     } catch {
       if (currentRequest === requestId.current) {
-        setError("Kuvaa ei voitu avata. Valitse toinen kuvatiedosto.");
+        setError(messages.image.decodeFailed);
       }
     } finally {
       if (!accepted && url && objectUrls.current.delete(url)) {
@@ -133,11 +136,11 @@ export function useEventImageSelection(
     expectedImageId?: string | null;
   }> {
     const selectionId = requestId.current;
-    if (isDecoding) throw new Error("Odota kuvan avaamisen valmistumista.");
+    if (isDecoding) throw new Error(messages.image.waitForDecode);
     if (action === "keep") return {};
     if (action === "remove")
       return { imageId: null, expectedImageId: expectedImageId.current };
-    if (!image) throw new Error("Valitse kuvatiedosto.");
+    if (!image) throw new Error(messages.image.selectFile);
     setError(null);
     try {
       if (
@@ -161,7 +164,7 @@ export function useEventImageSelection(
           !EVENT_IMAGE_ID_PATTERN.test(result.imageId)
         ) {
           throw new Error(
-            result?.error || "Kuvan lataus epäonnistui. Yritä uudelleen.",
+            result?.error || messages.image.uploadFailedRetry,
           );
         }
         assertCurrentImageSelection(selectionId, requestId.current);
@@ -178,7 +181,7 @@ export function useEventImageSelection(
     } catch (error) {
       if (selectionId === requestId.current) {
         setError(
-          error instanceof Error ? error.message : "Kuvan lataus epäonnistui.",
+          error instanceof Error ? error.message : messages.image.uploadFailed,
         );
       }
       throw error;

@@ -18,23 +18,33 @@ const questions: IdentifiedAnswerQuestion[] = [
   {
     id: "radio",
     type: "radio",
-    options: ["First", "Second"],
+    options: [{ id: "radio-first" }, { id: "radio-second" }],
     required: false,
   },
   {
     id: "checkbox",
     type: "checkbox",
-    options: ["Alpha", "Beta", "Gamma"],
+    options: [
+      { id: "checkbox-alpha" },
+      { id: "checkbox-beta" },
+      { id: "checkbox-gamma" },
+    ],
     required: true,
   },
 ];
 
 test("checkbox answers encode canonically and decode line endings", () => {
   assert.equal(
-    encodeCheckboxAnswer(["Gamma", "Alpha"], questions[2]!.options),
-    "Alpha\nGamma",
+    encodeCheckboxAnswer(
+      ["checkbox-gamma", "checkbox-alpha"],
+      questions[2]!.options,
+    ),
+    "checkbox-alpha\ncheckbox-gamma",
   );
-  assert.deepEqual(decodeCheckboxAnswer("Alpha\r\nGamma"), ["Alpha", "Gamma"]);
+  assert.deepEqual(decodeCheckboxAnswer("checkbox-alpha\r\ncheckbox-gamma"), [
+    "checkbox-alpha",
+    "checkbox-gamma",
+  ]);
   assert.deepEqual(decodeCheckboxAnswer(""), []);
   assert.deepEqual(decodeCheckboxAnswer(undefined), []);
   assert.deepEqual(decodeCheckboxAnswer(null), []);
@@ -50,17 +60,23 @@ test("choice configuration requires two non-empty unique single-line options", (
 
 test("valid signup answers are canonicalized in question and option order", () => {
   const result = validateAndCanonicalizeSignupAnswers(questions, [
-    { questionId: "checkbox", answer: "Gamma\nAlpha" },
+    {
+      questionId: "checkbox",
+      answer: "checkbox-gamma\ncheckbox-alpha",
+    },
     { questionId: "required-text", answer: "Hello" },
-    { questionId: "radio", answer: "Second" },
+    { questionId: "radio", answer: "radio-second" },
   ]);
 
   assert.deepEqual(result, {
     success: true,
     answers: [
       { questionId: "required-text", answer: "Hello" },
-      { questionId: "radio", answer: "Second" },
-      { questionId: "checkbox", answer: "Alpha\nGamma" },
+      { questionId: "radio", answer: "radio-second" },
+      {
+        questionId: "checkbox",
+        answer: "checkbox-alpha\ncheckbox-gamma",
+      },
     ],
   });
 });
@@ -100,22 +116,25 @@ test("unknown radio and duplicate or unknown checkbox selections are rejected", 
   assert.equal(
     validateAndCanonicalizeSignupAnswers(questions, [
       ...base,
-      { questionId: "radio", answer: "Third" },
-      { questionId: "checkbox", answer: "Alpha" },
+      { questionId: "radio", answer: "radio-unknown" },
+      { questionId: "checkbox", answer: "checkbox-alpha" },
     ]).success,
     false,
   );
   assert.equal(
     validateAndCanonicalizeSignupAnswers(questions, [
       ...base,
-      { questionId: "checkbox", answer: "Alpha\nAlpha" },
+      {
+        questionId: "checkbox",
+        answer: "checkbox-alpha\ncheckbox-alpha",
+      },
     ]).success,
     false,
   );
   assert.equal(
     validateAndCanonicalizeSignupAnswers(questions, [
       ...base,
-      { questionId: "checkbox", answer: "Unknown" },
+      { questionId: "checkbox", answer: "checkbox-unknown" },
     ]).success,
     false,
   );

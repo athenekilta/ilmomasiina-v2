@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/generated/prisma/client";
 import { stringify } from "csv-stringify/sync";
 import { nativeDate } from "@/utils/nativeDate";
+import { localizedValue } from "../localization/content";
 
 export async function createSignupsCsv(
   prisma: PrismaClient,
@@ -8,7 +9,11 @@ export async function createSignupsCsv(
 ): Promise<string> {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { Questions: true },
+    include: {
+      Questions: {
+        include: { Translations: true },
+      },
+    },
   });
   if (!event) throw new Error("Event not found");
 
@@ -16,8 +21,18 @@ export async function createSignupsCsv(
     where: { Quota: { eventId } },
     orderBy: { createdAt: "asc" },
     include: {
-      Quota: { select: { id: true, title: true } },
-      Answers: true,
+      Quota: { include: { Translations: true } },
+      Answers: {
+        include: {
+          Selections: {
+            include: {
+              Option: {
+                include: { Translations: true },
+              },
+            },
+          },
+        },
+      },
       identity: { select: { email: true } },
     },
   });
@@ -25,8 +40,13 @@ export async function createSignupsCsv(
   const sortedQuestions = [...event.Questions].sort(
     (a, b) => a.sortId - b.sortId,
   );
-
-  const questionHeaders = sortedQuestions.map((q) => q.question);
+  const questionHeaders = sortedQuestions.map((question) =>
+    localizedValue(
+      question.Translations,
+      "fi",
+      (translation) => translation.question,
+    ),
+  );
   const header = [
     "Järjestys",
     "Nimi",
@@ -39,19 +59,34 @@ export async function createSignupsCsv(
   const rows = [
     header,
     ...signups.map((signup, index) => {
-      const answers = sortedQuestions.map((q) => {
-        const answer = signup.Answers.find((a) => a.questionId === q.id);
-        return answer?.answer ?? "";
+      const answers = sortedQuestions.map((question) => {
+        const answer = signup.Answers.find(
+          (candidate) => candidate.questionId === question.id,
+        );
+        if (!answer) return "";
+        if (answer.textValue !== null) return answer.textValue;
+        return [...answer.Selections]
+          .sort((a, b) => a.Option.sortId - b.Option.sortId)
+          .map((selection) =>
+            localizedValue(
+              selection.Option.Translations,
+              "fi",
+              (translation) => translation.label,
+            ),
+          )
+          .join("\n");
       });
-
-      const date = nativeDate.stringify(new Date(signup.createdAt));
 
       return [
         index + 1,
         signup.name,
         signup.identity.email,
-        date,
-        signup.Quota?.title || signup.quotaId,
+        nativeDate.stringify(new Date(signup.createdAt)),
+        localizedValue(
+          signup.Quota.Translations,
+          "fi",
+          (translation) => translation.title,
+        ) || signup.quotaId,
         ...answers,
       ];
     }),

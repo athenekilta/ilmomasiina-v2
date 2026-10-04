@@ -1,5 +1,7 @@
 import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
+import { getTranslations } from "@/i18n/messages";
+import { emailMessages } from "@/i18n/messages/emails";
 import {
   EventSignupDetails,
   type EventSignupDetailsProps,
@@ -9,7 +11,7 @@ export type EventQueueAcceptedEmailProps = EventSignupDetailsProps & {
   editUrl?: string;
 };
 
-const defaultProps: EventQueueAcceptedEmailProps = {
+const defaultProps: Omit<EventQueueAcceptedEmailProps, "locale"> = {
   eventName: "Esimerkkitapahtuma",
   eventDate: new Date("2026-09-14T15:00:00Z"),
   signupName: "Matti Meikäläinen",
@@ -19,7 +21,10 @@ const defaultProps: EventQueueAcceptedEmailProps = {
 };
 
 function getSubject(props: EventQueueAcceptedEmailProps) {
-  return `Paikkasi on vahvistettu: ${props.eventName}`;
+  return getTranslations(
+    emailMessages,
+    props.locale,
+  ).eventQueueAccepted.subject(props.eventName);
 }
 
 const EventQueueAcceptedEmail = Object.assign(
@@ -27,17 +32,22 @@ const EventQueueAcceptedEmail = Object.assign(
     originalProps: EventQueueAcceptedEmailProps,
   ) {
     const props = { ...defaultProps, ...originalProps };
+    const messages = getTranslations(
+      emailMessages,
+      props.locale,
+    ).eventQueueAccepted;
 
     return (
       <Email
+        locale={props.locale}
         title={getSubject(props)}
-        preview={`Olet saanut paikan tapahtumasta ${props.eventName}`}
+        preview={messages.preview(props.eventName)}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
-          Sait paikan tapahtumasta
+          {messages.heading}
         </Heading>
         <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
-          Tapahtumaan vapautui paikka, ja ilmosi on nyt vahvistettu.
+          {messages.body}
         </Text>
 
         <EventSignupDetails {...props} />
@@ -47,7 +57,7 @@ const EventQueueAcceptedEmail = Object.assign(
             className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
             href={props.editUrl}
           >
-            Muokkaa ilmoa
+            {messages.button}
           </Button>
         )}
       </Email>

@@ -3,11 +3,12 @@ import { createElement } from "react";
 import { EmailClient } from "@azure/communication-email";
 import { env } from "@/env/server.mjs";
 import React from "react";
+import type { Locale } from "@/i18n/config";
 
 const connectionString = `endpoint=https://ilmomasiina.europe.communication.azure.com/;accesskey=${env.MAIL_API_KEY}`;
 const client = new EmailClient(connectionString);
 
-export function createEmailTemplate<Props extends object>(
+export function createEmailTemplate<Props extends { locale: Locale }>(
   EmailComponent: ((props: Props) => React.JSX.Element) & {
     getSubject(props: Props): string;
   },

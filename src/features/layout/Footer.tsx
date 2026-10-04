@@ -4,6 +4,8 @@ import { useManagementUser } from "../auth/hooks/useManagementUser";
 import { c } from "@/utils/classnames";
 import { ManagementMenu } from "./ManagementMenu";
 import { useIsClient } from "@/hooks/useIsClient";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { layoutMessages } from "@/i18n/messages/layout";
 
 const linkClass = c(
   "rounded-sm px-2 py-1 text-sm text-stone-100 transition-colors",
@@ -12,6 +14,7 @@ const linkClass = c(
 );
 
 export function Footer() {
+  const messages = useTranslations(layoutMessages);
   const isClient = useIsClient();
   const user = useManagementUser();
   const isLoggedIn = isClient && !!user.data;
@@ -22,7 +25,7 @@ export function Footer() {
         href={isLoggedIn ? routes.app.admin : routes.auth.login}
         className={linkClass}
       >
-        Hallinta
+        {messages.management}
       </Link>
       {isLoggedIn && (
         <>
@@ -36,7 +39,7 @@ export function Footer() {
         ·
       </span>
       <a href="https://athene.fi/hallinto/materiaalit/" className={linkClass}>
-        Tietosuoja
+        {messages.privacy}
       </a>
       <span className="text-stone-500 select-none" aria-hidden>
         ·

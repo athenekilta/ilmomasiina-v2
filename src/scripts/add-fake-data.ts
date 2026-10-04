@@ -12,67 +12,64 @@ async function createFakeData() {
   await prisma.quota.deleteMany({});
   await prisma.event.deleteMany({});
 
-  // Create Events
-  const events = [
-    {
-      title: "Minuuttikalja 2024",
+  // Create Event
+  const event = await prisma.event.create({
+    data: {
       date: moment().subtract(3, "days").toDate(),
       registrationStartDate: moment().subtract(10, "days").toDate(),
       registrationEndDate: moment().subtract(5, "days").toDate(),
-      description: "Legendaarinen wappufiiliksen pikakohottaja, Minuuttikalja",
       price: "",
       location: "Smökki (Jämeräntaival 4, Espoo)",
       draft: false,
-      verificationEmail: faker.lorem.paragraphs(),
       signupsPublic: true,
-    },
-    // Add more events as needed
-  ];
-
-  const eventRecords = await prisma.event.createMany({ data: events });
-
-  console.log("Event records", eventRecords);
-
-  const createdEvents = await prisma.event.findMany();
-  const event = createdEvents[0];
-  // Create Quotas
-  const quotas = [
-    {
-      eventId: event?.id || 1,
-      sortId: 1,
-      title: "Minuuttikalja 2024",
-      size: 20,
-    },
-    // Add more quotas as needed
-  ];
-
-  const quotaRecords = await prisma.quota.createMany({ data: quotas });
-  console.log("Quota records", quotaRecords);
-
-  const questionRecords = await prisma.question.createMany({
-    data: [
-      {
-        eventId: event?.id || 1,
-        sortId: 1,
-        type: "text",
-        question: "Pöytätoive",
-        required: true,
-        public: false,
+      translations: {
+        create: {
+          locale: "fi",
+          title: "Minuuttikalja 2024",
+          description:
+            "Legendaarinen wappufiiliksen pikakohottaja, Minuuttikalja",
+          verificationEmail: faker.lorem.paragraphs(),
+        },
       },
-    ],
+    },
   });
 
-  console.log(questionRecords);
-  const createdQuestions = await prisma.question.findMany({
-    where: {
-      eventId: event?.id || 1,
+  console.log("Event record", event);
+
+  // Create Quota
+  const quotaRecord = await prisma.quota.create({
+    data: {
+      eventId: event.id,
+      sortId: 1,
+      size: 20,
+      Translations: {
+        create: { locale: "fi", title: "Minuuttikalja 2024" },
+      },
     },
+  });
+  console.log("Quota record", quotaRecord);
+
+  const questionRecord = await prisma.question.create({
+    data: {
+      id: "fake-data-table-request",
+      eventId: event.id,
+      sortId: 1,
+      type: "text",
+      required: true,
+      public: false,
+      Translations: {
+        create: { locale: "fi", question: "Pöytätoive" },
+      },
+    },
+  });
+
+  console.log(questionRecord);
+  const createdQuestions = await prisma.question.findMany({
+    where: { eventId: event.id },
   });
 
   const createdQuotas = await prisma.quota.findMany({
-    where: {
-      eventId: event?.id || 1,
-    },
+    where: { eventId: event.id },
   });
 
   // Create Signups and Answers dynamically based on Quotas
@@ -105,7 +102,7 @@ async function createFakeData() {
           data: {
             questionId: question.id,
             signupId: signup.id,
-            answer: faker.lorem.sentence(),
+            textValue: faker.lorem.sentence(),
           },
         });
       }

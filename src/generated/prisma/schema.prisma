@@ -29,16 +29,17 @@ model Example {
 // When extending user data, extend this model
 
 model ManagementUser {
-  id            String              @id @default(cuid())
-  name          String?
-  email         String?             @unique
-  emailVerified Boolean             @default(false)
-  image         String?
-  role          ManagementRole      @default(user)
-  accounts      ManagementAccount[]
-  sessions      ManagementSession[]
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id              String              @id @default(cuid())
+  name            String?
+  email           String?             @unique
+  emailVerified   Boolean             @default(false)
+  image           String?
+  role            ManagementRole      @default(user)
+  preferredLocale String              @default("fi")
+  accounts        ManagementAccount[]
+  sessions        ManagementSession[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 }
 
 enum ManagementRole {
@@ -134,31 +135,41 @@ model EventImage {
 }
 
 model Event {
-  imageId               String?     @unique @db.Uuid
-  image                 EventImage? @relation(fields: [imageId], references: [id])
-  creationRequestId     String?     @unique @db.Uuid
-  id                    Int         @id @default(autoincrement())
-  title                 String
-  /// Free-form marketing tag shown on the event card, e.g. "Vuoden haippisin"
-  badgeText             String?
-  badgeTone             BadgeTone   @default(GREEN)
+  imageId               String?            @unique @db.Uuid
+  image                 EventImage?        @relation(fields: [imageId], references: [id])
+  creationRequestId     String?            @unique @db.Uuid
+  id                    Int                @id @default(autoincrement())
+  translations          EventTranslation[]
+  badgeTone             BadgeTone          @default(GREEN)
   date                  DateTime
   registrationStartDate DateTime
   registrationEndDate   DateTime
-  openQuotaSize         Int         @default(0) // Legacy field, retained for migration compatibility
-  extraCapacity         Int         @default(0)
-  description           String?
+  openQuotaSize         Int                @default(0) // Legacy field, retained for migration compatibility
+  extraCapacity         Int                @default(0)
   price                 String?
   location              String?
   webpageUrl            String?
-  draft                 Boolean     @default(true)
-  signupsPublic         Boolean     @default(false)
-  verificationEmail     String?
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  deletedAt             DateTime?   @map("deletedAt") // Paranoid deletion setup
+  draft                 Boolean            @default(true)
+  signupsPublic         Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  deletedAt             DateTime?          @map("deletedAt") // Paranoid deletion setup
   Questions             Question[]
   Quotas                Quota[]
+}
+
+model EventTranslation {
+  eventId           Int
+  locale            String
+  title             String
+  /// Free-form marketing tag shown on the event card, e.g. "Vuoden haippisin"
+  badgeText         String?
+  description       String?
+  verificationEmail String?
+  event             Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, locale])
+  @@index([locale])
 }
 
 enum QuestionType {
@@ -169,46 +180,90 @@ enum QuestionType {
 }
 
 model Question {
-  id       String       @id @default(cuid())
-  question String
-  type     QuestionType @default(text) // MULTIPLE_CHOICE | TEXT
-  sortId   Int
-  options  String[]     @default([])
-  required Boolean      @default(true)
-  public   Boolean      @default(false)
-  eventId  Int
-  Event    Event        @relation(fields: [eventId], references: [id])
-  Answers  Answer[]
+  id           String                @id @default(cuid())
+  type         QuestionType          @default(text)
+  sortId       Int
+  required     Boolean               @default(true)
+  public       Boolean               @default(false)
+  eventId      Int
+  Event        Event                 @relation(fields: [eventId], references: [id])
+  Translations QuestionTranslation[]
+  Options      QuestionOption[]
+  Answers      Answer[]
 
   @@index([eventId])
 }
 
+model QuestionTranslation {
+  questionId String
+  locale     String
+  question   String
+  Question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, locale])
+  @@index([locale])
+}
+
+model QuestionOption {
+  id           String                      @id @default(cuid())
+  questionId   String
+  sortId       Int
+  Question     Question                    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  Translations QuestionOptionTranslation[]
+  Selections   AnswerSelection[]
+
+  @@unique([questionId, sortId])
+  @@index([questionId])
+}
+
+model QuestionOptionTranslation {
+  optionId String
+  locale   String
+  label    String
+  Option   QuestionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([optionId, locale])
+  @@index([locale])
+}
+
 model Answer {
-  id         String   @id @default(cuid())
-  answer     String
+  id         String            @id @default(cuid())
+  textValue  String?
   questionId String
   signupId   String
-  Question   Question @relation(fields: [questionId], references: [id])
-  Signup     Signup   @relation(fields: [signupId], references: [id])
+  Question   Question          @relation(fields: [questionId], references: [id])
+  Signup     Signup            @relation(fields: [signupId], references: [id])
+  Selections AnswerSelection[]
 
   @@unique([signupId, questionId], name: "signup_and_question")
 }
 
+model AnswerSelection {
+  answerId String
+  optionId String
+  Answer   Answer         @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  Option   QuestionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([answerId, optionId])
+  @@index([optionId])
+}
+
 model Signup {
-  id              String       @id @default(cuid())
-  name            String
-  completedAt     DateTime? // when signup process is completed
-  createdAt       DateTime     @default(now())
-  quotaId         String
-  originalQuotaId String
-  status          SignupStatus @default(IN_PROGRESS)
-  allocatedAt     DateTime?
-  Quota           Quota        @relation("Quota", fields: [quotaId], references: [id])
-  OriginalQuota   Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
-  Answers         Answer[]
-  identityId      String
-  identity        Identity     @relation(fields: [identityId], references: [id])
-  signupGrant     SignupGrant?
+  id                  String       @id @default(cuid())
+  name                String
+  completedAt         DateTime? // when signup process is completed
+  createdAt           DateTime     @default(now())
+  quotaId             String
+  originalQuotaId     String
+  status              SignupStatus @default(IN_PROGRESS)
+  communicationLocale String       @default("fi")
+  allocatedAt         DateTime?
+  Quota               Quota        @relation("Quota", fields: [quotaId], references: [id])
+  OriginalQuota       Quota        @relation("OriginalQuota", fields: [originalQuotaId], references: [id])
+  Answers             Answer[]
+  identityId          String
+  identity            Identity     @relation(fields: [identityId], references: [id])
+  signupGrant         SignupGrant?
 
   @@index([quotaId])
   @@index([identityId])
@@ -290,14 +345,24 @@ enum SharedPlacesAllocation {
 
 model Quota {
   id                     String                 @id @default(cuid())
-  title                  String
   size                   Int?
   sharedPlacesAllocation SharedPlacesAllocation @default(NEVER)
   sortId                 Int
   eventId                Int
   Event                  Event                  @relation(fields: [eventId], references: [id])
+  Translations           QuotaTranslation[]
   Signups                Signup[]               @relation("Quota")
   OriginalSignups        Signup[]               @relation("OriginalQuota")
 
   @@index([eventId])
+}
+
+model QuotaTranslation {
+  quotaId String
+  locale  String
+  title   String
+  Quota   Quota  @relation(fields: [quotaId], references: [id], onDelete: Cascade)
+
+  @@id([quotaId, locale])
+  @@index([locale])
 }

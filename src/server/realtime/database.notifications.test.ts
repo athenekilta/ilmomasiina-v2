@@ -130,7 +130,7 @@ test(
       SELECT count(*)::integer AS count FROM pg_trigger
       WHERE tgname = 'ilmomasiina_row_change'
     `);
-    assert.equal(installed.rows[0]?.count, 8);
+    assert.equal(installed.rows[0]?.count, 14);
 
     await listener.connect();
     const notifications: Change[] = [];
@@ -188,17 +188,17 @@ test(
     }
     async function addEvent(id: number, draft = false, deleted = false) {
       await change(
-        `INSERT INTO "Event" (id, title, date, "registrationStartDate",
-          "registrationEndDate", "updatedAt", draft, "deletedAt", "verificationEmail")
-         VALUES ($1, 'Private event title', now(), now(), now(), now(), $2,
-          CASE WHEN $3 THEN now() ELSE NULL END, 'private-organizer@example.test')`,
+        `INSERT INTO "Event" (id, date, "registrationStartDate",
+          "registrationEndDate", "updatedAt", draft, "deletedAt")
+         VALUES ($1, now(), now(), now(), now(), $2,
+          CASE WHEN $3 THEN now() ELSE NULL END)`,
         [eventChange(id, !draft && !deleted)],
         [id, draft, deleted],
       );
     }
     async function addQuota(id: string, eventId: number, visible = true) {
       await change(
-        'INSERT INTO "Quota" (id, title, "sortId", "eventId") VALUES ($1, \'Private quota\', 0, $2)',
+        'INSERT INTO "Quota" (id, "sortId", "eventId") VALUES ($1, 0, $2)',
         [eventChange(eventId, visible)],
         [id, eventId],
       );
@@ -209,11 +209,16 @@ test(
       eventId: number,
       visible = true,
     ) {
+      await writer.query(
+        `INSERT INTO "Identity" (id, email, "updatedAt")
+         VALUES ($1, $2, now())`,
+        [`${id}-identity`, `${id}@example.test`],
+      );
       await change(
-        `INSERT INTO "Signup" (id, name, email, "quotaId", "originalQuotaId")
-         VALUES ($1, 'Private attendee', 'private-attendee@example.test', $2, $2)`,
+        `INSERT INTO "Signup" (id, name, "quotaId", "originalQuotaId", "identityId")
+         VALUES ($1, 'Private attendee', $2, $2, $3)`,
         [signupChange(eventId, visible)],
-        [id, quotaId],
+        [id, quotaId, `${id}-identity`],
       );
     }
 
@@ -223,19 +228,23 @@ test(
         await addEvent(1);
         await addEvent(2, true);
         await addEvent(3, false, true);
+        await change('UPDATE "Event" SET "updatedAt" = now()', []);
         await change(
-          'UPDATE "Event" SET title = title, "updatedAt" = now()',
-          [],
+          `INSERT INTO "EventTranslation" ("eventId", locale, title, description)
+           VALUES (1, 'fi', 'Private event title', NULL)`,
+          [eventChange(1)],
         );
         await change(
-          'UPDATE "Event" SET title = \'Changed private title\' WHERE id = 1',
+          `UPDATE "EventTranslation" SET title = 'Changed private title'
+           WHERE "eventId" = 1 AND locale = 'fi'`,
           [eventChange(1)],
         );
         await change('UPDATE "Event" SET draft = true WHERE id = 1', [
           eventChange(1),
         ]);
         await change(
-          "UPDATE \"Event\" SET description = 'Private' WHERE id = 1",
+          `UPDATE "EventTranslation" SET description = 'Private'
+           WHERE "eventId" = 1 AND locale = 'fi'`,
           [eventChange(1, false)],
         );
         await change('UPDATE "Event" SET draft = false WHERE id = 1', [
@@ -244,9 +253,11 @@ test(
         await change('UPDATE "Event" SET "deletedAt" = now() WHERE id = 1', [
           eventChange(1),
         ]);
-        await change('UPDATE "Event" SET description = NULL WHERE id = 1', [
-          eventChange(1, false),
-        ]);
+        await change(
+          `UPDATE "EventTranslation" SET description = NULL
+           WHERE "eventId" = 1 AND locale = 'fi'`,
+          [eventChange(1, false)],
+        );
         await change('UPDATE "Event" SET "deletedAt" = NULL WHERE id = 1', [
           eventChange(1),
         ]);
@@ -267,15 +278,18 @@ test(
       "commit-only delivery, rollback and transaction coalescing",
       async () => {
         await writer.query(`BEGIN;
-        INSERT INTO "Event" (id, title, date, "registrationStartDate", "registrationEndDate", "updatedAt", draft)
-        VALUES (10, 'Rolled back private event', now(), now(), now(), now(), false)`);
+        INSERT INTO "Event" (id, date, "registrationStartDate", "registrationEndDate", "updatedAt", draft)
+        VALUES (10, now(), now(), now(), now(), false)`);
         await expectChanges([]);
         await writer.query("ROLLBACK");
         await expectChanges([]);
         await writer.query(`BEGIN;
-        INSERT INTO "Event" (id, title, date, "registrationStartDate", "registrationEndDate", "updatedAt", draft)
-        VALUES (10, 'Private', now(), now(), now(), now(), false);
-        UPDATE "Event" SET title = 'Changed' WHERE id = 10`);
+        INSERT INTO "Event" (id, date, "registrationStartDate", "registrationEndDate", "updatedAt", draft)
+        VALUES (10, now(), now(), now(), now(), false);
+        INSERT INTO "EventTranslation" ("eventId", locale, title)
+        VALUES (10, 'fi', 'Private');
+        UPDATE "EventTranslation" SET title = 'Changed'
+        WHERE "eventId" = 10 AND locale = 'fi'`);
         await expectChanges([]);
         await writer.query("COMMIT");
         await expectChanges([eventChange(10)]);
@@ -290,7 +304,7 @@ test(
         await addQuota("private-q1", 10);
         await addQuota("private-q2", 11, false);
         await addQuota("private-q3", 12, false);
-        await change('UPDATE "Quota" SET title = title, size = size', []);
+        await change('UPDATE "Quota" SET size = size', []);
         await change("UPDATE \"Quota\" SET size = 5 WHERE id = 'private-q1'", [
           eventChange(10),
         ]);
@@ -303,13 +317,23 @@ test(
           [eventChange(10), eventChange(11, false)],
         );
         await change(
-          `INSERT INTO "Question" (id, question, "sortId", "eventId")
-        VALUES ('private-question', 'Sensitive question', 0, 10)`,
+          `INSERT INTO "Question" (id, "sortId", "eventId")
+        VALUES ('private-question', 0, 10)`,
           [eventChange(10)],
         );
-        await change('UPDATE "Question" SET question = question', []);
         await change(
-          `UPDATE "Question" SET options = ARRAY['Sensitive option']`,
+          `INSERT INTO "QuestionTranslation" ("questionId", locale, question)
+           VALUES ('private-question', 'fi', 'Sensitive question')`,
+          [eventChange(10)],
+        );
+        await change(
+          `INSERT INTO "QuestionOption" (id, "questionId", "sortId")
+           VALUES ('private-option', 'private-question', 0)`,
+          [eventChange(10)],
+        );
+        await change(
+          `INSERT INTO "QuestionOptionTranslation" ("optionId", locale, label)
+           VALUES ('private-option', 'fi', 'Sensitive option')`,
           [eventChange(10)],
         );
         await change('UPDATE "Question" SET "eventId" = 11', [
@@ -338,7 +362,7 @@ test(
           [signupChange(10)],
         );
         await change(
-          `UPDATE "Signup" SET email = 'new-private@example.test' WHERE id = 'private-signup1'`,
+          `UPDATE "Signup" SET name = 'New private name' WHERE id = 'private-signup1'`,
           [signupChange(10)],
         );
         await change(
@@ -355,18 +379,28 @@ test(
           [signupChange(10)],
         );
         await change(
-          `INSERT INTO "Question" (id, question, "sortId", "eventId")
-        VALUES ('private-question', 'Sensitive question', 0, 10)`,
+          `INSERT INTO "Question" (id, "sortId", "eventId")
+        VALUES ('private-question', 0, 10)`,
           [eventChange(10)],
         );
         await change(
-          `INSERT INTO "Answer" (id, answer, "questionId", "signupId")
+          `INSERT INTO "QuestionOption" (id, "questionId", "sortId")
+           VALUES ('private-answer-option', 'private-question', 0)`,
+          [eventChange(10)],
+        );
+        await change(
+          `INSERT INTO "Answer" (id, "textValue", "questionId", "signupId")
         VALUES ('private-answer', 'Sensitive medical answer', 'private-question', 'private-signup1')`,
           [signupChange(10)],
         );
-        await change('UPDATE "Answer" SET answer = answer', []);
         await change(
-          `UPDATE "Answer" SET answer = 'Changed sensitive answer'`,
+          `INSERT INTO "AnswerSelection" ("answerId", "optionId")
+           VALUES ('private-answer', 'private-answer-option')`,
+          [signupChange(10)],
+        );
+        await change('UPDATE "Answer" SET "textValue" = "textValue"', []);
+        await change(
+          `UPDATE "Answer" SET "textValue" = 'Changed sensitive answer'`,
           [signupChange(10)],
         );
         await change(`UPDATE "Answer" SET "signupId" = 'private-signup2'`, [

@@ -7,9 +7,12 @@ import { TRPCError } from "@trpc/server";
 import { SignupStatus } from "@/generated/prisma/client";
 import type { Prisma } from "@/generated/prisma/client";
 import {
+  decodeCheckboxAnswer,
   getChoiceConfigurationIssues,
   validateAndCanonicalizeSignupAnswers,
 } from "@/features/events/utils/questionAnswers";
+import { localeSchema, type Locale } from "@/i18n/config";
+import { localizedValue } from "../features/localization/content";
 import { createSignupsCsv } from "../features/exports/buildSignupsCsv";
 import {
   cleanupExpiredInProgressSignups,
@@ -27,6 +30,49 @@ import {
 import { normalizeEmail } from "../features/userSession/request";
 
 const DEMO_SIGNUP_EMAIL_PREFIX = "dev-demo-";
+
+type AnswerWithSelections = {
+  id: string;
+  questionId: string;
+  signupId: string;
+  textValue: string | null;
+  Selections: Array<{ optionId: string; Option: { sortId: number } }>;
+};
+
+function answerDto(answer: AnswerWithSelections) {
+  const { Selections, textValue, ...data } = answer;
+  return {
+    ...data,
+    answer:
+      textValue ??
+      [...Selections]
+        .sort((a, b) => a.Option.sortId - b.Option.sortId)
+        .map((selection) => selection.optionId)
+        .join("\n"),
+  };
+}
+
+function localizedEventTranslation(
+  translations: Array<{
+    locale: string;
+    title: string;
+    badgeText: string | null;
+    description: string | null;
+    verificationEmail: string | null;
+  }>,
+  locale: Locale,
+) {
+  return {
+    title: localizedValue(translations, locale, (row) => row.title),
+    badgeText:
+      localizedValue(translations, locale, (row) => row.badgeText) || null,
+    description:
+      localizedValue(translations, locale, (row) => row.description) || null,
+    verificationEmail:
+      localizedValue(translations, locale, (row) => row.verificationEmail) ||
+      null,
+  };
+}
 
 type SignupPlacementItem = {
   id: string;
@@ -63,7 +109,6 @@ function ensureDevelopment() {
     throw new TRPCError({ code: "NOT_FOUND" });
   }
 }
-
 
 function requireRegistrationNotClosed(registrationEndDate: Date) {
   if (registrationEndDate.getTime() <= Date.now()) {
@@ -129,12 +174,19 @@ export const signupsRouter = router({
           createdAt: "asc",
         },
         include: {
-          Answers: true,
+          Answers: {
+            include: {
+              Selections: {
+                include: { Option: { select: { sortId: true } } },
+              },
+            },
+          },
           identity: { select: { email: true } },
         },
       });
       return signups.map(({ identity, ...signup }) => ({
         ...signup,
+        Answers: signup.Answers.map(answerDto),
         email: identity.email,
       }));
     }),
@@ -187,43 +239,69 @@ export const signupsRouter = router({
     }),
 
   sendMySignupAccessEmail: publicProcedure
-    .input(z.object({ eventId: z.number() }))
+    .input(z.object({ eventId: z.number(), locale: localeSchema }))
     .mutation(async ({ ctx, input }) => {
       const userSession = await getUserSession(ctx.prisma, ctx.userSession);
-      const signup = userSession?.email
-        ? await ctx.prisma.signup.findFirst({
-            where: {
-              Quota: { eventId: input.eventId },
-              identity: {
-                email: { equals: userSession.email, mode: "insensitive" },
+      const sessionEmail = userSession?.email;
+      const signup = sessionEmail
+        ? await ctx.prisma.$transaction(async (tx) => {
+            const found = await tx.signup.findFirst({
+              where: {
+                Quota: { eventId: input.eventId },
+                identity: {
+                  email: { equals: sessionEmail, mode: "insensitive" },
+                },
+                status: { not: SignupStatus.REJECTED },
               },
-              status: { not: SignupStatus.REJECTED },
-            },
-            include: {
-              Quota: { include: { Event: true } },
-              identity: { select: { email: true } },
-            },
-            orderBy: [
-              { completedAt: "desc" },
-              { createdAt: "asc" },
-              { id: "asc" },
-            ],
+              include: {
+                Quota: {
+                  include: {
+                    Translations: true,
+                    Event: { include: { translations: true } },
+                  },
+                },
+                identity: { select: { email: true } },
+              },
+              orderBy: [
+                { completedAt: "desc" },
+                { createdAt: "asc" },
+                { id: "asc" },
+              ],
+            });
+            if (
+              !found ||
+              RegistrationDate(found.Quota.Event).isRegistrationClosed
+            )
+              return null;
+            await tx.signup.update({
+              where: { id: found.id },
+              data: { communicationLocale: input.locale },
+            });
+            return found;
           })
         : null;
 
       // Deliberately return the same response whether a matching signup exists
       // or its registration has already closed.
-      if (!signup || RegistrationDate(signup.Quota.Event).isRegistrationClosed)
-        return;
+      if (!signup) return;
 
       await (
         await ctx.mail.templates.eventSignupAccess({
-          eventName: signup.Quota.Event.title,
+          locale: input.locale,
+          eventName: localizedValue(
+            signup.Quota.Event.translations,
+            input.locale,
+            (translation) => translation.title,
+          ),
           eventDate: signup.Quota.Event.date,
           signupName: signup.name,
           signupEmail: signup.identity.email,
-          quotaName: signup.Quota.title,
-          editUrl: await createSignupEditUrl(signup.id),
+          quotaName: localizedValue(
+            signup.Quota.Translations,
+            input.locale,
+            (translation) => translation.title,
+          ),
+          editUrl: await createSignupEditUrl(signup.id, input.locale),
         })
       ).send({
         to: { displayName: signup.name, address: signup.identity.email },
@@ -236,6 +314,7 @@ export const signupsRouter = router({
       z.object({
         signupId: z.string(),
         eventId: z.number(),
+        locale: localeSchema,
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -243,6 +322,7 @@ export const signupsRouter = router({
         where: {
           id: input.eventId,
         },
+        include: { translations: true },
       });
 
       if (!event) {
@@ -255,7 +335,7 @@ export const signupsRouter = router({
           Quota: { eventId: input.eventId },
         },
         include: {
-          Quota: true,
+          Quota: { include: { Translations: true } },
           identity: { select: { email: true } },
         },
       });
@@ -270,11 +350,24 @@ export const signupsRouter = router({
         where: {
           eventId: input.eventId,
         },
+        orderBy: [{ sortId: "asc" }, { id: "asc" }],
+        include: {
+          Translations: true,
+          Options: {
+            orderBy: [{ sortId: "asc" }, { id: "asc" }],
+            include: { Translations: true },
+          },
+        },
       });
 
       const answers = await ctx.prisma.answer.findMany({
         where: {
           signupId: input.signupId,
+        },
+        include: {
+          Selections: {
+            include: { Option: { select: { sortId: true } } },
+          },
         },
       });
 
@@ -291,13 +384,42 @@ export const signupsRouter = router({
         },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
-      const { identity, ...signupData } = signup;
+      const { identity, Quota, ...signupData } = signup;
+      const { Translations: quotaTranslations, ...quotaData } = Quota;
+      const { translations: eventTranslations, ...eventData } = event;
       return {
         ...signupData,
+        Quota: {
+          ...quotaData,
+          title: localizedValue(
+            quotaTranslations,
+            input.locale,
+            (translation) => translation.title,
+          ),
+        },
         email: identity.email,
-        answers,
-        questions,
-        event,
+        answers: answers.map(answerDto),
+        questions: questions.map(({ Translations, Options, ...question }) => ({
+          ...question,
+          question: localizedValue(
+            Translations,
+            input.locale,
+            (translation) => translation.question,
+          ),
+          options: Options.map(({ id, sortId, Translations }) => ({
+            id,
+            sortId,
+            label: localizedValue(
+              Translations,
+              input.locale,
+              (translation) => translation.label,
+            ),
+          })),
+        })),
+        event: {
+          ...eventData,
+          ...localizedEventTranslation(eventTranslations, input.locale),
+        },
         placement: getSignupPlacement(quotaSignups, signup.id),
       };
     }),
@@ -387,6 +509,7 @@ export const signupsRouter = router({
         quotaId: z.string(),
         name: z.string(),
         email: z.string().email(),
+        locale: localeSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -409,7 +532,10 @@ export const signupsRouter = router({
 
         const quota = await tx.quota.findUnique({
           where: { id: input.quotaId },
-          include: { Event: true },
+          include: {
+            Translations: true,
+            Event: { include: { translations: true } },
+          },
         });
         if (!quota) {
           throw new TRPCError({
@@ -439,7 +565,7 @@ export const signupsRouter = router({
               email: { equals: normalizedEmail, mode: "insensitive" },
             },
           },
-          include: { Quota: { select: { title: true } } },
+          include: { Quota: { include: { Translations: true } } },
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         });
         const existingSignup =
@@ -483,6 +609,7 @@ export const signupsRouter = router({
               name: input.name,
               identityId: identity.id,
               status: SignupStatus.IN_PROGRESS,
+              communicationLocale: input.locale,
             },
           });
           await grantCreatedSignup(tx, accessSession, candidate.id);
@@ -492,11 +619,30 @@ export const signupsRouter = router({
                 signupId: candidate.id,
                 existingSignupId: existingSignup.id,
                 existingQuotaId: existingSignup.quotaId,
-                existingQuotaTitle: existingSignup.Quota.title,
+                existingQuotaTitle: localizedValue(
+                  existingSignup.Quota.Translations,
+                  input.locale,
+                  (translation) => translation.title,
+                ),
                 existingIsCompleted: existingSignup.completedAt !== null,
-                selectedQuotaTitle: quota.title,
+                selectedQuotaTitle: localizedValue(
+                  quota.Translations,
+                  input.locale,
+                  (translation) => translation.title,
+                ),
               }
             : { kind: "CREATED", signupId: candidate.id };
+        }
+
+        if (
+          response.kind === "EXISTING" ||
+          response.kind === "CREATED" ||
+          response.kind === "CHOICE"
+        ) {
+          await tx.signup.update({
+            where: { id: response.signupId },
+            data: { communicationLocale: input.locale },
+          });
         }
 
         const allocation = await reconcileEventAllocations(tx, quota.eventId);
@@ -570,6 +716,7 @@ export const signupsRouter = router({
       z.object({
         candidateSignupId: z.string(),
         choice: z.enum(["NEW", "EXISTING"]),
+        locale: localeSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -643,6 +790,10 @@ export const signupsRouter = router({
           where: { id: { in: signupIdsToDelete } },
         });
 
+        await tx.signup.update({
+          where: { id: selectedSignupId },
+          data: { communicationLocale: input.locale },
+        });
         const allocation = await reconcileEventAllocations(tx, eventId);
         const signup = await tx.signup.findUniqueOrThrow({
           where: { id: selectedSignupId },
@@ -674,6 +825,7 @@ export const signupsRouter = router({
             answer: z.string(),
           }),
         ),
+        locale: localeSchema,
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -684,7 +836,13 @@ export const signupsRouter = router({
             include: {
               Quota: {
                 include: {
-                  Event: { include: { Questions: true } },
+                  Translations: true,
+                  Event: {
+                    include: {
+                      translations: true,
+                      Questions: { include: { Options: true } },
+                    },
+                  },
                 },
               },
               identity: { select: { email: true } },
@@ -703,12 +861,21 @@ export const signupsRouter = router({
             currentSignup.Quota.Event.registrationEndDate,
           );
 
-          const questions = currentSignup.Quota.Event.Questions;
+          const questions = currentSignup.Quota.Event.Questions.map(
+            ({ Options, ...question }) => ({
+              ...question,
+              options: Options.map((option) => ({ id: option.id })),
+            }),
+          );
           const hasInvalidChoiceConfiguration = questions.some((question) => {
             if (question.type !== "radio" && question.type !== "checkbox") {
               return false;
             }
-            return getChoiceConfigurationIssues(question.options).length > 0;
+            return (
+              getChoiceConfigurationIssues(
+                question.options.map((option) => option.id),
+              ).length > 0
+            );
           });
           if (hasInvalidChoiceConfiguration) {
             throw new TRPCError({
@@ -729,7 +896,29 @@ export const signupsRouter = router({
             });
           }
 
+          const answeredQuestionIds = validated.answers.map(
+            (answer) => answer.questionId,
+          );
+          await tx.answer.deleteMany({
+            where: {
+              signupId: input.signupId,
+              questionId: { notIn: answeredQuestionIds },
+            },
+          });
+          const questionById = new Map(
+            questions.map((question) => [question.id, question]),
+          );
           for (const answer of validated.answers) {
+            const question = questionById.get(answer.questionId)!;
+            const isChoice =
+              question.type === "radio" || question.type === "checkbox";
+            const optionIds = isChoice
+              ? question.type === "radio"
+                ? answer.answer
+                  ? [answer.answer]
+                  : []
+                : decodeCheckboxAnswer(answer.answer)
+              : [];
             await tx.answer.upsert({
               where: {
                 signup_and_question: {
@@ -737,18 +926,30 @@ export const signupsRouter = router({
                   signupId: input.signupId,
                 },
               },
-              update: { answer: answer.answer },
+              update: {
+                textValue: isChoice ? null : answer.answer,
+                Selections: {
+                  deleteMany: {},
+                  create: optionIds.map((optionId) => ({ optionId })),
+                },
+              },
               create: {
                 questionId: answer.questionId,
                 signupId: input.signupId,
-                answer: answer.answer,
+                textValue: isChoice ? null : answer.answer,
+                Selections: {
+                  create: optionIds.map((optionId) => ({ optionId })),
+                },
               },
             });
           }
 
           await tx.signup.update({
             where: { id: input.signupId },
-            data: { completedAt: new Date() },
+            data: {
+              completedAt: new Date(),
+              communicationLocale: input.locale,
+            },
           });
           const allocation = await reconcileEventAllocations(
             tx,
@@ -781,12 +982,21 @@ export const signupsRouter = router({
         if (wasQueued) return newSignup;
         await (
           await ctx.mail.templates.eventSignup({
-            eventName: currentSignup.Quota.Event.title,
+            locale: input.locale,
+            eventName: localizedValue(
+              currentSignup.Quota.Event.translations,
+              input.locale,
+              (translation) => translation.title,
+            ),
             eventDate: currentSignup.Quota.Event.date,
             signupName: newSignup.name,
             signupEmail: newSignup.identity.email,
-            quotaName: currentSignup.Quota.title,
-            editUrl: await createSignupEditUrl(currentSignup.id),
+            quotaName: localizedValue(
+              currentSignup.Quota.Translations,
+              input.locale,
+              (translation) => translation.title,
+            ),
+            editUrl: await createSignupEditUrl(currentSignup.id, input.locale),
           })
         ).send({
           to: {
@@ -798,12 +1008,21 @@ export const signupsRouter = router({
       } else if (!wasCompletedBefore) {
         await (
           await ctx.mail.templates.eventQueue({
-            eventName: currentSignup.Quota.Event.title,
+            locale: input.locale,
+            eventName: localizedValue(
+              currentSignup.Quota.Event.translations,
+              input.locale,
+              (translation) => translation.title,
+            ),
             eventDate: currentSignup.Quota.Event.date,
             signupName: newSignup.name,
             signupEmail: newSignup.identity.email,
-            quotaName: currentSignup.Quota.title,
-            editUrl: await createSignupEditUrl(currentSignup.id),
+            quotaName: localizedValue(
+              currentSignup.Quota.Translations,
+              input.locale,
+              (translation) => translation.title,
+            ),
+            editUrl: await createSignupEditUrl(currentSignup.id, input.locale),
           })
         ).send({
           to: {

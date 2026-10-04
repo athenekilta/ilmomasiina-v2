@@ -111,10 +111,9 @@ test("a confirmed shared signup moves into a freed protected place", async () =>
     "employee-next",
     "employee-shared",
   ]);
-  assert.deepEqual(
-    result.queueAcceptedNotification.signups.map((item) => item.id),
-    ["employee-next"],
-  );
+  assert.deepEqual(result.queueAcceptedNotification.signupIds, [
+    "employee-next",
+  ]);
 });
 
 test("trip categories compete for shared places by click time", async () => {

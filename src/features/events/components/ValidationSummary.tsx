@@ -1,74 +1,125 @@
-import React from 'react';
-import type { FieldErrors } from 'react-hook-form';
+import type { FieldErrors } from "react-hook-form";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 type ValidationSummaryProps = {
   errors: FieldErrors;
 };
 
+type CollectedError = {
+  path: string;
+  message: string;
+};
+
+function collectErrors(
+  value: unknown,
+  path: string[] = [],
+): CollectedError[] {
+  if (!value || typeof value !== "object") return [];
+
+  if (
+    "message" in value &&
+    typeof (value as { message?: unknown }).message === "string"
+  ) {
+    return [
+      {
+        path: path.join("."),
+        message: (value as { message: string }).message,
+      },
+    ];
+  }
+
+  return Object.entries(value).flatMap(([key, nestedValue]) =>
+    collectErrors(nestedValue, [...path, key]),
+  );
+}
+
 export function ValidationSummary({ errors }: ValidationSummaryProps) {
-  const formatErrorPath = (path: string): string => {
-    return path.split('.').map((part, index, array) => {
-      if (/^\d+$/.test(part) && index > 0 && index < array.length - 1) {
-        const num = parseInt(part) + 1;
-        const prefix = array[index - 1] || '';
-        const singular = prefix.endsWith('s') ? prefix.slice(0, -1) : prefix;
-        return `${singular.charAt(0).toUpperCase()}${singular.slice(1)} ${num}`;
+  const messages = useTranslations(eventAdminMessages);
+  const fieldLabels = messages.validation.fields as Record<string, string>;
+
+  const formatErrorPath = (path: string) => {
+    const parts = path.split(".").filter(Boolean);
+    const labels: string[] = [];
+
+    for (let index = 0; index < parts.length; index += 1) {
+      const part = parts[index];
+      const nextPart = parts[index + 1];
+
+      if (!part) continue;
+      if (part === "root" || part === "translations") continue;
+      if (part === "quotas") {
+        if (nextPart && /^\d+$/.test(nextPart)) {
+          labels.push(messages.validation.quota(Number(nextPart) + 1));
+          index += 1;
+        } else {
+          labels.push(messages.quotas.title);
+        }
+        continue;
       }
-      return index > array.findIndex(p => /^\d+$/.test(p)) ? part : '';
-    }).filter(Boolean).join(' ').trim();
+      if (part === "questions") {
+        if (nextPart && /^\d+$/.test(nextPart)) {
+          labels.push(messages.validation.question(Number(nextPart) + 1));
+          index += 1;
+        } else {
+          labels.push(messages.questions.title);
+        }
+        continue;
+      }
+      if (part === "options") {
+        if (nextPart && /^\d+$/.test(nextPart)) {
+          labels.push(messages.validation.option(Number(nextPart) + 1));
+          index += 1;
+        } else {
+          labels.push(fieldLabels.options ?? part);
+        }
+        continue;
+      }
+      if (/^\d+$/.test(part)) continue;
+
+      labels.push(fieldLabels[part] ?? part);
+    }
+
+    return labels.join(" · ");
   };
 
-  const collectErrors = (obj: Record<string, unknown>, path = ''): {path: string, message: string}[] => {
-    return Object.entries(obj).flatMap(([key, value]) => {
-      const currentPath = path ? `${path}.${key}` : key;
-      
-      // Handle special case for quota errors, which might have a different structure
-      if (key === 'quotas' && typeof value === 'object' && value !== null) {
-        if ('message' in value && value.message) {
-          return [{ path: 'Quotas', message: String(value.message) }];
-        }
-        
-        // If it's an array error
-        if (Array.isArray(value) || (typeof value === 'object' && Object.keys(value).some(k => /^\d+$/.test(k)))) {
-          return collectErrors(value as Record<string, unknown>, currentPath);
-        }
-      }
-      
-      if (key === 'eventId' && currentPath.includes('quota')) return [];
-      
-      if (value && typeof value === 'object' && 'message' in value && value.message) {
-        const formattedPath = formatErrorPath(currentPath);
-        return formattedPath ? [{ path: formattedPath, message: String(value.message) }] : [];
-      }
-      
-      if (value && typeof value === 'object') {
-        return collectErrors(value as Record<string, unknown>, currentPath);
-      }
-      
-      return [];
-    });
-  };
-  
-  const allErrors = collectErrors(errors as Record<string, unknown>)
-    .filter(error => error.path.trim() !== '');
-  
+  const allErrors = collectErrors(errors)
+    .map((error) => ({
+      path: formatErrorPath(error.path),
+      message: messages.validation.message(error.message),
+    }))
+    .filter((error) => error.path);
+
   if (allErrors.length === 0) return null;
 
   return (
-    <div className="fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] rounded-card border border-rose-400 bg-rose-50 p-3 shadow-card">
-      <div className="flex flex-col">
-        <div className="shrink-0">
-          <svg className="h-5 w-5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-        </div>
-        <div className="ml-3 w-full">
-          <h3 className="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+    <div
+      role="alert"
+      className="rounded-card shadow-card fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] border border-rose-400 bg-rose-50 p-3"
+    >
+      <div className="flex">
+        <svg
+          aria-hidden="true"
+          className="h-5 w-5 shrink-0 text-rose-600"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <div className="ml-3 min-w-0 flex-1">
+          <h3 className="text-sm font-medium text-red-800">
+            {messages.validation.heading}
+          </h3>
           <div className="mt-2 max-h-60 overflow-y-auto text-sm text-red-700">
             <ul className="list-disc space-y-1 pl-5">
               {allErrors.map((error, index) => (
-                <li key={index} className="wrap-break-word">
-                  <span className="font-medium">{error.path}:</span> {error.message}
+                <li key={`${error.path}-${index}`} className="wrap-break-word">
+                  <span className="font-medium">{error.path}:</span>{" "}
+                  {error.message}
                 </li>
               ))}
             </ul>

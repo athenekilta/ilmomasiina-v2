@@ -5,6 +5,8 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
 
 /* Runs the full height of the card along its edge, so this card reads
    differently from an event card (which wears its image as a wide banner
@@ -20,6 +22,7 @@ const PROMPT_IMAGE = "/placeholders/kaappikello.png";
  * at a signup form with the clock running.
  */
 export function IdentityPromptCard() {
+  const messages = useTranslations(publicEventsMessages);
   const [saved, setSaved] = useState(false);
 
   const {
@@ -60,10 +63,10 @@ export function IdentityPromptCard() {
           id="identity-prompt-title"
           className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-xl"
         >
-          Aloita täydentämällä ilmotietosi
+          {messages.identity.promptTitle}
         </h2>
         <p className="text-brand-dark mt-1 text-sm sm:text-base">
-          Näillä tiedoilla ilmoat tapahtumiin jatkossa automaattisesti
+          {messages.identity.promptDescription}
         </p>
       </div>
 
@@ -91,7 +94,7 @@ export function IdentityPromptCard() {
         <div className="min-w-0 flex-1">
           <Input
             {...register("name")}
-            placeholder="Nimi"
+            placeholder={messages.identity.name}
             fullWidth
             error={!!errors.name}
             helperText={errors.name?.message}
@@ -101,7 +104,7 @@ export function IdentityPromptCard() {
           <Input
             {...register("email")}
             type="email"
-            placeholder="sinä@example.com"
+            placeholder={messages.identity.emailPlaceholder}
             fullWidth
             error={!!errors.email}
             helperText={errors.email?.message}
@@ -113,7 +116,7 @@ export function IdentityPromptCard() {
           color="primary"
           className="justify-center @3xl:w-auto"
         >
-          Tallenna
+          {messages.identity.save}
         </Button>
       </form>
     </section>

@@ -44,9 +44,10 @@ type EventSeed = {
   signupsPublic?: boolean;
   quotas: QuotaSeed[];
   questions?: {
+    id: string;
     question: string;
     type: "text" | "textarea" | "radio" | "checkbox";
-    options?: string[];
+    options?: { id: string; label: string }[];
     required?: boolean;
     public?: boolean;
   }[];
@@ -90,12 +91,30 @@ const eventSeeds: EventSeed[] = [
       { title: "Lukkaristo", size: 4, signups: 0 },
     ],
     questions: [
-      { question: "Pöytätoive", type: "text", required: false, public: true },
       {
+        id: "test-mobiiliesa-table-request",
+        question: "Pöytätoive",
+        type: "text",
+        required: false,
+        public: true,
+      },
+      {
+        id: "test-mobiiliesa-diet",
         question: "Erityisruokavalio",
         type: "textarea",
         required: false,
         public: false,
+      },
+      {
+        id: "test-mobiiliesa-afterparty",
+        question: "Osallistutko jatkoille?",
+        type: "radio",
+        options: [
+          { id: "test-mobiiliesa-afterparty-yes", label: "Kyllä" },
+          { id: "test-mobiiliesa-afterparty-no", label: "Ei" },
+        ],
+        required: false,
+        public: true,
       },
     ],
   },
@@ -324,14 +343,28 @@ async function addTestEvents() {
   // skriptin voi ajaa uudestaan ilman duplikaatteja.
   const titles = eventSeeds.map((e) => e.title);
   const existing = await prisma.event.findMany({
-    where: { title: { in: titles } },
-    select: { id: true, title: true },
+    where: {
+      translations: {
+        some: { locale: "fi", title: { in: titles } },
+      },
+    },
+    select: {
+      id: true,
+      translations: {
+        where: { locale: "fi", title: { in: titles } },
+        select: { title: true },
+      },
+    },
   });
   const existingIds = existing.map((e) => e.id);
   // Keep each event's id across runs: re-seeding is how the dates are
   // refreshed, and an id that moved would leave every open tab, bookmark and
   // pasted link pointing at an event that no longer exists.
-  const idByTitle = new Map(existing.map((e) => [e.title, e.id]));
+  const idByTitle = new Map<string, number>();
+  for (const event of existing) {
+    const title = event.translations[0]?.title;
+    if (title) idByTitle.set(title, event.id);
+  }
 
   if (existingIds.length > 0) {
     const quotas = await prisma.quota.findMany({
@@ -353,32 +386,68 @@ async function addTestEvents() {
   }
 
   for (const seed of eventSeeds) {
-    const { quotas, questions, ...eventData } = seed;
+    const { title, badgeText, description, quotas, questions, ...eventData } =
+      seed;
     const data = {
       ...eventData,
       extraCapacity: eventData.extraCapacity ?? 0,
       draft: eventData.draft ?? false,
+    };
+    const translation = {
+      title,
+      badgeText: badgeText ?? null,
+      description: description ?? null,
       verificationEmail: "Kiitos ilmoittautumisesta! Nähdään tapahtumassa.",
     };
-    const existingId = idByTitle.get(seed.title);
+    const existingId = idByTitle.get(title);
 
     const event = existingId
-      ? await prisma.event.update({ where: { id: existingId }, data })
-      : await prisma.event.create({ data });
+      ? await prisma.event.update({
+          where: { id: existingId },
+          data: {
+            ...data,
+            translations: {
+              updateMany: {
+                where: { locale: "fi" },
+                data: translation,
+              },
+            },
+          },
+        })
+      : await prisma.event.create({
+          data: {
+            ...data,
+            translations: {
+              create: { locale: "fi", ...translation },
+            },
+          },
+        });
 
     const createdQuestions = questions?.length
       ? await Promise.all(
           questions.map((q, i) =>
             prisma.question.create({
               data: {
+                id: q.id,
                 eventId: event.id,
                 sortId: i + 1,
-                question: q.question,
                 type: q.type,
-                options: q.options ?? [],
                 required: q.required ?? false,
                 public: q.public ?? false,
+                Translations: {
+                  create: { locale: "fi", question: q.question },
+                },
+                Options: {
+                  create: (q.options ?? []).map((option, optionIndex) => ({
+                    id: option.id,
+                    sortId: optionIndex + 1,
+                    Translations: {
+                      create: { locale: "fi", label: option.label },
+                    },
+                  })),
+                },
               },
+              include: { Options: { orderBy: { sortId: "asc" } } },
             }),
           ),
         )
@@ -389,9 +458,11 @@ async function addTestEvents() {
         data: {
           eventId: event.id,
           sortId: i + 1,
-          title: quotaSeed.title,
           size: quotaSeed.size,
           sharedPlacesAllocation: quotaSeed.sharedPlaces ?? "NEVER",
+          Translations: {
+            create: { locale: "fi", title: quotaSeed.title },
+          },
         },
       });
 
@@ -419,11 +490,25 @@ async function addTestEvents() {
         });
 
         for (const question of createdQuestions) {
+          const isChoice =
+            question.type === "radio" || question.type === "checkbox";
+          const selectedOptions = isChoice
+            ? question.type === "radio"
+              ? question.Options.slice(0, 1)
+              : question.Options.slice(0, 2)
+            : [];
           await prisma.answer.create({
             data: {
               questionId: question.id,
               signupId: signup.id,
-              answer: faker.lorem.words({ min: 1, max: 5 }),
+              textValue: isChoice
+                ? null
+                : faker.lorem.words({ min: 1, max: 5 }),
+              Selections: {
+                create: selectedOptions.map((option) => ({
+                  optionId: option.id,
+                })),
+              },
             },
           });
         }
@@ -432,7 +517,7 @@ async function addTestEvents() {
 
     const signupTotal = quotas.reduce((sum, q) => sum + q.signups, 0);
     console.log(
-      `✓ ${event.title} (id ${event.id}) — ${quotas.length} kiintiötä, ${signupTotal} ilmoittautumista`,
+      `✓ ${title} (id ${event.id}) — ${quotas.length} kiintiötä, ${signupTotal} ilmoittautumista`,
     );
   }
 

@@ -10,13 +10,15 @@ import { Button } from "@/components/Button";
 import Link from "next/link";
 import { routes } from "@/utils/routes";
 import { useState } from "react";
-
-const formschema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
+import { useTranslations } from "@/i18n/I18nProvider";
+import { authMessages } from "@/i18n/messages/auth";
 
 export function LoginForm() {
+  const messages = useTranslations(authMessages);
+  const formSchema = z.object({
+    email: z.string().email(messages.validation.invalidEmail),
+    password: z.string().min(8, messages.validation.passwordTooShort(8)),
+  });
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [loginError, setLoginError] = useState<string>();
   const { error: queryError } = useQueryParams();
@@ -26,7 +28,7 @@ export function LoginForm() {
     handleSubmit: createHandleSubmit,
     formState: { isSubmitting, errors },
   } = useForm({
-    resolver: zodResolver(formschema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -39,14 +41,15 @@ export function LoginForm() {
     try {
       const result = await managementSignIn.email(values);
       if (result.error) {
-        setLoginError("Invalid email or password.");
+        setLoginError(messages.login.invalidCredentials);
       }
     } catch {
-      setLoginError("Login failed. Please try again.");
+      setLoginError(messages.login.failed);
     }
   });
 
-  const errorMessage = loginError ?? queryError;
+  const errorMessage =
+    loginError ?? (queryError ? messages.login.failed : undefined);
 
   return (
     <form
@@ -58,8 +61,8 @@ export function LoginForm() {
           {...register("email")}
           fullWidth
           startIcon={<Icon icon="mail" />}
-          placeholder="Email"
-          //   helperText={errors?.email?.message} TODO: fix
+          placeholder={messages.fields.email}
+          helperText={errors.email?.message}
           error={!!errors.email}
         />
         <Input
@@ -67,11 +70,18 @@ export function LoginForm() {
           fullWidth
           type={isPasswordVisible ? "text" : "password"}
           startIcon={<Icon icon="lock" />}
-          placeholder="Password"
+          placeholder={messages.fields.password}
+          helperText={errors.password?.message}
+          error={!!errors.password}
           endIcon={
             <IconButton
               tabIndex={-1}
               type="button"
+              aria-label={
+                isPasswordVisible
+                  ? messages.actions.hidePassword
+                  : messages.actions.showPassword
+              }
               onClick={() => setIsPasswordVisible((isVisible) => !isVisible)}
               inputAdornment="end"
             >
@@ -85,7 +95,7 @@ export function LoginForm() {
 
       <div className="flex flex-col gap-2">
         <Button type="submit" color="primary" loading={isSubmitting}>
-          Login
+          {messages.actions.login}
         </Button>
         {errorMessage && (
           <p role="alert" aria-live="polite" className="text-danger-700">
@@ -96,7 +106,7 @@ export function LoginForm() {
 
       <div className="flex items-center justify-between text-black">
         <Link className="font-thin hover:underline" href={routes.auth.signup}>
-          Create an account
+          {messages.actions.createAccount}
         </Link>
       </div>
     </form>

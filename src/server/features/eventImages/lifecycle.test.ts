@@ -61,7 +61,20 @@ test(
     };
     const eventInput = () => ({
       creationRequestId: randomUUID(),
-      title: "Image transaction test",
+      translations: {
+        fi: {
+          title: "Image transaction test",
+          badgeText: "",
+          description: "",
+          verificationEmail: "",
+        },
+        en: {
+          title: "",
+          badgeText: "",
+          description: "",
+          verificationEmail: "",
+        },
+      },
       date: new Date("2099-01-03"),
       registrationStartDate: new Date("2099-01-01"),
       registrationEndDate: new Date("2099-01-02"),
@@ -107,7 +120,7 @@ test(
           const image = await pending();
           const quota = {
             id: randomUUID(),
-            title: "Duplicate quota",
+            translations: { fi: "Duplicate quota", en: "" },
             size: 1,
             sortId: 1,
             eventId: 0,
@@ -175,16 +188,24 @@ test(
             caller.updateEvent({
               ...input,
               id: event.id,
-              title: "must not save",
+              translations: {
+                ...input.translations,
+                fi: { ...input.translations.fi, title: "must not save" },
+              },
               imageId: competing.id,
               expectedImageId: image.id,
             }),
             /muuttunut/,
           );
           assert.equal(
-            (await prisma.event.findUniqueOrThrow({ where: { id: event.id } }))
-              .title,
-            input.title,
+            (
+              await prisma.eventTranslation.findUniqueOrThrow({
+                where: {
+                  eventId_locale: { eventId: event.id, locale: "fi" },
+                },
+              })
+            ).title,
+            input.translations.fi.title,
           );
           await caller.updateEvent({
             ...input,

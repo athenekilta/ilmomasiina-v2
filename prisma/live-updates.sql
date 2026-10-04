@@ -52,9 +52,37 @@ BEGIN
     IF TG_TABLE_NAME = 'Event' THEN
         change_kind := 'event';
         event_ids := ARRAY[(old_row->>'id')::integer, (new_row->>'id')::integer];
+    ELSIF TG_TABLE_NAME IN ('EventTranslation') THEN
+        change_kind := 'event';
+        event_ids := ARRAY[(old_row->>'eventId')::integer, (new_row->>'eventId')::integer];
     ELSIF TG_TABLE_NAME IN ('Quota', 'Question') THEN
         change_kind := 'event';
         event_ids := ARRAY[(old_row->>'eventId')::integer, (new_row->>'eventId')::integer];
+    ELSIF TG_TABLE_NAME = 'QuotaTranslation' THEN
+        change_kind := 'event';
+        EXECUTE format(
+            'SELECT array_agg(DISTINCT "eventId") FROM %I."Quota" WHERE id = ANY($1)',
+            TG_TABLE_SCHEMA
+        ) INTO event_ids USING ARRAY[old_row->>'quotaId', new_row->>'quotaId'];
+    ELSIF TG_TABLE_NAME = 'QuestionTranslation' THEN
+        change_kind := 'event';
+        EXECUTE format(
+            'SELECT array_agg(DISTINCT "eventId") FROM %I."Question" WHERE id = ANY($1)',
+            TG_TABLE_SCHEMA
+        ) INTO event_ids USING ARRAY[old_row->>'questionId', new_row->>'questionId'];
+    ELSIF TG_TABLE_NAME = 'QuestionOption' THEN
+        change_kind := 'event';
+        EXECUTE format(
+            'SELECT array_agg(DISTINCT "eventId") FROM %I."Question" WHERE id = ANY($1)',
+            TG_TABLE_SCHEMA
+        ) INTO event_ids USING ARRAY[old_row->>'questionId', new_row->>'questionId'];
+    ELSIF TG_TABLE_NAME = 'QuestionOptionTranslation' THEN
+        change_kind := 'event';
+        EXECUTE format(
+            'SELECT array_agg(DISTINCT q."eventId") FROM %I."QuestionOption" o
+             JOIN %I."Question" q ON q.id = o."questionId" WHERE o.id = ANY($1)',
+            TG_TABLE_SCHEMA, TG_TABLE_SCHEMA
+        ) INTO event_ids USING ARRAY[old_row->>'optionId', new_row->>'optionId'];
     ELSIF TG_TABLE_NAME = 'Signup' THEN
         change_kind := 'signups';
         EXECUTE format(
@@ -68,6 +96,14 @@ BEGIN
              JOIN %I."Quota" q ON q.id = s."quotaId" WHERE s.id = ANY($1)',
             TG_TABLE_SCHEMA, TG_TABLE_SCHEMA
         ) INTO event_ids USING ARRAY[old_row->>'signupId', new_row->>'signupId'];
+    ELSIF TG_TABLE_NAME = 'AnswerSelection' THEN
+        change_kind := 'signups';
+        EXECUTE format(
+            'SELECT array_agg(DISTINCT q."eventId") FROM %I."Answer" a
+             JOIN %I."Signup" s ON s.id = a."signupId"
+             JOIN %I."Quota" q ON q.id = s."quotaId" WHERE a.id = ANY($1)',
+            TG_TABLE_SCHEMA, TG_TABLE_SCHEMA, TG_TABLE_SCHEMA
+        ) INTO event_ids USING ARRAY[old_row->>'answerId', new_row->>'answerId'];
     ELSE
         RETURN NULL;
     END IF;
@@ -88,6 +124,8 @@ BEGIN
                 'SELECT NOT draft AND "deletedAt" IS NULL FROM %I."Event" WHERE id = $1',
                 TG_TABLE_SCHEMA
             ) INTO is_public USING target_event_id;
+            -- A parent cascade has its own authoritative trigger notification.
+            CONTINUE WHEN is_public IS NULL;
         END IF;
         PERFORM pg_notify('ilmomasiina_changes', json_build_object(
             'kind', change_kind, 'eventId', target_event_id,
@@ -104,7 +142,9 @@ DECLARE
     target_schema text := current_schema();
 BEGIN
     FOREACH target_table IN ARRAY ARRAY[
-        'Event', 'Quota', 'Question', 'Signup', 'Answer',
+        'Event', 'EventTranslation', 'Quota', 'QuotaTranslation',
+        'Question', 'QuestionTranslation', 'QuestionOption',
+        'QuestionOptionTranslation', 'Signup', 'Answer', 'AnswerSelection',
         'ManagementUser', 'ManagementSession', 'ManagementAccount'
     ] LOOP
         IF to_regclass(format('%I.%I', target_schema, target_table)) IS NOT NULL THEN

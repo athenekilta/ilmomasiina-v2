@@ -2,6 +2,8 @@
 
 import { ManagementRole, type ManagementUser } from "@/generated/prisma";
 import { useManagementSession } from "@/server/auth/management-auth-client";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { adminMessages } from "@/i18n/messages/admin";
 
 export type UsersTableProps = {
   users: Array<Pick<ManagementUser, "id" | "name" | "email" | "role">>;
@@ -14,6 +16,7 @@ export function UsersTable({
   onUpdateRole,
   isUpdating = false,
 }: UsersTableProps) {
+  const messages = useTranslations(adminMessages);
   const managementSession = useManagementSession();
   const currentUserId = managementSession.data?.user?.id;
 
@@ -23,13 +26,13 @@ export function UsersTable({
         <thead className="bg-stone-100">
           <tr>
             <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-              Nimi
+              {messages.columns.name}
             </th>
             <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-              Sähköposti
+              {messages.columns.email}
             </th>
             <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
-              Rooli
+              {messages.columns.role}
             </th>
           </tr>
         </thead>
@@ -53,21 +56,24 @@ export function UsersTable({
                       disabled={isUpdating || isCurrentUser}
                       title={
                         isCurrentUser
-                          ? "Et voi muuttaa omaa rooliasi turvallisuussyistä."
-                          : "Valitse käyttäjän rooli"
+                          ? messages.ownRoleTitle
+                          : messages.selectRoleTitle
                       }
                       onChange={(event) => {
                         const newRole = event.target.value as ManagementRole;
                         const roleLabel =
                           newRole === ManagementRole.superadmin
-                            ? "Pääkäyttäjä"
+                            ? messages.roles.superadmin
                             : newRole === ManagementRole.event_editor
-                              ? "Tapahtumamuokkaaja"
-                              : "Uusi käyttäjä";
+                              ? messages.roles.eventEditor
+                              : messages.roles.user;
 
                         if (
                           window.confirm(
-                            `Haluatko varmasti muuttaa käyttäjän ${user.email} rooliksi "${roleLabel}"?`,
+                            messages.confirmRoleChange(
+                              user.email ?? "—",
+                              roleLabel,
+                            ),
                           )
                         ) {
                           onUpdateRole(user.id, newRole);
@@ -75,13 +81,13 @@ export function UsersTable({
                       }}
                     >
                       <option value={ManagementRole.user}>
-                        Uusi käyttäjä (Ei oikeuksia)
+                        {messages.roles.userOption}
                       </option>
                       <option value={ManagementRole.event_editor}>
-                        Tapahtumamuokkaaja
+                        {messages.roles.eventEditor}
                       </option>
                       <option value={ManagementRole.superadmin}>
-                        Pääkäyttäjä (Superadmin)
+                        {messages.roles.superadminOption}
                       </option>
                     </select>
                   </div>

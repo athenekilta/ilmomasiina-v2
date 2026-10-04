@@ -13,7 +13,6 @@ import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
 import { ManagementRole } from "@/generated/prisma";
 import { Input } from "@/components/Input";
 
-
 import { useGuestIdentityForm } from "@/features/events/hooks/useGuestIdentityForm";
 import type { RouteOutput } from "@/types/types";
 import { useAlert } from "@/features/alert/hooks/useAlert";
@@ -29,6 +28,8 @@ import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
 import { QuotaBars } from "@/features/events/quotaBars/QuotaBars";
 import { buildQuotaBars } from "@/features/events/quotaBars/quotaBarModel";
 import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
 
 type SignupConflictChoice = {
   candidateSignupId: string;
@@ -55,6 +56,8 @@ function Registration({
   now: number | null;
 }) {
   const router = useRouter();
+  const locale = useLocale();
+  const messages = useTranslations(publicEventsMessages);
   const apiContext = api.useContext();
   const { isRegistrationOpen, isRegistrationClosed } = RegistrationDate(
     event,
@@ -87,10 +90,10 @@ function Registration({
   const resolveSignupConflictMutation =
     api.signups.resolveSignupConflict.useMutation();
   const addDemoSignupMutation = api.signups.addDemoSignup.useMutation({
-    onError: (error) => alert.error(error.message),
+    onError: () => alert.error(messages.registration.signupFailed),
   });
   const removeDemoSignupMutation = api.signups.removeDemoSignup.useMutation({
-    onError: (error) => alert.error(error.message),
+    onError: () => alert.error(messages.registration.signupFailed),
   });
   const showDemoControls = process.env.NODE_ENV === "development";
   const signupStatus = signupStatusQuery.data;
@@ -128,26 +131,26 @@ function Registration({
   });
 
   const showCompletedSignupWarning = () =>
-    alert.warning(
-      "Tällä sähköpostilla on jo ilmo. Muokkaa olemassa olevaa ilmoa sähköpostiin tulleen linkin kautta",
-      { timeoutMs: 10000 },
-    );
+    alert.warning(messages.registration.completedWarning, {
+      timeoutMs: 10000,
+    });
 
   const requestSignupAccessEmail = async () => {
     try {
-      await sendSignupAccessEmailMutation.mutateAsync({ eventId: event.id });
-      alert.success(
-        "Ilmon muokkauslinkki lähetetty sähköpostiin",
-        { timeoutMs: 10000 },
-      );
+      await sendSignupAccessEmailMutation.mutateAsync({
+        eventId: event.id,
+        locale,
+      });
+      alert.success(messages.registration.editLinkSent, {
+        timeoutMs: 10000,
+      });
     } catch (error) {
       console.error(error);
-      alert.error("Linkin lähettäminen epäonnistui. Yritä uudelleen.", {
+      alert.error(messages.registration.editLinkFailed, {
         timeoutMs: 10000,
       });
     }
   };
-
 
   const resolveSignupConflict = async (choice: "NEW" | "EXISTING") => {
     if (!signupConflict) return;
@@ -156,6 +159,7 @@ function Registration({
       const result = await resolveSignupConflictMutation.mutateAsync({
         candidateSignupId: signupConflict.candidateSignupId,
         choice,
+        locale,
       });
       setSignupConflict(null);
 
@@ -168,7 +172,7 @@ function Registration({
     } catch (error) {
       console.error(error);
       if (error instanceof Error) {
-        alert.error(error.message, { timeoutMs: 10000 });
+        alert.error(messages.registration.signupFailed, { timeoutMs: 10000 });
       }
     }
   };
@@ -180,6 +184,7 @@ function Registration({
           quotaId,
           name: data.name,
           email: data.email,
+          locale,
         });
         if (result) {
           await apiContext.userSession.getIdentity.invalidate();
@@ -203,11 +208,11 @@ function Registration({
           // TODO: move to separate alert page here which allows to request link again
           return showCompletedSignupWarning();
         if (error instanceof Error)
-          return alert.error(`${error.message}`, { timeoutMs: 10000 });
+          return alert.error(messages.registration.signupFailed, {
+            timeoutMs: 10000,
+          });
 
-        alert.error("An unknown error occurred: " + error, {
-          timeoutMs: 10000,
-        });
+        alert.error(messages.registration.unknownError, { timeoutMs: 10000 });
       }
     };
   };
@@ -221,336 +226,362 @@ function Registration({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-brand-secondary text-base font-extrabold tracking-[0.015em] uppercase">
-              Ilmo
+              {messages.registration.title}
             </h2>
             <p className="text-brand-primary text-[13px] font-semibold">
               {formatRegistration(
                 event.registrationStartDate,
                 event.registrationEndDate,
+                locale,
+                messages.registration,
               )}
             </p>
           </div>
-        {isEditingUserData && !isRegistrationClosed ? (
-          <form className="-mx-[5px] sm:mx-0 surface-muted p-4" onSubmit={saveUserData}>
-            <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
-              Täydennä ilmotietosi
-            </h3>
-            <p className="text-brand-dark mt-1 text-sm">
-              Aseta nimi ja sähköposti ennen ilmoa. Huomaa, että voit ilmota
-              tapahtumaan vain kerran.
-            </p>
-            <p className="mt-2 text-xs leading-relaxed text-gray-600">
-              {event.signupsPublic && <span>Nimi on julkinen tieto. </span>}
-              Voit halutessasi ilmota salanimellä tapahtumaan.
-            </p>
+          {isEditingUserData && !isRegistrationClosed ? (
+            <form
+              className="surface-muted -mx-[5px] p-4 sm:mx-0"
+              onSubmit={saveUserData}
+            >
+              <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
+                {messages.identity.completeTitle}
+              </h3>
+              <p className="text-brand-dark mt-1 text-sm">
+                {messages.identity.completeDescription}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-gray-600">
+                {event.signupsPublic
+                  ? messages.identity.publicPrivacy
+                  : messages.identity.privatePrivacy}
+              </p>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-              <Input
-                {...register("name")}
-                placeholder="Nimi"
-                fullWidth
-                error={!!errors.name}
-                helperText={errors.name?.message}
-              />
-              <Input
-                {...register("email")}
-                type="email"
-                placeholder="sinä@example.com"
-                fullWidth
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <Input
+                  {...register("name")}
+                  placeholder={messages.identity.name}
+                  fullWidth
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                />
+                <Input
+                  {...register("email")}
+                  type="email"
+                  placeholder={messages.identity.emailPlaceholder}
+                  fullWidth
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
+              </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="submit"
-                variant="filled"
-                color="primary"
-                disabled={!isValid || isSubmitting}
-              >
-                Tallenna
-              </Button>
-              {storedUser && (
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
-                  type="button"
-                  color="neutral"
-                  variant="bordered"
-                  onClick={() => {
-                    reset({
-                      name: storedUser.name ?? "",
-                      email: storedUser.email ?? "",
-                    });
-                    setIsEditingUserData(false);
-                  }}
+                  type="submit"
+                  variant="filled"
+                  color="primary"
+                  disabled={!isValid || isSubmitting}
                 >
-                  Peruuta
+                  {messages.identity.save}
                 </Button>
+                {storedUser && (
+                  <Button
+                    type="button"
+                    color="neutral"
+                    variant="bordered"
+                    onClick={() => {
+                      reset({
+                        name: storedUser.name ?? "",
+                        email: storedUser.email ?? "",
+                      });
+                      setIsEditingUserData(false);
+                    }}
+                  >
+                    {messages.identity.cancel}
+                  </Button>
+                )}
+              </div>
+            </form>
+          ) : signupStatus?.state === "COMPLETED" ? (
+            <div
+              className="surface-muted text-brand-dark/80 -mx-[5px] px-3 py-2 text-sm sm:mx-0"
+              role="status"
+            >
+              <p>
+                <span className="font-medium text-gray-900">
+                  {messages.registration.signupComplete}
+                </span>
+                <br />
+                {messages.registration.completedWithEmail(
+                  storedUser?.email ?? "",
+                )}
+                {isRegistrationClosed ? (
+                  <>
+                    <br />
+                    {messages.registration.registrationClosedCannotEdit}
+                  </>
+                ) : (
+                  !signupStatus.canEditDirectly && (
+                    <> {messages.registration.editFromEmail}</>
+                  )
+                )}
+              </p>
+              {!isRegistrationClosed && (
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {signupStatus.canEditDirectly && signupStatus.id ? (
+                    <Link
+                      href={`/events/${event.id}/${signupStatus.id}`}
+                      className="text-brand-primary hover:underline"
+                    >
+                      {messages.registration.editSignup}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={requestSignupAccessEmail}
+                      disabled={sendSignupAccessEmailMutation.isPending}
+                      className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {sendSignupAccessEmailMutation.isPending
+                        ? messages.registration.sendingLink
+                        : messages.registration.sendEditLink}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingUserData(true)}
+                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+                  >
+                    {messages.registration.newSignup}
+                  </button>
+                </div>
               )}
             </div>
-          </form>
-        ) : signupStatus?.state === "COMPLETED" ? (
-          <div
-            className="-mx-[5px] sm:mx-0 surface-muted text-brand-dark/80 px-3 py-2 text-sm"
-            role="status"
-          >
-            <p>
-              <span className="font-medium text-gray-900">Ilmo kunnossa!</span>
-              <br />
-              Olet ilmonnut sähköpostilla{" "}
-              <span className="text-gray-900">{storedUser?.email}</span>.
-              {isRegistrationClosed ? (
-                <>
-                  <br />
-                  Ilmo on päättynyt, eikä ilmoa voi enää muokata.
-                </>
-              ) : (
-                !signupStatus.canEditDirectly &&
-                " Muokkaa ilmoa sähköpostista löytyvällä linkillä."
-              )}
-            </p>
-            {!isRegistrationClosed && (
-              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                {signupStatus.canEditDirectly && signupStatus.id ? (
-                  <Link
-                    href={`/events/${event.id}/${signupStatus.id}`}
-                    className="text-brand-primary hover:underline"
-                  >
-                    Muokkaa ilmoa
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={requestSignupAccessEmail}
-                    disabled={sendSignupAccessEmailMutation.isPending}
-                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {sendSignupAccessEmailMutation.isPending
-                      ? "Lähetetään linkkiä…"
-                      : "Lähetä muokkauslinkki"}
-                  </button>
+          ) : signupStatus?.state === "IN_PROGRESS" ? (
+            <div
+              className="surface-muted text-brand-dark/80 -mx-[5px] px-3 py-2 text-sm sm:mx-0"
+              role="status"
+            >
+              <p>
+                <span className="font-medium text-gray-900">
+                  {messages.registration.signupInProgress}
+                </span>
+                <br />
+                {messages.registration.inProgressWithEmail(
+                  storedUser?.email ?? "",
                 )}
-                <button
-                  type="button"
-                  onClick={() => setIsEditingUserData(true)}
-                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
-                >
-                  Uusi ilmo
-                </button>
-              </div>
-            )}
-          </div>
-        ) : signupStatus?.state === "IN_PROGRESS" ? (
-          <div
-            className="-mx-[5px] sm:mx-0 surface-muted text-brand-dark/80 px-3 py-2 text-sm"
-            role="status"
-          >
-            <p>
-              <span className="font-medium text-gray-900">Ilmo kesken!</span>
-              <br />
-              Sinulla on keskeneräinen ilmo sähköpostilla{" "}
-              <span className="text-gray-900">{storedUser?.email}</span>.
-              {isRegistrationClosed && (
-                <>
-                  <br />
-                  Ilmo on päättynyt, eikä ilmoa voi enää muokata.
-                </>
-              )}
-            </p>
-            {!isRegistrationClosed && (
-              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                {signupStatus.canEditDirectly && signupStatus.id ? (
-                  <Link
-                    href={`/events/${event.id}/${signupStatus.id}`}
-                    className="text-brand-primary hover:underline"
-                  >
-                    Viimeistele ilmo
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={requestSignupAccessEmail}
-                    disabled={sendSignupAccessEmailMutation.isPending}
-                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
-                  >
-                    {sendSignupAccessEmailMutation.isPending
-                      ? "Lähetetään linkkiä…"
-                      : "Lähetä muokkauslinkki"}
-                  </button>
+                {isRegistrationClosed && (
+                  <>
+                    <br />
+                    {messages.registration.registrationClosedCannotEdit}
+                  </>
                 )}
+              </p>
+              {!isRegistrationClosed && (
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {signupStatus.canEditDirectly && signupStatus.id ? (
+                    <Link
+                      href={`/events/${event.id}/${signupStatus.id}`}
+                      className="text-brand-primary hover:underline"
+                    >
+                      {messages.registration.finishSignup}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={requestSignupAccessEmail}
+                      disabled={sendSignupAccessEmailMutation.isPending}
+                      className="text-brand-primary cursor-pointer border-none p-0 hover:underline disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {sendSignupAccessEmailMutation.isPending
+                        ? messages.registration.sendingLink
+                        : messages.registration.sendEditLink}
+                    </button>
+                  )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsEditingUserData(true)}
-                  className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
-                >
-                  Uusi ilmo
-                </button>
-              </div>
-            )}
-          </div>
-        ) : isRegistrationClosed ? (
-          <p
-            className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
-            role="status"
-          >
-            Ilmo on päättynyt, eikä ilmoa voi enää muokata.
-          </p>
-        ) : (
-          /* Same shape as the header's identity panel: the green check and
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingUserData(true)}
+                    className="text-brand-primary cursor-pointer border-none p-0 hover:underline"
+                  >
+                    {messages.registration.newSignup}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : isRegistrationClosed ? (
+            <p
+              className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
+              role="status"
+            >
+              {messages.registration.registrationClosedCannotEdit}
+            </p>
+          ) : (
+            /* Same shape as the header's identity panel: the green check and
              the uppercase heading say "this is settled" at a glance, and the
              values below are what you check before pressing the button. */
-          <div className="-mx-[5px] sm:mx-0 surface-muted flex flex-col gap-2 p-3.5">
-            <span className="text-brand-secondary text-xs font-bold tracking-wide uppercase">
-              Ilmotiedot kunnossa
-            </span>
-            {/* The badge sits beside the values it vouches for, not beside
+            <div className="surface-muted -mx-[5px] flex flex-col gap-2 p-3.5 sm:mx-0">
+              <span className="text-brand-secondary text-xs font-bold tracking-wide uppercase">
+                {messages.registration.title}
+              </span>
+              {/* The badge sits beside the values it vouches for, not beside
                 the heading — and that leaves the row's right end free for the
                 action, level with the same two lines. */}
-            <div className="flex items-center gap-2.5">
-              <span className="text-brand-dark/70 relative shrink-0" aria-hidden>
-                <UserRound size={34} strokeWidth={2} />
-                {/* Inverted from the header's version: there the badge sits
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="text-brand-dark/70 relative shrink-0"
+                  aria-hidden
+                >
+                  <UserRound size={34} strokeWidth={2} />
+                  {/* Inverted from the header's version: there the badge sits
                     on the green bar, where a pale disc carries. On the beige
                     panel the pale disc disappears, so the disc goes dark and
                     the mark light. */}
-                <span className="bg-brand-secondary ring-brand-beige absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full text-white ring-[3px]">
-                  <Check size={11} strokeWidth={4} />
+                  <span className="bg-brand-secondary ring-brand-beige absolute -top-1.5 -right-1.5 flex size-[18px] items-center justify-center rounded-full text-white ring-[3px]">
+                    <Check size={11} strokeWidth={4} />
+                  </span>
                 </span>
-              </span>
-              <p className="text-brand-dark min-w-0 flex-1 text-sm leading-snug">
-                <span className="font-bold">{storedUser?.name}</span>
-                <br />
-                <span className="text-brand-dark/70 break-all">
-                  {storedUser?.email}
-                </span>
-              </p>
-              {/* No outline: inside a tinted panel the colour change is the
+                <p className="text-brand-dark min-w-0 flex-1 text-sm leading-snug">
+                  <span className="font-bold">{storedUser?.name}</span>
+                  <br />
+                  <span className="text-brand-dark/70 break-all">
+                    {storedUser?.email}
+                  </span>
+                </p>
+                {/* No outline: inside a tinted panel the colour change is the
                   edge, the same way the app's nested surfaces work. */}
-              <Button
-                type="button"
-                size="small"
-                color="neutral"
-                variant="filled"
-                className="shrink-0 bg-white enabled:hover:bg-stone-100 enabled:active:bg-stone-200"
-                onClick={() => setIsEditingUserData(true)}
-              >
-                Vaihda
-              </Button>
+                <Button
+                  type="button"
+                  size="small"
+                  color="neutral"
+                  variant="filled"
+                  className="shrink-0 bg-white enabled:hover:bg-stone-100 enabled:active:bg-stone-200"
+                  onClick={() => setIsEditingUserData(true)}
+                >
+                  {messages.registration.changeIdentity}
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-        {/* A rule and a label between the identity panel and the buttons: a
+          )}
+          {/* A rule and a label between the identity panel and the buttons: a
             beige box running straight into a stack of green read as one
             undifferentiated block. The label carries the context and the
             button carries what varies — the quota names when there is a
             choice, the verb when there is only one quota. */}
-        {(!hasExistingSignup || showDemoControls) && !isEditingUserData && (
-          <div className="flex flex-col gap-3 pt-2">
-            <h3 className="text-[13px] font-bold tracking-[0.06em] text-stone-500 uppercase">
-              Ilmoa omaan kiintiöösi
-            </h3>
-            <div className="flex flex-col gap-2">
-              {quotas.map((quota) => {
-                const protectedPlacesAreFull =
-                  quota.size !== null &&
-                  seatHoldingSignupCount(quota) >= quota.size;
-                const signupGoesToQueue =
-                  protectedPlacesAreFull &&
-                  (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
-                    sharedPlacesAreFull);
+          {(!hasExistingSignup || showDemoControls) && !isEditingUserData && (
+            <div className="flex flex-col gap-3 pt-2">
+              <h3 className="text-[13px] font-bold tracking-[0.06em] text-stone-500 uppercase">
+                {messages.registration.signUp}
+              </h3>
+              <div className="flex flex-col gap-2">
+                {quotas.map((quota) => {
+                  const protectedPlacesAreFull =
+                    quota.size !== null &&
+                    seatHoldingSignupCount(quota) >= quota.size;
+                  const signupGoesToQueue =
+                    protectedPlacesAreFull &&
+                    (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
+                      sharedPlacesAreFull);
 
-                return (
-                  <div key={quota.id} className="flex items-center gap-1">
-                    {showDemoControls && (
-                      <Button
-                        type="button"
-                        size="small"
-                        className="min-w-8 px-2"
-                        color="neutral"
-                        variant="bordered"
-                        title={`Poista demoilmo kiintiöstä ${quota.title}`}
-                        aria-label={`Poista demoilmo kiintiöstä ${quota.title}`}
-                        onClick={() =>
-                          removeDemoSignupMutation.mutate({ quotaId: quota.id })
-                        }
-                        disabled={
-                          addDemoSignupMutation.isPending ||
-                          removeDemoSignupMutation.isPending
-                        }
-                        loading={
-                          removeDemoSignupMutation.isPending &&
-                          removeDemoSignupMutation.variables?.quotaId ===
-                            quota.id
-                        }
-                      >
-                        −1
-                      </Button>
-                    )}
-                    {hasExistingSignup || isRegistrationClosed ? (
-                      // Nothing to click — already signed up, or the window
-                      // has closed — but the demo controls still need to say
-                      // which quota they act on.
-                      <span className="min-w-0 grow truncate px-2 text-sm font-semibold text-stone-500">
-                        {quota.title}
-                      </span>
-                    ) : (
-                      /* Joining a queue is not the same act as taking a
+                  return (
+                    <div key={quota.id} className="flex items-center gap-1">
+                      {showDemoControls && (
+                        <Button
+                          type="button"
+                          size="small"
+                          className="min-w-8 px-2"
+                          color="neutral"
+                          variant="bordered"
+                          title={messages.registration.removeDemoSignup(
+                            quota.title,
+                          )}
+                          aria-label={messages.registration.removeDemoSignup(
+                            quota.title,
+                          )}
+                          onClick={() =>
+                            removeDemoSignupMutation.mutate({
+                              quotaId: quota.id,
+                            })
+                          }
+                          disabled={
+                            addDemoSignupMutation.isPending ||
+                            removeDemoSignupMutation.isPending
+                          }
+                          loading={
+                            removeDemoSignupMutation.isPending &&
+                            removeDemoSignupMutation.variables?.quotaId ===
+                              quota.id
+                          }
+                        >
+                          −1
+                        </Button>
+                      )}
+                      {hasExistingSignup || isRegistrationClosed ? (
+                        // Nothing to click — already signed up, or the window
+                        // has closed — but the demo controls still need to say
+                        // which quota they act on.
+                        <span className="min-w-0 grow truncate px-2 text-sm font-semibold text-stone-500">
+                          {quota.title}
+                        </span>
+                      ) : (
+                        /* Joining a queue is not the same act as taking a
                          place, so the button is not the same button: filled
                          means a place, outlined means a wait. In a list where
                          some quotas are full and some are not, that shows at
                          a glance — and "jonoon" rides along as its own small
                          label rather than as punctuation in the name. */
-                      <Button
-                        className="min-w-0 grow"
-                        color="primary"
-                        variant={signupGoesToQueue ? "bordered" : "filled"}
-                        onClick={handleSubmit(getHandleSignup(quota.id))}
-                        disabled={!isRegistrationOpen || isSubmitting}
-                        loading={
-                          isSubmitting &&
-                          createSignupMutation.variables?.quotaId === quota.id
-                        }
-                      >
-                        <span className="flex min-w-0 items-baseline justify-center gap-2">
-                          <span className="truncate">{quota.title}</span>
-                          {signupGoesToQueue && (
-                            <span className="shrink-0 text-[11px] font-bold tracking-wide uppercase opacity-70">
-                              jonoon
-                            </span>
+                        <Button
+                          className="min-w-0 grow"
+                          color="primary"
+                          variant={signupGoesToQueue ? "bordered" : "filled"}
+                          onClick={handleSubmit(getHandleSignup(quota.id))}
+                          disabled={!isRegistrationOpen || isSubmitting}
+                          loading={
+                            isSubmitting &&
+                            createSignupMutation.variables?.quotaId === quota.id
+                          }
+                        >
+                          <span className="flex min-w-0 items-baseline justify-center gap-2">
+                            <span className="truncate">{quota.title}</span>
+                            {signupGoesToQueue && (
+                              <span className="shrink-0 text-[11px] font-bold tracking-wide uppercase opacity-70">
+                                {messages.registration.joinQueue}
+                              </span>
+                            )}
+                          </span>
+                        </Button>
+                      )}
+                      {showDemoControls && (
+                        <Button
+                          type="button"
+                          size="small"
+                          className="min-w-8 px-2"
+                          color="neutral"
+                          variant="bordered"
+                          title={messages.registration.addDemoSignup(
+                            quota.title,
                           )}
-                        </span>
-                      </Button>
-                    )}
-                    {showDemoControls && (
-                      <Button
-                        type="button"
-                        size="small"
-                        className="min-w-8 px-2"
-                        color="neutral"
-                        variant="bordered"
-                        title={`Lisää demoilmo kiintiöön ${quota.title}`}
-                        aria-label={`Lisää demoilmo kiintiöön ${quota.title}`}
-                        onClick={() =>
-                          addDemoSignupMutation.mutate({ quotaId: quota.id })
-                        }
-                        disabled={
-                          addDemoSignupMutation.isPending ||
-                          removeDemoSignupMutation.isPending
-                        }
-                        loading={
-                          addDemoSignupMutation.isPending &&
-                          addDemoSignupMutation.variables?.quotaId === quota.id
-                        }
-                      >
-                        +1
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
+                          aria-label={messages.registration.addDemoSignup(
+                            quota.title,
+                          )}
+                          onClick={() =>
+                            addDemoSignupMutation.mutate({ quotaId: quota.id })
+                          }
+                          disabled={
+                            addDemoSignupMutation.isPending ||
+                            removeDemoSignupMutation.isPending
+                          }
+                          loading={
+                            addDemoSignupMutation.isPending &&
+                            addDemoSignupMutation.variables?.quotaId ===
+                              quota.id
+                          }
+                        >
+                          +1
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
           )}
         </div>
 
@@ -569,30 +600,30 @@ function Registration({
               id="signup-conflict-title"
               className="text-brand-dark text-lg font-bold"
             >
-              Vaihda kiintiötä?
+              {messages.registration.conflictTitle}
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Löysimme tällä sähköpostilla aiemman{" "}
               {signupConflict.existingSignup.isCompleted
-                ? "vahvistetun"
-                : "vahvistamattoman"}{" "}
-              ilmon.
+                ? messages.registration.foundPreviousCompleted
+                : messages.registration.foundPreviousIncomplete}
             </p>
             <div className="mt-4 space-y-2 text-sm">
               <p>
-                <span className="font-medium">Aiempi:</span>{" "}
+                <span className="font-medium">
+                  {messages.registration.previous}
+                </span>{" "}
                 {signupConflict.existingSignup.quotaTitle} —{" "}
                 {signupConflict.existingSignup.placement.type === "QUEUE"
-                  ? "Jonossa"
-                  : "Kiintiössä"}{" "}
+                  ? messages.registration.inQueue
+                  : messages.registration.inQuota}{" "}
                 {signupConflict.existingSignup.placement.position}
               </p>
               <p>
-                <span className="font-medium">Uusi:</span>{" "}
+                <span className="font-medium">{messages.registration.new}</span>{" "}
                 {signupConflict.selectedQuotaTitle} —{" "}
                 {signupConflict.selectedPlacement.type === "QUEUE"
-                  ? "Jonossa"
-                  : "Kiintiössä"}{" "}
+                  ? messages.registration.inQueue
+                  : messages.registration.inQuota}{" "}
                 {signupConflict.selectedPlacement.position}
               </p>
             </div>
@@ -610,7 +641,7 @@ function Registration({
                   resolveSignupConflictMutation.variables?.choice === "EXISTING"
                 }
               >
-                Pidä aiempi ilmo
+                {messages.registration.keepPrevious}
               </Button>
               <Button
                 type="button"
@@ -623,7 +654,7 @@ function Registration({
                   resolveSignupConflictMutation.variables?.choice === "NEW"
                 }
               >
-                Valitse uusi kiintiö
+                {messages.registration.chooseNewQuota}
               </Button>
             </div>
           </div>
@@ -661,6 +692,8 @@ function EventBannerImage({
 export default function EventPage() {
   const now = useNow();
   const router = useRouter();
+  const locale = useLocale();
+  const messages = useTranslations(publicEventsMessages);
   const eventId = Number(router.query.eventId);
 
   const loginUser = useManagementUser();
@@ -668,8 +701,13 @@ export default function EventPage() {
     loginUser.data?.role === ManagementRole.event_editor ||
     loginUser.data?.role === ManagementRole.superadmin;
 
-  const { data: event, isLoading, error, refetch } = api.events.getEventByID.useQuery(
-    { eventId: eventId! },
+  const {
+    data: event,
+    isLoading,
+    error,
+    refetch,
+  } = api.events.getEventByID.useQuery(
+    { eventId: eventId!, locale },
     {
       enabled: !isNaN(eventId),
       staleTime: 0, // Always fetch fresh data
@@ -684,28 +722,40 @@ export default function EventPage() {
     : false;
 
   if (isUnavailableError(error) || (!isLoading && !event)) {
-    return <Layout><PageHead title="Tapahtuma ei ole saatavilla" />
-      <div role="alert" className="surface-panel space-y-4 p-6">
-        <p>{error?.data?.code === "FORBIDDEN" || error?.data?.code === "UNAUTHORIZED"
-          ? "Sinulla ei ole oikeutta nähdä tätä tapahtumaa."
-          : error?.data?.code === "NOT_FOUND" || !event
-            ? "Tapahtumaa ei löytynyt tai se ei ole enää saatavilla."
-            : "Tapahtuman päivitys epäonnistui. Yritä uudelleen."}</p>
-        <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
-        <Button.Link href="/">Takaisin tapahtumiin</Button.Link>
-      </div>
-    </Layout>;
+    return (
+      <Layout>
+        <PageHead title={messages.detail.unavailableTitle} />
+        <div role="alert" className="surface-panel space-y-4 p-6">
+          <p>
+            {error?.data?.code === "FORBIDDEN" ||
+            error?.data?.code === "UNAUTHORIZED"
+              ? messages.detail.forbidden
+              : error?.data?.code === "NOT_FOUND" || !event
+                ? messages.detail.notFound
+                : messages.detail.refreshFailed}
+          </p>
+          <Button onClick={() => void refetch()}>
+            {messages.detail.retry}
+          </Button>
+          <Button.Link href="/">{messages.detail.backToEvents}</Button.Link>
+        </div>
+      </Layout>
+    );
   }
 
   return (
     <>
-      <PageHead title={event?.title || "Loading..."} />
+      <PageHead title={event?.title || messages.detail.loading} />
       <Layout>
         <div className="mx-auto w-full max-w-5xl min-w-0">
-          {error && <div role="alert" className="surface-muted mb-4 p-4 text-sm">
-            Tapahtuman päivitys epäonnistui. Näytetyt tiedot voivat olla vanhentuneita.
-            <Button onClick={() => void refetch()}>Yritä uudelleen</Button>
-          </div>}
+          {error && (
+            <div role="alert" className="surface-muted mb-4 p-4 text-sm">
+              {messages.detail.staleData}
+              <Button onClick={() => void refetch()}>
+                {messages.detail.retry}
+              </Button>
+            </div>
+          )}
           <Link
             href="/"
             className="text-brand-secondary hover:text-brand-dark focus-visible:ring-brand-secondary mb-3 flex w-fit min-w-0 items-center gap-2 rounded-full text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
@@ -713,7 +763,7 @@ export default function EventPage() {
             <span className="shrink-0 text-base" aria-hidden>
               ←
             </span>
-            <span className="min-w-0">Takaisin etusivulle</span>
+            <span className="min-w-0">{messages.detail.backToHome}</span>
           </Link>
 
           <div
@@ -751,7 +801,7 @@ export default function EventPage() {
                     {event.draft && (
                       <span className="rounded-control inline-flex items-center border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
                         <Icon icon="draft" className="mr-1.5 h-3.5 w-3.5" />
-                        Luonnos
+                        {messages.detail.draft}
                       </span>
                     )}
                   </div>
@@ -769,7 +819,7 @@ export default function EventPage() {
                   {canEditEvent && (
                     <div className="mb-6 flex justify-end">
                       <Button.Link href={`/events/${event.id}/edit`}>
-                        Muokkaa tapahtumaa
+                        {messages.detail.editEvent}
                       </Button.Link>
                     </div>
                   )}
@@ -777,18 +827,18 @@ export default function EventPage() {
                   <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
                     <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
                       <h2 className="text-brand-secondary mb-3 text-base font-extrabold tracking-[0.015em] uppercase">
-                        Tiedot
+                        {messages.detail.information}
                       </h2>
                       <p>
                         <span className="text-brand-dark font-semibold">
-                          Ajankohta:{" "}
+                          {messages.detail.dateTime}{" "}
                         </span>
-                        {formatEventDateTime(event.date)}
+                        {formatEventDateTime(event.date, locale)}
                       </p>
                       {event.location && (
                         <p>
                           <span className="text-brand-dark font-semibold">
-                            Sijainti:{" "}
+                            {messages.detail.location}{" "}
                           </span>
                           {event.location}
                         </p>

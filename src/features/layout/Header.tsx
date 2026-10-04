@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HeaderAccountMenu } from "./HeaderAccountMenu";
+import { LanguageSelector } from "./LanguageSelector";
 
 export const Header = () => {
   return (
@@ -13,7 +14,10 @@ export const Header = () => {
           </h1>
         </Link>
 
-        <HeaderAccountMenu />
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <LanguageSelector />
+          <HeaderAccountMenu />
+        </div>
       </div>
     </nav>
   );

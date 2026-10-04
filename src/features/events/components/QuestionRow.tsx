@@ -1,4 +1,3 @@
-import type { Question } from "@/generated/prisma";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Switch } from "@/components/Switch";
@@ -10,8 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/Select";
-import { questionSchema } from "../utils/eventFormSchema";
+import { eventFormSchema, questionSchema } from "../utils/eventFormSchema";
 import type { FieldErrorsImpl } from "react-hook-form";
+import type { z } from "zod";
+import cuid from "cuid";
+import type { Locale } from "@/i18n/config";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
+
+type EventFormValues = z.input<typeof eventFormSchema>;
+type QuestionValue = EventFormValues["Questions"][number];
 
 export function QuestionRow({
   question,
@@ -19,13 +26,16 @@ export function QuestionRow({
   deleteQuestion,
   signupCount,
   errors,
+  activeLanguage,
 }: {
-  question: Question;
-  onChange: (value: Question) => void;
+  question: QuestionValue;
+  onChange: (value: QuestionValue) => void;
   deleteQuestion: (id: string) => void;
   signupCount: number;
-  errors: FieldErrorsImpl<Question> | undefined;
+  errors: FieldErrorsImpl<QuestionValue> | undefined;
+  activeLanguage: Locale;
 }) {
+  const messages = useTranslations(eventAdminMessages);
   const hasOptions =
     question.type === questionSchema.shape.type.enum.radio ||
     question.type === questionSchema.shape.type.enum.checkbox;
@@ -33,7 +43,14 @@ export function QuestionRow({
   const addOption = () => {
     onChange({
       ...question,
-      options: [...question.options, ""],
+      options: [
+        ...question.options,
+        {
+          id: cuid(),
+          sortId: question.options.length + 1,
+          translations: { fi: "", en: "" },
+        },
+      ],
     });
   };
 
@@ -42,7 +59,10 @@ export function QuestionRow({
     newOptions.splice(idx, 1);
     onChange({
       ...question,
-      options: newOptions,
+      options: newOptions.map((option, index) => ({
+        ...option,
+        sortId: index + 1,
+      })),
     });
   };
 
@@ -50,49 +70,55 @@ export function QuestionRow({
     <div className="surface-muted flex flex-col gap-5 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <label
-          htmlFor={`question-text-${question.id}`}
+          htmlFor={`question-text-${question.id}-${activeLanguage}`}
           className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
         >
-          Kysymys
+          {messages.questions.question}
         </label>
         <Input
-          id={`question-text-${question.id}`}
-          title="Kysymys"
-          value={question.question}
+          id={`question-text-${question.id}-${activeLanguage}`}
+          title={messages.questions.question}
+          value={question.translations[activeLanguage]}
           fullWidth
-          onChange={(value) =>
-            onChange({ ...question, question: value.target.value })
+          onChange={(event) =>
+            onChange({
+              ...question,
+              translations: {
+                ...question.translations,
+                [activeLanguage]: event.target.value,
+              },
+            })
           }
-          error={!!errors?.question}
-          helperText={errors?.question ? errors.question.message : undefined}
+          error={!!errors?.translations?.[activeLanguage]}
+          helperText={errors?.translations?.[activeLanguage]?.message}
         />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-4">
-        <label className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
-          Tyyppi
-        </label>
+        <span className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
+          {messages.questions.type}
+        </span>
         <Select
           value={question.type}
           onValueChange={(value) => {
-            onChange({ ...question, type: value as Question["type"] });
+            onChange({ ...question, type: value as QuestionValue["type"] });
           }}
         >
           <SelectTrigger className="w-full sm:w-70">
-            <SelectValue placeholder="Teksti (lyhyt)" />
+            <SelectValue placeholder={messages.questions.types.text} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={questionSchema.shape.type.enum.text}>
-              Teksti (lyhyt)
+              {messages.questions.types.text}
             </SelectItem>
             <SelectItem value={questionSchema.shape.type.enum.checkbox}>
-              Monivalinta (voi valita useita)
+              {messages.questions.types.checkbox}
             </SelectItem>
             <SelectItem value={questionSchema.shape.type.enum.radio}>
-              Monivalinta (voi valita vain yhden)
+              {messages.questions.types.radio}
             </SelectItem>
             <SelectItem value={questionSchema.shape.type.enum.textarea}>
-              Teksti (pitkä)
+              {messages.questions.types.textarea}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -100,54 +126,76 @@ export function QuestionRow({
 
       <div className="flex flex-wrap gap-6 sm:pl-36">
         <div className="flex items-center gap-2">
-          <span className="text-brand-dark text-sm">Pakollinen</span>
+          <label
+            htmlFor={`question-required-${question.id}`}
+            className="text-brand-dark text-sm"
+          >
+            {messages.questions.required}
+          </label>
           <Switch
+            id={`question-required-${question.id}`}
             value={question.required}
             onChange={(value) => onChange({ ...question, required: value })}
           />
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-brand-dark text-sm">Julkinen</span>
+            <label
+              htmlFor={`question-public-${question.id}`}
+              className="text-brand-dark text-sm"
+            >
+              {messages.questions.public}
+            </label>
             <Switch
+              id={`question-public-${question.id}`}
               value={question.public}
               onChange={(value) => onChange({ ...question, public: value })}
             />
           </div>
           <p className="max-w-md text-xs leading-relaxed text-gray-600">
-            Julkiset vastaukset näkyvät <strong>julkisessa osallistujalistassa</strong>.
+            {messages.questions.publicHelp}
           </p>
         </div>
       </div>
 
       {hasOptions && (
         <div className="flex flex-col gap-3 sm:pl-36">
-          {question.options.map((option, index) => (
-            <div className="flex flex-row items-center gap-3" key={index}>
-              <Input
-                title={`Vaihtoehto ${index + 1}`}
-                value={option}
-                fullWidth
-                onChange={(value) => {
-                  const newOptions = [...question.options];
-                  newOptions[index] = value.target.value;
-                  onChange({ ...question, options: newOptions });
-                }}
-                error={!!errors?.options?.[index]}
-                helperText={errors?.options?.[index]?.message}
-              />
-              <Button
-                type="button"
-                size="small"
-                color="danger"
-                onClick={() => deleteOption(index)}
-              >
-                Poista
-              </Button>
-            </div>
-          ))}
-          <Button type="button" size="small" onClick={() => addOption()}>
-            Lisää vaihtoehto
+          {question.options.map((option, index) => {
+            const optionError =
+              errors?.options?.[index]?.translations?.[activeLanguage];
+            return (
+              <div className="flex flex-row items-center gap-3" key={option.id}>
+                <Input
+                  title={messages.questions.option(index + 1)}
+                  value={option.translations[activeLanguage]}
+                  fullWidth
+                  onChange={(event) => {
+                    const newOptions = [...question.options];
+                    newOptions[index] = {
+                      ...option,
+                      translations: {
+                        ...option.translations,
+                        [activeLanguage]: event.target.value,
+                      },
+                    };
+                    onChange({ ...question, options: newOptions });
+                  }}
+                  error={!!optionError}
+                  helperText={optionError?.message}
+                />
+                <Button
+                  type="button"
+                  size="small"
+                  color="danger"
+                  onClick={() => deleteOption(index)}
+                >
+                  {messages.questions.removeOption}
+                </Button>
+              </div>
+            );
+          })}
+          <Button type="button" size="small" onClick={addOption}>
+            {messages.questions.addOption}
           </Button>
           {errors?.options?.root?.message ? (
             <p className="text-sm text-red-600">
@@ -166,12 +214,11 @@ export function QuestionRow({
           size="small"
           color="danger"
         >
-          Poista kysymys
+          {messages.questions.removeQuestion}
         </Button>
         {signupCount > 0 && (
           <p className="text-xs leading-relaxed text-gray-600">
-            <strong>Huom!</strong> Kysymyksen poistaminen poistaa myös siihen
-            saadut vastaukset pysyvästi.
+            {messages.questions.deleteWarning}
           </p>
         )}
       </div>

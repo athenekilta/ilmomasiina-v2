@@ -11,13 +11,15 @@ import { Icon } from "@/components/Icon";
 import { IconButton } from "@/components/IconButton";
 import { Button } from "@/components/Button";
 import Link from "next/link";
-
-const formschema = z.object({
-  password: z.string().min(8),
-});
+import { useTranslations } from "@/i18n/I18nProvider";
+import { authMessages } from "@/i18n/messages/auth";
 
 export function ChangePasswordForm() {
   const router = useRouter();
+  const messages = useTranslations(authMessages);
+  const formSchema = z.object({
+    password: z.string().min(8, messages.validation.passwordTooShort(8)),
+  });
 
   const token = useQueryParams().token ?? "";
   const tokenQuery = api.auth.passwordChange.validate.useQuery({ token });
@@ -31,8 +33,8 @@ export function ChangePasswordForm() {
       isSubmitting,
       errors: { password: passwordError },
     },
-  } = useForm<z.TypeOf<typeof formschema>>({
-    resolver: zodResolver(formschema),
+  } = useForm<z.TypeOf<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       password: "",
     },
@@ -50,13 +52,13 @@ export function ChangePasswordForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p
         data-status={tokenQuery.status}
-        className="text-center text-black/70 data-[status=error]:text-danger"
+        className="data-[status=error]:text-danger text-center text-black/70"
       >
         {tokenQuery.error
-          ? "Invalid token"
-          : token
-            ? "syötä uusi salasana alle käyttäjälle " + tokenQuery.data
-            : "loading..."}
+          ? messages.passwordChange.invalidToken
+          : tokenQuery.data
+            ? messages.passwordChange.enterNewPassword(tokenQuery.data)
+            : messages.passwordChange.loading}
       </p>
 
       <div className="flex flex-col gap-6">
@@ -67,6 +69,12 @@ export function ChangePasswordForm() {
           endIcon={
             <IconButton
               tabIndex={-1}
+              type="button"
+              aria-label={
+                passwordHidden
+                  ? messages.actions.showPassword
+                  : messages.actions.hidePassword
+              }
               onClick={() => setPasswordHidden((prev) => !prev)}
               inputAdornment="end"
             >
@@ -85,16 +93,18 @@ export function ChangePasswordForm() {
           loading={isSubmitting}
           disabled={tokenQuery.isError}
         >
-          Change password
+          {messages.actions.changePassword}
         </Button>
 
         {mutation.error && (
-          <p className="text-danger">{mutation.error.message}</p>
+          <p role="alert" className="text-danger">
+            {messages.passwordChange.changeFailed}
+          </p>
         )}
 
         <div className="flex items-center justify-between pt-6 text-black/70">
           <Link className="hover:underline" href={routes.auth.login}>
-            Login
+            {messages.actions.login}
           </Link>
         </div>
       </div>

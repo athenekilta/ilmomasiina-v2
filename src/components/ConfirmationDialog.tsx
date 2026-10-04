@@ -1,14 +1,16 @@
 import { Button } from "@/components/Button";
 import { useId, useRef } from "react";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { commonMessages } from "@/i18n/messages/common";
 
 export function ConfirmationDialog({
-  title = "Vahvista poisto",
+  title,
   message,
   onConfirmAction,
   onCancelAction,
   pending,
-  confirmLabel = "Poista",
-  cancelLabel = "Peruuta",
+  confirmLabel,
+  cancelLabel,
 }: {
   title?: string;
   message?: string;
@@ -18,6 +20,10 @@ export function ConfirmationDialog({
   confirmLabel?: string;
   cancelLabel?: string;
 }) {
+  const messages = useTranslations(commonMessages);
+  const dialogTitle = title ?? messages.confirmDelete;
+  const dialogConfirmLabel = confirmLabel ?? messages.delete;
+  const dialogCancelLabel = cancelLabel ?? messages.cancel;
   const id = useId();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -51,7 +57,7 @@ export function ConfirmationDialog({
           id={`${id}-title`}
           className="text-brand-dark mb-3 text-lg font-bold tracking-tight"
         >
-          {title}
+          {dialogTitle}
         </h3>
 
         {message && (
@@ -74,7 +80,7 @@ export function ConfirmationDialog({
             onClick={onCancelAction}
             disabled={pending}
           >
-            {cancelLabel}
+            {dialogCancelLabel}
           </Button>
 
           <Button
@@ -85,7 +91,7 @@ export function ConfirmationDialog({
             onClick={onConfirmAction}
             loading={pending}
           >
-            {confirmLabel}
+            {dialogConfirmLabel}
           </Button>
         </div>
       </div>

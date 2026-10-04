@@ -1,159 +1,539 @@
 import { TRPCError } from "@trpc/server";
-import { changeEventImage } from "../features/eventImages/lifecycle";
 import { z } from "zod";
+import { changeEventImage } from "../features/eventImages/lifecycle";
 import { router } from "../trpc/trpc";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
 import { eventEditorProcedure } from "../trpc/procedures/eventEditorProcedure";
 import {
+  eventTranslationsSchema,
   normalizeQuestionOptions,
   quotaSchema,
   questionSchema,
 } from "@/features/events/utils/eventFormSchema";
-import { SignupStatus } from "@/generated/prisma/client";
 import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
+import { SignupStatus, type Prisma } from "@/generated/prisma/client";
+import { localeSchema, type Locale } from "@/i18n/config";
+import {
+  localizedTranslation,
+  localizedValue,
+  translationRecord,
+} from "../features/localization/content";
 import { reconcileEventAllocations } from "../features/allocations/reconcileEventAllocations";
 import { sendQueueAcceptedEmails } from "../features/allocations/sendQueueAcceptedEmails";
 
-export const eventsRouter = router({
-  getEvents: publicProcedure.query(async ({ ctx }) => {
-    const events = await ctx.prisma.event.findMany({
-      orderBy: { date: "asc" },
-      where: {
-        draft: false,
-        date: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 7)), // Show events that have passed are at most 7 days old
-        },
+const eventMutationSchema = z.object({
+  imageId: z.uuid().nullable().optional(),
+  translations: eventTranslationsSchema,
+  badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
+  date: z.date(),
+  registrationStartDate: z.date(),
+  registrationEndDate: z.date(),
+  location: z.string().optional(),
+  price: z.string().optional(),
+  webpageUrl: z.string().optional(),
+  draft: z.boolean(),
+  signupsPublic: z.boolean(),
+  extraCapacity: z.number().int().min(0),
+  quotas: z.array(quotaSchema),
+  questions: z.array(questionSchema),
+});
+
+type Tx = Prisma.TransactionClient;
+type EventTranslationsInput = z.infer<typeof eventTranslationsSchema>;
+type QuotaInput = z.infer<typeof quotaSchema>;
+type QuestionInput = z.infer<typeof questionSchema>;
+
+function hasValues(values: Record<string, string>) {
+  return Object.values(values).some((value) => value.trim() !== "");
+}
+
+function eventTranslationRows(translations: EventTranslationsInput) {
+  const rows = [
+    {
+      locale: "fi",
+      title: translations.fi.title,
+      badgeText: translations.fi.badgeText.trim() || null,
+      description: translations.fi.description || null,
+      verificationEmail: translations.fi.verificationEmail || null,
+    },
+  ];
+  if (hasValues(translations.en)) {
+    rows.push({
+      locale: "en",
+      title: translations.en.title,
+      badgeText: translations.en.badgeText.trim() || null,
+      description: translations.en.description || null,
+      verificationEmail: translations.en.verificationEmail || null,
+    });
+  }
+  return rows;
+}
+
+function simpleTranslationRows(
+  translations: Record<Locale, string>,
+  key: string,
+) {
+  return (["fi", "en"] as const)
+    .filter((locale) => locale === "fi" || translations[locale].trim() !== "")
+    .map((locale) => ({ locale, [key]: translations[locale] }));
+}
+
+async function syncEventTranslations(
+  tx: Tx,
+  eventId: number,
+  translations: EventTranslationsInput,
+) {
+  const rows = eventTranslationRows(translations);
+  await tx.eventTranslation.deleteMany({
+    where: { eventId, locale: { notIn: rows.map((row) => row.locale) } },
+  });
+  for (const row of rows) {
+    await tx.eventTranslation.upsert({
+      where: { eventId_locale: { eventId, locale: row.locale } },
+      update: row,
+      create: { eventId, ...row },
+    });
+  }
+}
+
+async function syncQuotaTranslations(
+  tx: Tx,
+  quotaId: string,
+  translations: QuotaInput["translations"],
+) {
+  const rows = simpleTranslationRows(translations, "title") as Array<{
+    locale: Locale;
+    title: string;
+  }>;
+  await tx.quotaTranslation.deleteMany({
+    where: { quotaId, locale: { notIn: rows.map((row) => row.locale) } },
+  });
+  for (const row of rows) {
+    await tx.quotaTranslation.upsert({
+      where: { quotaId_locale: { quotaId, locale: row.locale } },
+      update: { title: row.title },
+      create: { quotaId, ...row },
+    });
+  }
+}
+
+async function syncQuestionTranslations(
+  tx: Tx,
+  questionId: string,
+  translations: QuestionInput["translations"],
+) {
+  const rows = simpleTranslationRows(translations, "question") as Array<{
+    locale: Locale;
+    question: string;
+  }>;
+  await tx.questionTranslation.deleteMany({
+    where: { questionId, locale: { notIn: rows.map((row) => row.locale) } },
+  });
+  for (const row of rows) {
+    await tx.questionTranslation.upsert({
+      where: { questionId_locale: { questionId, locale: row.locale } },
+      update: { question: row.question },
+      create: { questionId, ...row },
+    });
+  }
+}
+
+async function syncOptionTranslations(
+  tx: Tx,
+  optionId: string,
+  translations: QuestionInput["options"][number]["translations"],
+) {
+  const rows = simpleTranslationRows(translations, "label") as Array<{
+    locale: Locale;
+    label: string;
+  }>;
+  await tx.questionOptionTranslation.deleteMany({
+    where: { optionId, locale: { notIn: rows.map((row) => row.locale) } },
+  });
+  for (const row of rows) {
+    await tx.questionOptionTranslation.upsert({
+      where: { optionId_locale: { optionId, locale: row.locale } },
+      update: { label: row.label },
+      create: { optionId, ...row },
+    });
+  }
+}
+
+async function createQuota(tx: Tx, eventId: number, quota: QuotaInput) {
+  await tx.quota.create({
+    data: {
+      id: quota.id,
+      eventId,
+      size: quota.size,
+      sharedPlacesAllocation: quota.sharedPlacesAllocation,
+      sortId: quota.sortId,
+      Translations: {
+        create: (
+          simpleTranslationRows(quota.translations, "title") as Array<{
+            locale: Locale;
+            title: string;
+          }>
+        ).map(({ locale, title }) => ({ locale, title })),
       },
-      include: {
-        Quotas: {
-          include: {
-            Signups: true, // Include signups directly within each quota
+    },
+  });
+}
+
+async function createQuestion(
+  tx: Tx,
+  eventId: number,
+  question: QuestionInput,
+) {
+  await tx.question.create({
+    data: {
+      id: question.id,
+      eventId,
+      type: question.type,
+      sortId: question.sortId,
+      required: question.required,
+      public: question.public,
+      Translations: {
+        create: (
+          simpleTranslationRows(question.translations, "question") as Array<{
+            locale: Locale;
+            question: string;
+          }>
+        ).map(({ locale, question }) => ({ locale, question })),
+      },
+      Options: {
+        create: question.options.map((option) => ({
+          id: option.id,
+          sortId: option.sortId,
+          Translations: {
+            create: (
+              simpleTranslationRows(option.translations, "label") as Array<{
+                locale: Locale;
+                label: string;
+              }>
+            ).map(({ locale, label }) => ({ locale, label })),
+          },
+        })),
+      },
+    },
+  });
+}
+
+async function syncQuestionOptions(
+  tx: Tx,
+  questionId: string,
+  options: QuestionInput["options"],
+) {
+  const existing = await tx.questionOption.findMany({
+    where: { questionId },
+    select: { id: true },
+  });
+  const inputIds = new Set(options.map((option) => option.id));
+  await tx.questionOption.deleteMany({
+    where: {
+      questionId,
+      id: {
+        in: existing
+          .filter((option) => !inputIds.has(option.id))
+          .map((option) => option.id),
+      },
+    },
+  });
+
+  const existingIds = new Set(existing.map((option) => option.id));
+  const retained = options.filter((option) => existingIds.has(option.id));
+  for (const [index, option] of retained.entries()) {
+    await tx.questionOption.update({
+      where: { id: option.id },
+      data: { sortId: -(index + 1) },
+    });
+  }
+
+  for (const option of options) {
+    if (existingIds.has(option.id)) {
+      await tx.questionOption.update({
+        where: { id: option.id },
+        data: { sortId: option.sortId },
+      });
+      await syncOptionTranslations(tx, option.id, option.translations);
+    } else {
+      await tx.questionOption.create({
+        data: {
+          id: option.id,
+          questionId,
+          sortId: option.sortId,
+          Translations: {
+            create: (
+              simpleTranslationRows(option.translations, "label") as Array<{
+                locale: Locale;
+                label: string;
+              }>
+            ).map(({ locale, label }) => ({ locale, label })),
           },
         },
-      },
-    });
+      });
+    }
+  }
+}
 
-    // Enrich events with signup counts per quota
-    const enrichedEvents = events.map((event) => ({
-      ...event,
-      Quotas: event.Quotas.map((quota) => ({
-        ...quota,
-        signupCount: quota.Signups.length,
-      })),
-    }));
+function localizeQuota<
+  T extends { Translations: Array<{ locale: string; title: string }> },
+>(quota: T, locale: Locale) {
+  const { Translations, ...data } = quota;
+  return {
+    ...data,
+    title: localizedValue(Translations, locale, (row) => row.title),
+  };
+}
 
-    return enrichedEvents;
-  }),
+function localizeQuestion<
+  T extends {
+    Translations: Array<{ locale: string; question: string }>;
+    Options: Array<{
+      id: string;
+      sortId: number;
+      Translations: Array<{ locale: string; label: string }>;
+    }>;
+  },
+>(question: T, locale: Locale) {
+  const { Translations, Options, ...data } = question;
+  return {
+    ...data,
+    question: localizedValue(Translations, locale, (row) => row.question),
+    options: Options.map((option) => ({
+      id: option.id,
+      sortId: option.sortId,
+      label: localizedValue(option.Translations, locale, (row) => row.label),
+    })),
+  };
+}
+
+function localizeEvent<
+  T extends {
+    translations: Array<{
+      locale: string;
+      title: string;
+      badgeText: string | null;
+      description: string | null;
+      verificationEmail: string | null;
+    }>;
+  },
+>(event: T, locale: Locale) {
+  const { translations, ...data } = event;
+  const selected = localizedTranslation(translations, locale);
+  return {
+    ...data,
+    title: selected?.title ?? "",
+    badgeText: selected?.badgeText ?? null,
+    description: selected?.description ?? null,
+    verificationEmail: selected?.verificationEmail ?? null,
+  };
+}
+
+function answerValue(answer: {
+  textValue: string | null;
+  Selections: Array<{ optionId: string; Option: { sortId: number } }>;
+}) {
+  return (
+    answer.textValue ??
+    [...answer.Selections]
+      .sort((a, b) => a.Option.sortId - b.Option.sortId)
+      .map((selection) => selection.optionId)
+      .join("\n")
+  );
+}
+
+export const eventsRouter = router({
+  getEvents: publicProcedure
+    .input(z.object({ locale: localeSchema }))
+    .query(async ({ ctx, input }) => {
+      const events = await ctx.prisma.event.findMany({
+        orderBy: { date: "asc" },
+        where: {
+          draft: false,
+          date: {
+            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+          },
+        },
+        include: {
+          translations: true,
+          Quotas: {
+            include: { Translations: true, Signups: true },
+          },
+        },
+      });
+
+      return events.map((event) =>
+        localizeEvent(
+          {
+            ...event,
+            Quotas: event.Quotas.map((quota) => ({
+              ...localizeQuota(quota, input.locale),
+              signupCount: quota.Signups.length,
+            })),
+          },
+          input.locale,
+        ),
+      );
+    }),
 
   getEventsAdmin: eventEditorProcedure
     .input(
       z.object({
+        locale: localeSchema,
         includeDrafts: z.boolean().optional().default(false),
         includeOlderEvents: z.boolean().optional().default(false),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const dateFilter = input.includeOlderEvents
-        ? {}
-        : {
-            gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-          };
-
       const events = await ctx.prisma.event.findMany({
         orderBy: { date: "asc" },
         where: {
           draft: input.includeDrafts ? {} : false,
-          date: dateFilter,
+          date: input.includeOlderEvents
+            ? {}
+            : { gte: new Date(new Date().setDate(new Date().getDate() - 7)) },
         },
         include: {
+          translations: true,
+          Quotas: { include: { Translations: true, Signups: true } },
+        },
+      });
+      return events.map((event) =>
+        localizeEvent(
+          {
+            ...event,
+            Quotas: event.Quotas.map((quota) => ({
+              ...localizeQuota(quota, input.locale),
+              signupCount: quota.Signups.length,
+            })),
+          },
+          input.locale,
+        ),
+      );
+    }),
+
+  getEventEditId: eventEditorProcedure
+    .input(z.object({ eventId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const event = await ctx.prisma.event.findUnique({
+        where: { id: input.eventId },
+        include: {
+          translations: true,
           Quotas: {
+            orderBy: [{ sortId: "asc" }, { id: "asc" }],
+            include: { Translations: true },
+          },
+          Questions: {
+            orderBy: [{ sortId: "asc" }, { id: "asc" }],
             include: {
-              Signups: true,
+              Translations: true,
+              Options: {
+                orderBy: [{ sortId: "asc" }, { id: "asc" }],
+                include: { Translations: true },
+              },
             },
           },
         },
       });
-
-      // Enrich events with signup counts per quota
-      const enrichedEvents = events.map((event) => ({
-        ...event,
-        Quotas: event.Quotas.map((quota) => ({
+      if (!event) return null;
+      const { translations, ...data } = event;
+      return {
+        ...data,
+        translations: {
+          fi: {
+            title: translationRecord(translations, (row) => row.title).fi,
+            badgeText: translationRecord(translations, (row) => row.badgeText)
+              .fi,
+            description: translationRecord(
+              translations,
+              (row) => row.description,
+            ).fi,
+            verificationEmail: translationRecord(
+              translations,
+              (row) => row.verificationEmail,
+            ).fi,
+          },
+          en: {
+            title: translationRecord(translations, (row) => row.title).en,
+            badgeText: translationRecord(translations, (row) => row.badgeText)
+              .en,
+            description: translationRecord(
+              translations,
+              (row) => row.description,
+            ).en,
+            verificationEmail: translationRecord(
+              translations,
+              (row) => row.verificationEmail,
+            ).en,
+          },
+        },
+        Quotas: event.Quotas.map(({ Translations, ...quota }) => ({
           ...quota,
-          signupCount: quota.Signups.length,
+          translations: translationRecord(Translations, (row) => row.title),
         })),
-      }));
+        Questions: event.Questions.map(
+          ({ Translations, Options, ...question }) => ({
+            ...question,
+            translations: translationRecord(
+              Translations,
+              (row) => row.question,
+            ),
+            options: Options.map(
+              ({ Translations: optionTranslations, ...option }) => ({
+                ...option,
+                translations: translationRecord(
+                  optionTranslations,
+                  (row) => row.label,
+                ),
+              }),
+            ),
+          }),
+        ),
+      };
+    }),
 
-      return enrichedEvents;
-    }),
-  getEventEditId: eventEditorProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const event = await ctx.prisma.event.findUnique({
-        where: {
-          id: input.eventId,
-        },
-        include: {
-          Quotas: true,
-          Questions: true,
-        },
-      });
-      return event;
-    }),
   getEventByID: publicProcedure
-    .input(
-      z.object({
-        eventId: z.number(),
-      }),
-    )
+    .input(z.object({ eventId: z.number(), locale: localeSchema }))
     .query(async ({ ctx, input }) => {
       const allocation = await ctx.prisma.$transaction((tx) =>
         reconcileEventAllocations(tx, input.eventId),
       );
       await sendQueueAcceptedEmails(allocation.queueAcceptedNotification);
       const event = await ctx.prisma.event.findUnique({
-        where: {
-          id: input.eventId,
-        },
+        where: { id: input.eventId },
         include: {
+          translations: true,
           Quotas: {
             include: {
-              Signups: {
-                orderBy: {
-                  createdAt: "asc",
-                },
-              },
+              Translations: true,
+              Signups: { orderBy: { createdAt: "asc" } },
             },
           },
           Questions: {
             include: {
-              Answers: true,
+              Translations: true,
+              Options: {
+                orderBy: [{ sortId: "asc" }, { id: "asc" }],
+                include: { Translations: true },
+              },
+              Answers: {
+                include: {
+                  Selections: {
+                    include: { Option: { select: { sortId: true } } },
+                  },
+                },
+              },
             },
           },
         },
       });
+      if (!event) throw new Error("Event not found");
 
-      if (!event) {
-        throw new Error("Event not found");
-      }
-
-
-      // Create queue quota. NOTE! This is only a presentation and does not actually exist on the DB level.
-      event.Quotas.push({
-        id: QUEUE_QUOTA_ID,
-        title: "Queue",
-        sortId: Number.MAX_SAFE_INTEGER,
-        eventId: event.id,
-        Signups: [],
-        size: null,
-        sharedPlacesAllocation: "NEVER",
-      });
-
+      const quotas = event.Quotas.map((quota) =>
+        localizeQuota(quota, input.locale),
+      );
       const seatHoldingSignupCounts = new Map(
-        event.Quotas.map((quota) => [
+        quotas.map((quota) => [
           quota.id,
           quota.Signups.filter(
             (signup) =>
@@ -163,7 +543,7 @@ export const eventsRouter = router({
         ]),
       );
       const waitlistedSignupCounts = new Map(
-        event.Quotas.map((quota) => [
+        quotas.map((quota) => [
           quota.id,
           quota.Signups.filter(
             (signup) => signup.status === SignupStatus.WAITLISTED,
@@ -171,16 +551,18 @@ export const eventsRouter = router({
         ]),
       );
 
-      // Signups waiting for allocation are represented in the queue.
-      // In-progress signups stay in their quota because they hold a seat there.
-      // Their details remain private in the public event response below.
-      const queueQuota = event.Quotas.find(
-        (quota) => quota.id === QUEUE_QUOTA_ID,
-      );
-      if (!queueQuota) throw new Error("Queue quota not found");
-      for (const quota of event.Quotas.filter(
-        (item) => item.id !== QUEUE_QUOTA_ID,
-      )) {
+      // Signups waiting for allocation are represented in a presentation-only
+      // queue. In-progress signups stay in their quota because they hold a seat.
+      const queueQuota = {
+        id: QUEUE_QUOTA_ID,
+        title: input.locale === "fi" ? "Jono" : "Queue",
+        sortId: Number.MAX_SAFE_INTEGER,
+        eventId: event.id,
+        Signups: [] as (typeof quotas)[number]["Signups"],
+        size: null,
+        sharedPlacesAllocation: "NEVER" as const,
+      };
+      for (const quota of quotas) {
         const queued = quota.Signups.filter(
           (signup) =>
             signup.status === SignupStatus.PENDING ||
@@ -191,17 +573,18 @@ export const eventsRouter = router({
           (signup) => !queued.some((item) => item.id === signup.id),
         );
       }
-
+      const allQuotas = [...quotas, queueQuota];
       const completedSignupIds = new Set(
-        event.Quotas.flatMap((quota) =>
-          quota.Signups
-            .filter((signup) => signup.completedAt !== null)
-            .map((signup) => signup.id),
+        allQuotas.flatMap((quota) =>
+          quota.Signups.filter((signup) => signup.completedAt !== null).map(
+            (signup) => signup.id,
+          ),
         ),
       );
+      const localized = localizeEvent(event, input.locale);
       const eventWithPublicSignups = {
-        ...event,
-        Quotas: event.Quotas.map((quota) => ({
+        ...localized,
+        Quotas: allQuotas.map((quota) => ({
           ...quota,
           signupCount: quota.Signups.length,
           seatHoldingSignupCount: seatHoldingSignupCounts.get(quota.id) ?? 0,
@@ -225,19 +608,19 @@ export const eventsRouter = router({
           ),
         })),
         Questions: event.Questions.map((question) => ({
-          ...question,
+          ...localizeQuestion(question, input.locale),
           Answers: question.public
             ? question.Answers.filter((answer) =>
                 completedSignupIds.has(answer.signupId),
-              ).map(({ signupId, answer }) => ({ signupId, answer }))
+              ).map((answer) => ({
+                signupId: answer.signupId,
+                answer: answerValue(answer),
+              }))
             : [],
         })),
       };
 
-      // Incomplete signups expose only a placeholder timestamp and quota.
-      // Names, identifiers, statuses, and answers stay out of the client payload.
       if (event.signupsPublic) return eventWithPublicSignups;
-
       return {
         ...eventWithPublicSignups,
         Quotas: eventWithPublicSignups.Quotas.map((quota) => ({
@@ -250,36 +633,15 @@ export const eventsRouter = router({
         })),
       };
     }),
-  createEvent: eventEditorProcedure
-    .input(
-      z.object({
-        creationRequestId: z.uuid(),
-        imageId: z.uuid().nullable().optional(),
-        title: z.string(),
-        badgeText: z.string().optional(),
-        badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
-        date: z.date(),
-        registrationStartDate: z.date(),
-        registrationEndDate: z.date(),
-        description: z.string().optional(),
-        location: z.string().optional(),
-        price: z.string().optional(),
-        webpageUrl: z.string().optional(),
-        draft: z.boolean(),
-        signupsPublic: z.boolean(),
-        verificationEmail: z.string().optional(),
-        extraCapacity: z.number().int().min(0),
-        quotas: z.array(quotaSchema),
-        questions: z.array(questionSchema),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
-      const openQuotaSize =
-        input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
 
+  createEvent: eventEditorProcedure
+    .input(eventMutationSchema.extend({ creationRequestId: z.uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const questions = input.questions.map(normalizeQuestionOptions);
+      const openQuotaSize =
+        input.quotas.find((quota) => quota.id.includes("public-quota"))?.size ??
+        0;
       return ctx.prisma.$transaction(async (tx) => {
-        // Namespace this lock separately from numeric event allocation locks.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(7301, hashtext(${input.creationRequestId}))`;
         const existing = await tx.event.findUnique({
           where: { creationRequestId: input.creationRequestId },
@@ -295,75 +657,44 @@ export const eventsRouter = router({
           data: {
             creationRequestId: input.creationRequestId,
             imageId: input.imageId,
-            title: input.title,
-            // Empty input means "no badge" rather than an empty pill.
-            badgeText: input.badgeText?.trim() || null,
             badgeTone: input.badgeTone ?? "GREEN",
             date: input.date,
             registrationStartDate: input.registrationStartDate,
             registrationEndDate: input.registrationEndDate,
-            description: input.description,
             location: input.location,
             price: input.price,
             webpageUrl: input.webpageUrl,
             draft: input.draft,
             signupsPublic: input.signupsPublic,
-            verificationEmail: input.verificationEmail,
-            openQuotaSize: openQuotaSize,
+            openQuotaSize,
             extraCapacity: input.extraCapacity,
+            translations: { create: eventTranslationRows(input.translations) },
           },
         });
-
-        const quotas = input.quotas.map((quota) => ({
-          ...quota,
-          eventId: event.id,
-          id: quota.id.includes("public-quota")
-            ? "public-quota-" + event.id
-            : quota.id,
-        }));
-
-        const questions = normalizedQuestions.map((question) => ({
-          ...question,
-          eventId: event.id,
-        }));
-
-        await tx.quota.createMany({
-          data: quotas,
-        });
-
-        await tx.question.createMany({
-          data: questions,
-        });
+        for (const quota of input.quotas) {
+          await createQuota(tx, event.id, {
+            ...quota,
+            id: quota.id.includes("public-quota")
+              ? `public-quota-${event.id}`
+              : quota.id,
+          });
+        }
+        for (const question of questions) {
+          await createQuestion(tx, event.id, question);
+        }
         return event;
       });
     }),
 
   updateEvent: eventEditorProcedure
     .input(
-      z.object({
+      eventMutationSchema.extend({
         id: z.number(),
-        imageId: z.uuid().nullable().optional(),
         expectedImageId: z.uuid().nullable().optional(),
-        title: z.string(),
-        badgeText: z.string().optional(),
-        badgeTone: z.enum(["GREEN", "PINK", "DARK"]).optional(),
-        date: z.date(),
-        registrationStartDate: z.date(),
-        registrationEndDate: z.date(),
-        description: z.string().optional(),
-        location: z.string().optional(),
-        price: z.string().optional(),
-        webpageUrl: z.string().optional(),
-        draft: z.boolean(),
-        signupsPublic: z.boolean(),
-        verificationEmail: z.string().optional(),
-        extraCapacity: z.number().int().min(0),
-        quotas: z.array(quotaSchema),
-        questions: z.array(questionSchema),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const normalizedQuestions = input.questions.map(normalizeQuestionOptions);
+      const questions = input.questions.map(normalizeQuestionOptions);
       const { updatedEvent, queueAcceptedNotification } =
         await ctx.prisma.$transaction(async (tx) => {
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(${input.id})`;
@@ -377,118 +708,107 @@ export const eventsRouter = router({
             expectedImageId: input.expectedImageId,
             uploaderId: ctx.managementUser.id,
           });
-          // Delete quotas by IDs that are not in the input anymore and do not have signups
+
           const existingQuotas = await tx.quota.findMany({
             where: { eventId: input.id },
-            include: {
-              Signups: true,
+            include: { Signups: true },
+          });
+          const inputQuotaIds = new Set(input.quotas.map((quota) => quota.id));
+          await tx.quota.deleteMany({
+            where: {
+              id: {
+                in: existingQuotas
+                  .filter(
+                    (quota) =>
+                      !inputQuotaIds.has(quota.id) &&
+                      quota.Signups.length === 0,
+                  )
+                  .map((quota) => quota.id),
+              },
             },
           });
           const existingQuotaIds = new Set(
             existingQuotas.map((quota) => quota.id),
           );
-          const quotasToDelete = existingQuotas.filter(
-            (eq) =>
-              !input.quotas.some((iq) => iq.id === eq.id) &&
-              eq.Signups.length === 0,
-          );
-          const newQuotas = input.quotas.filter((quota) => {
-            return !existingQuotaIds.has(quota.id);
-          });
-          const existingQuotasToUpdate = input.quotas.filter((quota) => {
-            return existingQuotaIds.has(quota.id);
-          });
+          for (const quota of input.quotas) {
+            if (existingQuotaIds.has(quota.id)) {
+              await tx.quota.update({
+                where: { id: quota.id },
+                data: {
+                  size: quota.size,
+                  sharedPlacesAllocation: quota.sharedPlacesAllocation,
+                  sortId: quota.sortId,
+                },
+              });
+              await syncQuotaTranslations(tx, quota.id, quota.translations);
+            } else {
+              await createQuota(tx, input.id, quota);
+            }
+          }
 
-          // Delete questions that are not in the input anymore
           const existingQuestions = await tx.question.findMany({
             where: { eventId: input.id },
+            select: { id: true },
+          });
+          const inputQuestionIds = new Set(
+            questions.map((question) => question.id),
+          );
+          await tx.question.deleteMany({
+            where: {
+              eventId: input.id,
+              id: {
+                in: existingQuestions
+                  .filter((question) => !inputQuestionIds.has(question.id))
+                  .map((question) => question.id),
+              },
+            },
           });
           const existingQuestionIds = new Set(
             existingQuestions.map((question) => question.id),
           );
-          const questionsToDelete = existingQuestions.filter(
-            (eq) => !normalizedQuestions.some((iq) => iq.id === eq.id),
-          );
-          const questionsToUpdate = normalizedQuestions.filter((question) => {
-            return existingQuestionIds.has(question.id);
-          });
-          const newQuestions = normalizedQuestions.filter((question) => {
-            return !existingQuestionIds.has(question.id);
-          });
+          for (const question of questions) {
+            if (existingQuestionIds.has(question.id)) {
+              await tx.question.update({
+                where: { id: question.id },
+                data: {
+                  type: question.type,
+                  sortId: question.sortId,
+                  required: question.required,
+                  public: question.public,
+                },
+              });
+              await syncQuestionTranslations(
+                tx,
+                question.id,
+                question.translations,
+              );
+              await syncQuestionOptions(tx, question.id, question.options);
+            } else {
+              await createQuestion(tx, input.id, question);
+            }
+          }
 
           const openQuotaSize =
-            input.quotas.find((q) => q.id.includes("public-quota"))?.size || 0;
-
-          // Apply allocation-affecting changes and reconcile signup statuses
-          // atomically so the event cannot expose a partially updated state.
+            input.quotas.find((quota) => quota.id.includes("public-quota"))
+              ?.size ?? 0;
           const event = await tx.event.update({
-            where: {
-              id: input.id,
-            },
+            where: { id: input.id },
             data: {
               imageId: input.imageId,
-              title: input.title,
-              badgeText: input.badgeText?.trim() || null,
               badgeTone: input.badgeTone ?? "GREEN",
               date: input.date,
               registrationStartDate: input.registrationStartDate,
               registrationEndDate: input.registrationEndDate,
-              description: input.description,
               location: input.location,
               price: input.price,
               webpageUrl: input.webpageUrl,
               draft: input.draft,
               signupsPublic: input.signupsPublic,
-              verificationEmail: input.verificationEmail,
-              openQuotaSize: openQuotaSize,
+              openQuotaSize,
               extraCapacity: input.extraCapacity,
-              Quotas: {
-                create: newQuotas.map((quota) => ({
-                  id: quota.id,
-                  title: quota.title,
-                  size: quota.size,
-                  sharedPlacesAllocation: quota.sharedPlacesAllocation,
-                  sortId: quota.sortId,
-                })),
-                update: existingQuotasToUpdate.map((quota) => ({
-                  where: { id: quota.id },
-                  data: {
-                    title: quota.title,
-                    size: quota.size,
-                    sharedPlacesAllocation: quota.sharedPlacesAllocation,
-                    sortId: quota.sortId,
-                  },
-                })),
-                delete: quotasToDelete.map((quota) => ({ id: quota.id })),
-              },
-              Questions: {
-                create: newQuestions.map((question) => ({
-                  id: question.id,
-                  question: question.question,
-                  type: question.type,
-                  options: question.options,
-                  sortId: question.sortId,
-                  required: question.required,
-                  public: question.public,
-                })),
-                update: questionsToUpdate.map((question) => ({
-                  where: { id: question.id },
-                  data: {
-                    question: question.question,
-                    type: question.type,
-                    options: question.options,
-                    sortId: question.sortId,
-                    required: question.required,
-                    public: question.public,
-                  },
-                })),
-                delete: questionsToDelete.map((question) => ({
-                  id: question.id,
-                })),
-              },
             },
           });
-
+          await syncEventTranslations(tx, input.id, input.translations);
           const allocation = await reconcileEventAllocations(tx, input.id);
           return {
             updatedEvent: event,

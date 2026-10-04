@@ -2,12 +2,20 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  guestIdentitySchema,
+  createGuestIdentitySchema,
   type GuestIdentityFormValues,
 } from "@/features/events/utils/guestIdentitySchema";
 import { api } from "@/utils/api";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
+import { useMemo } from "react";
 
 export function useGuestIdentityForm() {
+  const messages = useTranslations(publicEventsMessages);
+  const schema = useMemo(
+    () => createGuestIdentitySchema(messages.validation.identity),
+    [messages.validation.identity],
+  );
   const apiContext = api.useContext();
   const identityQuery = api.userSession.getIdentity.useQuery(undefined, {
     staleTime: 0,
@@ -24,7 +32,7 @@ export function useGuestIdentityForm() {
   });
 
   const form = useForm<GuestIdentityFormValues>({
-    resolver: zodResolver(guestIdentitySchema),
+    resolver: zodResolver(schema),
     defaultValues: { name: "", email: "" },
     mode: "all",
   });

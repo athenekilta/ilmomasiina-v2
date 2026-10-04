@@ -118,13 +118,22 @@ test(
       ),
     );
     await writer.query(`
-      INSERT INTO "Event" (id, title, date, "registrationStartDate",
+      INSERT INTO "Event" (id, date, "registrationStartDate",
         "registrationEndDate", "updatedAt", draft)
-      VALUES (1, 'Public event', now(), now(), now(), now(), false),
-             (2, 'Private event', now(), now(), now(), now(), true),
-             (3, 'Barrier event', now(), now(), now(), now(), false);
-      INSERT INTO "Quota" (id, title, "sortId", "eventId")
-      VALUES ('public-quota', 'Public', 0, 1), ('private-quota', 'Private', 0, 2);
+      VALUES (1, now(), now(), now(), now(), false),
+             (2, now(), now(), now(), now(), true),
+             (3, now(), now(), now(), now(), false);
+      INSERT INTO "EventTranslation" ("eventId", locale, title)
+      VALUES (1, 'fi', 'Public event'), (2, 'fi', 'Private event'),
+             (3, 'fi', 'Barrier event');
+      INSERT INTO "Quota" (id, "sortId", "eventId")
+      VALUES ('public-quota', 0, 1), ('private-quota', 0, 2);
+      INSERT INTO "QuotaTranslation" ("quotaId", locale, title)
+      VALUES ('public-quota', 'fi', 'Public'),
+             ('private-quota', 'fi', 'Private');
+      INSERT INTO "Identity" (id, email, "updatedAt")
+      VALUES ('private-identity', 'private@example.test', now()),
+             ('draft-identity', 'hidden@example.test', now());
     `);
     await gateway.listen(0);
     await until(() => listener.ready, "initial LISTEN acknowledgement");
@@ -184,9 +193,11 @@ test(
       // A separate committed row change traverses the SAME listener and sockets.
       // Its frame bounds earlier notifications/flushes, including negative checks,
       // without relying on sleeps or injecting notifications into the gateway.
-      await worker.query('UPDATE "Event" SET title = $1 WHERE id = 3', [
-        randomUUID(),
-      ]);
+      await worker.query(
+        `UPDATE "EventTranslation" SET title = $1
+         WHERE "eventId" = 3 AND locale = 'fi'`,
+        [randomUUID()],
+      );
       const isBarrier = (message: ServerMessage) =>
         message.type === "change" &&
         "eventId" in message &&
@@ -210,8 +221,8 @@ test(
     }
 
     await writer.query("BEGIN");
-    await writer.query(`INSERT INTO "Signup" (id, name, email, "quotaId", "originalQuotaId")
-      VALUES ('private-signup-id', 'Private attendee', 'private@example.test', 'public-quota', 'public-quota')`);
+    await writer.query(`INSERT INTO "Signup" (id, name, "quotaId", "originalQuotaId", "identityId")
+      VALUES ('private-signup-id', 'Private attendee', 'public-quota', 'public-quota', 'private-identity')`);
     await expectHints([]);
     await writer.query("COMMIT");
     await expectHints([hint("signups", 1)]);
@@ -236,11 +247,12 @@ test(
       `UPDATE "Signup" SET name = 'Worker update' WHERE id = 'private-signup-id'`,
     );
     await expectHints([hint("signups", 1)]);
-    await worker.query(`INSERT INTO "Signup" (id, name, email, "quotaId", "originalQuotaId")
-      VALUES ('draft-signup', 'Hidden attendee', 'hidden@example.test', 'private-quota', 'private-quota')`);
+    await worker.query(`INSERT INTO "Signup" (id, name, "quotaId", "originalQuotaId", "identityId")
+      VALUES ('draft-signup', 'Hidden attendee', 'private-quota', 'private-quota', 'draft-identity')`);
     await expectHints([], [hint("signups", 2)]);
     await writer.query(
-      `UPDATE "Event" SET title = 'Hidden draft title' WHERE id = 2`,
+      `UPDATE "EventTranslation" SET title = 'Hidden draft title'
+       WHERE "eventId" = 2 AND locale = 'fi'`,
     );
     await expectHints([], [hint("event", 2)]);
     await writer.query('UPDATE "Event" SET draft = false WHERE id = 2');

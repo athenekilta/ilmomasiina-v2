@@ -1,5 +1,7 @@
 import { Button, Heading, Text } from "@react-email/components";
 import { Email } from "./components/Email";
+import { getTranslations } from "@/i18n/messages";
+import { emailMessages } from "@/i18n/messages/emails";
 import {
   EventSignupDetails,
   type EventSignupDetailsProps,
@@ -9,7 +11,7 @@ export type EventSignupEmailProps = EventSignupDetailsProps & {
   editUrl?: string;
 };
 
-const defaultProps: EventSignupEmailProps = {
+const defaultProps: Omit<EventSignupEmailProps, "locale"> = {
   eventName: "Esimerkkitapahtuma",
   eventDate: new Date("2026-09-14T15:00:00Z"),
   signupName: "Matti Meikäläinen",
@@ -19,23 +21,27 @@ const defaultProps: EventSignupEmailProps = {
 };
 
 function getSubject(props: EventSignupEmailProps) {
-  return `Ilmosi on vahvistettu: ${props.eventName}`;
+  return getTranslations(emailMessages, props.locale).eventSignup.subject(
+    props.eventName,
+  );
 }
 
 const EventSignupEmail = Object.assign(
   function EventSignupEmail(originalProps: EventSignupEmailProps) {
     const props = { ...defaultProps, ...originalProps };
+    const messages = getTranslations(emailMessages, props.locale).eventSignup;
 
     return (
       <Email
+        locale={props.locale}
         title={getSubject(props)}
-        preview={`Ilmosi tapahtumaan ${props.eventName} on vahvistettu`}
+        preview={messages.preview(props.eventName)}
       >
         <Heading as="h1" className="text-brand-dark m-0 text-3xl font-bold">
-          Ilmo vahvistettu
+          {messages.heading}
         </Heading>
         <Text className="text-brand-dark mt-4 mb-0 text-base leading-7">
-          Olet saanut paikan tapahtumasta. Ilmosi tiedot ovat alla.
+          {messages.body}
         </Text>
 
         <EventSignupDetails {...props} />
@@ -45,7 +51,7 @@ const EventSignupEmail = Object.assign(
             className="bg-brand-primary mt-7 rounded-md px-6 py-3 text-center font-semibold text-white"
             href={props.editUrl}
           >
-            Muokkaa ilmoa
+            {messages.button}
           </Button>
         )}
       </Email>

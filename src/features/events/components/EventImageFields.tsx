@@ -5,6 +5,8 @@ import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { BADGE_TONE_CLASS } from "@/features/eventCard/badgeTone";
 import { getEventImage } from "@/features/eventCard/eventCardImage";
 import type { BadgeTone } from "@/generated/prisma/client";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 import {
   EVENT_IMAGE_ACCEPT,
   type EventImageSelection,
@@ -18,6 +20,7 @@ function ImageControls({
   disabled: boolean;
 }) {
   const id = useId();
+  const messages = useTranslations(eventAdminMessages);
   const [removalTarget, setRemovalTarget] = useState<string>();
   const currentTarget = `${selection.savedImageId ?? ""}:${selection.image?.url ?? ""}`;
   const removalChanged = removalTarget !== currentTarget;
@@ -31,7 +34,7 @@ function ImageControls({
         ref={setInputRef}
         type="file"
         accept={EVENT_IMAGE_ACCEPT}
-        aria-label="Valitse tapahtumakuva"
+        aria-label={messages.image.selectAria}
         hidden
         disabled={disabled}
         onChange={(event) => {
@@ -51,7 +54,7 @@ function ImageControls({
           aria-describedby={error ? `${id}-error` : undefined}
           onClick={selection.openPicker}
         >
-          {selection.hasImage ? "Vaihda kuva" : "Valitse kuva"}
+          {selection.hasImage ? messages.image.replace : messages.image.select}
         </Button>
         <div className="flex items-center gap-2">
           {selection.hasImage && (
@@ -64,13 +67,13 @@ function ImageControls({
               startIcon={<Trash2 size={18} aria-hidden />}
               onClick={() => setRemovalTarget(currentTarget)}
             >
-              Poista kuva
+              {messages.image.remove}
             </Button>
           )}
           <span className="group relative shrink-0">
             <button
               type="button"
-              aria-label="Kuvan kokorajoitus ja kuvasuhde"
+              aria-label={messages.image.constraintsAria}
               aria-describedby={`${id}-help`}
               className="text-brand-dark focus-visible:ring-brand-secondary flex h-8 w-8 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-hidden"
             >
@@ -82,7 +85,7 @@ function ImageControls({
               className="invisible absolute top-full right-0 z-10 w-max max-w-[calc(100vw-4rem)] pt-2 opacity-0 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
             >
               <span className="bg-brand-dark rounded-control shadow-card block px-3 py-2 text-xs text-white">
-                Enintään 10 MiB. Kuvasuhde 5:2.
+                {messages.image.constraints}
               </span>
             </span>
           </span>
@@ -97,7 +100,7 @@ function ImageControls({
         )}
       </div>
       <p role="status" className="text-xs text-gray-600 empty:hidden">
-        {isDecoding ? "Avataan kuvaa…" : ""}
+        {isDecoding ? messages.image.decoding : ""}
       </p>
       {error && (
         <p id={`${id}-error`} role="alert" className="text-danger text-sm">
@@ -106,9 +109,9 @@ function ImageControls({
       )}
       {removalTarget !== undefined && (
         <ConfirmationDialog
-          title="Poista tapahtumakuva?"
-          message={removalChanged ? "Kuva on muuttunut muualla. Tarkista nykyinen esikatselu ennen poistoa." : undefined}
-          confirmLabel={!selection.hasImage ? "Sulje" : removalChanged ? "Tarkista nykyinen kuva" : "Poista kuva"}
+          title={messages.image.removeTitle}
+          message={removalChanged ? messages.image.changed : undefined}
+          confirmLabel={!selection.hasImage ? messages.image.close : removalChanged ? messages.image.checkCurrent : messages.image.remove}
           pending={disabled}
           onCancelAction={() => {
             setRemovalTarget(undefined);
@@ -130,6 +133,7 @@ function ImageControls({
 export function EventImageBanner({
   selection,
   eventId,
+  title,
   badgeText,
   badgeTone,
   disabled = false,
@@ -137,9 +141,12 @@ export function EventImageBanner({
   disabled?: boolean;
   selection: EventImageSelection;
   eventId?: number;
+  title?: string;
   badgeText?: string;
   badgeTone: BadgeTone;
 }) {
+  const messages = useTranslations(eventAdminMessages);
+
   return (
     <div>
       <div className="bg-brand-sand rounded-t-card relative aspect-[5/2] w-full overflow-hidden">
@@ -156,7 +163,7 @@ export function EventImageBanner({
             selection.image?.url ??
             getEventImage(eventId ?? 0, selection.savedImageId)
           }
-          alt="Tapahtumakuvan esikatselu"
+          alt={title?.trim() ? messages.image.previewFor(title.trim()) : messages.image.preview}
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         {badgeText?.trim() && (

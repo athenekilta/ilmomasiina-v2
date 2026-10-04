@@ -4,8 +4,11 @@ import { useManagementSession } from "@/server/auth/management-auth-client";
 import { api } from "@/utils/api";
 import { clearRealtimeData, startRealtime } from "./client";
 import { describeQuery, isRealtimeQuery, profileIdentity } from "./queries";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { layoutMessages } from "@/i18n/messages/layout";
 
 export function Realtime() {
+  const messages = useTranslations(layoutMessages).realtime;
   const client = useQueryClient();
   const managementSession = useManagementSession();
   const [disconnected, setDisconnected] = useState(false);
@@ -55,13 +58,13 @@ export function Realtime() {
       role="status"
       aria-live="polite"
       className="fixed right-3 bottom-3 z-50 max-w-xs rounded-full border border-stone-200 bg-white/95 px-3 py-1.5 text-xs text-stone-600 shadow-sm"
-      title="Yhteyttä yritetään uudelleen automaattisesti. Tiedot päivitetään yhteyskatkon aikana 30 sekunnin välein, kun sivu on näkyvissä ja verkkoyhteys on käytettävissä."
+      title={messages.retryHint}
     >
       <span
         aria-hidden="true"
         className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-amber-500"
       />
-      Reaaliaikainen yhteys katkesi
+      {messages.disconnected}
     </div>
   );
 }

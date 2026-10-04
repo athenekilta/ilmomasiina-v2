@@ -3,6 +3,8 @@
 import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
 import { managementSignOut } from "@/server/auth/management-auth-client";
 import { c } from "@/utils/classnames";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { layoutMessages } from "@/i18n/messages/layout";
 
 const controlClass = c(
   "cursor-pointer rounded-sm px-2 py-1 text-sm text-stone-100 transition-colors",
@@ -11,6 +13,7 @@ const controlClass = c(
 );
 
 export function ManagementMenu() {
+  const messages = useTranslations(layoutMessages);
   const user = useManagementUser();
 
   if (!user.data) return null;
@@ -21,7 +24,7 @@ export function ManagementMenu() {
       className={controlClass}
       onClick={() => void managementSignOut()}
     >
-      Kirjaudu ulos
+      {messages.signOut}
     </button>
   );
 }

@@ -4,8 +4,12 @@ import { api } from "@/utils/api";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { Button } from "@/components/Button";
 import { routes } from "@/utils/routes";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { authMessages } from "@/i18n/messages/auth";
 
 export function EmailVerifier() {
+  const messages = useTranslations(authMessages);
+  const locale = useLocale();
   const user = useManagementUser();
   const apiContext = api.useContext();
 
@@ -41,10 +45,12 @@ export function EmailVerifier() {
         data-status={tokenMutation.status}
         className="data-[status=error]:text-danger py-8 text-center text-black/70"
       >
-        {tokenMutation.error?.message}
+        {tokenMutation.error
+          ? messages.emailVerification.verificationFailed
+          : null}
       </p>
       <Button.Link color="primary" href={routes.auth.login}>
-        Login
+        {messages.actions.login}
       </Button.Link>
 
       <Button
@@ -52,12 +58,19 @@ export function EmailVerifier() {
         variant="bordered"
         loading={requestMutation.isPending || tokenMutation.isPending}
         onClick={() => {
-          requestMutation.mutate({ email });
+          requestMutation.mutate({ email, locale });
         }}
         disabled={!email || tokenMutation.isSuccess || didReRequest}
       >
-        {email ? "Request new verification email" : "Email not found"}
+        {email
+          ? messages.actions.requestNewVerificationEmail
+          : messages.emailVerification.emailNotFound}
       </Button>
+      {requestMutation.error && (
+        <p role="alert" className="text-danger">
+          {messages.emailVerification.requestFailed}
+        </p>
+      )}
     </div>
   );
 }

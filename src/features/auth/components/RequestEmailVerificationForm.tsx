@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { userSignUpSchema } from "../utils/userSignUpSchema";
+import { createUserSignUpSchema } from "../utils/userSignUpSchema";
 import { useRouter } from "next/router";
 import { useManagementUser } from "../hooks/useManagementUser";
 import { api } from "@/utils/api";
@@ -10,21 +10,23 @@ import { routes } from "@/utils/routes";
 import { Input } from "@/components/Input";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/Button";
-
-const formSchem = z.object({
-  email: userSignUpSchema.shape.email,
-});
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { authMessages } from "@/i18n/messages/auth";
 
 export type RequestChangePasswordFormProps = {
   fixedEail?: string | undefined | null;
 };
 
 export function RequestEmailVerificationForm(
-  props: RequestChangePasswordFormProps
+  props: RequestChangePasswordFormProps,
 ) {
   const router = useRouter();
+  const messages = useTranslations(authMessages);
+  const locale = useLocale();
+  const userSchema = createUserSignUpSchema(messages.validation);
+  const formSchema = z.object({ email: userSchema.shape.email });
   const user = useManagementUser();
-  const requestMutation = api.auth.passwordChange.request.useMutation();
+  const requestMutation = api.auth.emailVerification.request.useMutation();
   const queryParams = useQueryParams();
   const email = props.fixedEail || queryParams.email || user.data?.email || "";
 
@@ -35,15 +37,15 @@ export function RequestEmailVerificationForm(
       isSubmitting,
       errors: { email: emailError },
     },
-  } = useForm<z.TypeOf<typeof formSchem>>({
-    resolver: zodResolver(formSchem),
+  } = useForm<z.TypeOf<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       email,
     },
   });
 
   const handleSubmit = createHandleSubmit(async (values) => {
-    await requestMutation.mutateAsync(values);
+    await requestMutation.mutateAsync({ ...values, locale });
     router.push(routes.auth.email.requestedVerification);
   });
 
@@ -54,26 +56,28 @@ export function RequestEmailVerificationForm(
         fullWidth
         {...register("email")}
         startIcon={<Icon icon="mail" />}
-        placeholder="Email"
+        placeholder={messages.fields.email}
         helperText={emailError?.message}
         error={!!emailError}
       />
 
       {requestMutation.isSuccess ? (
-        <p> Email sent Successfuly to {email}</p>
+        <p role="status">{messages.emailVerification.sentTo(email)}</p>
       ) : (
         <Button color="primary" type="submit" loading={isSubmitting}>
-          Request Email Verification
+          {messages.actions.requestEmailVerification}
         </Button>
       )}
 
-      <Button.Link
-        href={routes.auth.login}
-        color="primary"
-        variant="bordered"
-      >
-        Login
+      <Button.Link href={routes.auth.login} color="primary" variant="bordered">
+        {messages.actions.login}
       </Button.Link>
+
+      {requestMutation.error && (
+        <p role="alert" className="text-danger text-center">
+          {messages.emailVerification.requestFailed}
+        </p>
+      )}
     </form>
   );
 }

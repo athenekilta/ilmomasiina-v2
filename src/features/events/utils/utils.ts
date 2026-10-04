@@ -1,13 +1,16 @@
-import type { Quota, Event } from "@/generated/prisma/client";
+import type { Event } from "@/generated/prisma/client";
 
-
-export function OriginalQuotaTitle(quotas: Quota[], quotaId: string) {
-  const quota = quotas.find((q: Quota) => q.id === quotaId);
-  if (!quota) return null;
-  return quota.title;
+export function OriginalQuotaTitle(
+  quotas: ReadonlyArray<{ id: string; title: string }>,
+  quotaId: string,
+) {
+  return quotas.find((quota) => quota.id === quotaId)?.title ?? null;
 }
 
-export function RegistrationDate(event: Pick<Event, "registrationStartDate" | "registrationEndDate">, now = Date.now()) {
+export function RegistrationDate(
+  event: Pick<Event, "registrationStartDate" | "registrationEndDate">,
+  now = Date.now(),
+) {
   const registrationStartDate = new Date(event.registrationStartDate);
   const registrationEndDate = new Date(event.registrationEndDate);
 

@@ -18,8 +18,12 @@ import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
 import { groupEventsForList } from "@/features/eventCard/eventOrder";
 import { Button } from "@/components/Button";
 import { ManagementRole } from "@/generated/prisma";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import { publicEventsMessages } from "@/i18n/messages/events";
 
 export default function DesktopPage() {
+  const locale = useLocale();
+  const messages = useTranslations(publicEventsMessages);
   // Re-render cards and time-derived grouping without refetching event data.
   useNow();
   const [includeDrafts, setIncludeDrafts] = useState(false);
@@ -30,12 +34,13 @@ export default function DesktopPage() {
     user.data?.role === ManagementRole.event_editor ||
     user.data?.role === ManagementRole.superadmin;
 
-  const regularEventsQuery = api.events.getEvents.useQuery(undefined, {
-    enabled: !canEditEvents,
-  });
+  const regularEventsQuery = api.events.getEvents.useQuery(
+    { locale },
+    { enabled: !canEditEvents },
+  );
 
   const adminEventsQuery = api.events.getEventsAdmin.useQuery(
-    { includeDrafts, includeOlderEvents },
+    { locale, includeDrafts, includeOlderEvents },
     { enabled: canEditEvents },
   );
 
@@ -51,7 +56,7 @@ export default function DesktopPage() {
 
   return (
     <>
-      <PageHead title="Tapahtumat" />
+      <PageHead title={messages.list.title} />
       <Layout>
         {!isLoading && eventsData ? (
           <div className="flex-col pb-4">
@@ -61,17 +66,17 @@ export default function DesktopPage() {
 
             <header className="mt-2 mb-4 w-full">
               <h1 className="text-brand-secondary px-1 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
-                Tapahtumat
+                {messages.list.title}
               </h1>
             </header>
 
             {canEditEvents && (
               <section
                 className="mb-8 w-full"
-                aria-label="Hallinnan suodattimet"
+                aria-label={messages.list.adminFilters}
               >
                 <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
-                  Näkymä
+                  {messages.list.view}
                 </h2>
                 <div className="flex flex-wrap gap-3">
                   <Button
@@ -88,8 +93,8 @@ export default function DesktopPage() {
                     onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
                   >
                     {includeOlderEvents
-                      ? "Kaikki tapahtumat"
-                      : "Tulevat tapahtumat"}
+                      ? messages.list.allEvents
+                      : messages.list.upcomingEvents}
                   </Button>
 
                   <Button
@@ -106,18 +111,18 @@ export default function DesktopPage() {
                     onClick={() => setIncludeDrafts(!includeDrafts)}
                   >
                     {includeDrafts
-                      ? "Luonnokset näkyvissä"
-                      : "Luonnokset piilotettu"}
+                      ? messages.list.draftsVisible
+                      : messages.list.draftsHidden}
                   </Button>
                 </div>
               </section>
             )}
 
-            <section className="w-full" aria-label="Tapahtumalista">
-              <h2 className="sr-only">Tapahtumalista</h2>
+            <section className="w-full" aria-label={messages.list.eventList}>
+              <h2 className="sr-only">{messages.list.eventList}</h2>
               {events.open.length === 0 && events.closed.length === 0 && (
                 <p className="text-brand-dark px-1 text-sm">
-                  Tyhjää täynnä. Ei tulevia tapahtumia.
+                  {messages.list.empty}
                 </p>
               )}
               {/* Every card is the same size. Columns are added only once
@@ -144,7 +149,7 @@ export default function DesktopPage() {
                   id="closed-events"
                   className="text-brand-dark mb-4 px-1 text-lg font-extrabold tracking-tight uppercase sm:text-xl"
                 >
-                  Ilmo päättynyt
+                  {messages.list.registrationEnded}
                 </h2>
                 <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
                   {events.closed.map((event) => (
@@ -159,7 +164,7 @@ export default function DesktopPage() {
             {canEditEvents && (
               <div className="mt-10 w-full border-t border-stone-300 pt-8">
                 <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
-                  Hallinta
+                  {messages.list.management}
                 </h2>
                 <Button.Link
                   href="events/create"
@@ -167,7 +172,7 @@ export default function DesktopPage() {
                   color="primary"
                   startIcon={<Plus size={20} strokeWidth={2.25} />}
                 >
-                  Luo uusi tapahtuma
+                  {messages.list.createEvent}
                 </Button.Link>
               </div>
             )}

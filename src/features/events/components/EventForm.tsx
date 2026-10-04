@@ -6,7 +6,6 @@ import { set } from "date-fns";
 import { useForm, useWatch, type UseFormSetValue } from "react-hook-form";
 import { Button } from "@/components/Button";
 import { FieldSet } from "@/components/FieldSet";
-import { TextArea } from "@/components/TextArea";
 import { useAlert } from "@/features/alert/hooks/useAlert";
 import { useQueryParams } from "@/hooks/useQueryParams";
 import { api } from "@/utils/api";
@@ -32,6 +31,9 @@ import {
   eventFormSchema,
   normalizeQuestionOptions,
 } from "../utils/eventFormSchema";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
+import type { Locale } from "@/i18n/config";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 export type EventFormProps = {
   /**
@@ -41,6 +43,9 @@ export type EventFormProps = {
 };
 
 export function EventForm({ editId }: EventFormProps) {
+  const locale = useLocale();
+  const messages = useTranslations(eventAdminMessages);
+  const [activeLanguage, setActiveLanguage] = useState<Locale>(locale);
   const creationRequestId = useRef<string | null>(null);
   const submitting = useRef(false);
   const utils = api.useUtils();
@@ -63,7 +68,7 @@ export function EventForm({ editId }: EventFormProps) {
 
   const { error: queryError } = useQueryParams();
   if (queryError) {
-    alert.error("Error: " + queryError);
+    alert.error(messages.form.queryError(queryError));
   }
 
   const eventQuery = api.events.getEventEditId.useQuery(
@@ -131,7 +136,7 @@ export function EventForm({ editId }: EventFormProps) {
       const [result, signupResult] = await retryQueries();
       if (result.error || !result.data || signupResult.error) {
         alert.error(
-          "Uusimpien tietojen lataus epäonnistui. Omat muutoksesi säilytettiin.",
+          messages.form.reloadFailed,
         );
         return;
       }
@@ -184,6 +189,7 @@ export function EventForm({ editId }: EventFormProps) {
 
     if (submitting.current || imageSelection.isDecoding) return;
     submitting.current = true;
+    let savedEventId = editId;
     try {
       const imageChange = await imageSelection.uploadForSave();
       if (editId) {
@@ -201,7 +207,7 @@ export function EventForm({ editId }: EventFormProps) {
         ) {
           setNeedsReload(true);
           alert.warning(
-            "Tietoja muutettiin kuvan latauksen aikana. Lataa uusimmat tiedot ennen tallentamista.",
+            messages.form.changedDuringUpload,
           );
           return;
         }
@@ -226,13 +232,13 @@ export function EventForm({ editId }: EventFormProps) {
         } catch {
           setNeedsReload(true);
           alert.warning(
-            "Tapahtuma tallennettiin, mutta uusimpia tietoja ei voitu ladata. Lataa tiedot ennen uutta tallennusta.",
+            messages.form.savedReloadFailed,
           );
         }
-        alert.success("Event updated successfully");
+        alert.success(messages.form.updated);
         if (event.notificationWarning)
           alert.warning(
-            "Tapahtuma tallennettiin, mutta jonopaikan sähköposti-ilmoitusten lähetys epäonnistui.",
+            messages.form.notificationFailed,
           );
       } else {
         creationRequestId.current ??= crypto.randomUUID();
@@ -243,15 +249,21 @@ export function EventForm({ editId }: EventFormProps) {
           quotas: data.Quotas,
           questions,
         });
-        alert.success("Event created successfully");
+        savedEventId = event.id;
+        alert.success(messages.form.created);
         await router.push(`/events/${event.id}/edit`);
       }
       // Cache refresh failure must not turn a committed save into a save error.
       void Promise.all([
         utils.events.getEventEditId.invalidate(),
-        utils.events.getEvents.invalidate(),
-        utils.events.getEventsAdmin.invalidate(),
-        utils.events.getEventByID.invalidate(),
+        utils.events.getEvents.invalidate({ locale }),
+        utils.events.getEventsAdmin.invalidate({ locale }),
+        savedEventId
+          ? utils.events.getEventByID.invalidate({
+              eventId: savedEventId,
+              locale,
+            })
+          : Promise.resolve(),
       ]).catch(() => undefined);
     } catch (error) {
       if ((error as { data?: { code?: string } })?.data?.code === "CONFLICT") {
@@ -269,7 +281,7 @@ export function EventForm({ editId }: EventFormProps) {
       alert.error(
         error instanceof Error
           ? error.message
-          : "Tapahtuman tallennus epäonnistui.",
+          : messages.form.saveFailed,
       );
     } finally {
       submitting.current = false;
@@ -277,7 +289,19 @@ export function EventForm({ editId }: EventFormProps) {
   });
 
   const isDraft = useWatch({ control, name: "draft" });
-  const badgeText = useWatch({ control, name: "badgeText" });
+  const translations = useWatch({ control, name: "translations" });
+  const previewTitle =
+    translations?.[activeLanguage]?.title?.trim() ||
+    translations?.fi?.title?.trim() ||
+    "";
+  const previewBadgeText =
+    translations?.[activeLanguage]?.badgeText?.trim() ||
+    translations?.fi?.badgeText?.trim() ||
+    "";
+  const eventName =
+    editEvent?.translations[locale].title.trim() ||
+    editEvent?.translations.fi.title.trim() ||
+    messages.pages.editTitle;
   const badgeTone = useWatch({ control, name: "badgeTone" }) ?? "GREEN";
   const seatHoldingSignupCounts = (signups ?? []).reduce<
     Record<string, number>
@@ -304,18 +328,15 @@ export function EventForm({ editId }: EventFormProps) {
   ) {
     return (
       <div role="alert" className="space-y-3 p-6">
-        <p>
-          Tapahtumaa ei löytynyt, sen lataus epäonnistui tai sinulla ei ole
-          muokkausoikeutta. Tallentamattomia muutoksia ei lähetetty.
-        </p>
+        <p>{messages.form.notAvailable}</p>
         <Button
           type="button"
           disabled={eventQuery.isFetching || signupsQuery.isFetching}
           onClick={() => void retryQueries()}
         >
-          Yritä uudelleen
+          {messages.form.retry}
         </Button>
-        <Button.Link href="/">Takaisin tapahtumiin</Button.Link>
+        <Button.Link href="/">{messages.form.backToEvents}</Button.Link>
       </div>
     );
   }
@@ -323,7 +344,7 @@ export function EventForm({ editId }: EventFormProps) {
   if (editId && (isLoading || !draft.baseline)) {
     return (
       <div className="bg-brand-beige text-brand-dark pointer-events-none absolute inset-0 z-50 flex flex-col items-center justify-center p-4 text-sm font-medium">
-        Loading...
+        {messages.form.loading}
       </div>
     );
   }
@@ -338,16 +359,13 @@ export function EventForm({ editId }: EventFormProps) {
       )}
       {(eventError || signupsError) && (
         <div role="alert" className="text-danger p-4">
-          <p>
-            Tietojen päivitys epäonnistui. Omat muutoksesi säilytettiin.
-            Tallennus on estetty, kunnes tiedot saadaan päivitettyä.
-          </p>
+          <p>{messages.form.refreshFailed}</p>
           <Button
             type="button"
             disabled={busy || eventQuery.isFetching || signupsQuery.isFetching}
             onClick={() => void retryQueries()}
           >
-            Yritä uudelleen
+            {messages.form.retry}
           </Button>
         </div>
       )}
@@ -359,13 +377,16 @@ export function EventForm({ editId }: EventFormProps) {
           selection={imageSelection}
           disabled={busy}
           eventId={editId}
-          badgeText={badgeText}
+          title={previewTitle}
+          badgeText={previewBadgeText}
           badgeTone={badgeTone}
         />
         <div className="flex flex-col gap-6 p-4 sm:px-7 sm:py-6">
           <div className="flex flex-row flex-wrap items-start justify-between gap-3">
             <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
-              {editId ? "Muokkaa tapahtumaa" : "Luo uusi tapahtuma"}
+              {editId
+                ? messages.form.editHeading
+                : messages.form.createHeading}
             </h1>
 
             <div className="flex flex-wrap gap-2">
@@ -375,7 +396,7 @@ export function EventForm({ editId }: EventFormProps) {
                   disabled={imageSelection.isDecoding || saveBlocked}
                   loading={isSubmitting}
                 >
-                  Tallenna luonnoksena
+                  {messages.form.saveDraft}
                 </Button>
               ) : (
                 <>
@@ -385,7 +406,7 @@ export function EventForm({ editId }: EventFormProps) {
                     loading={isSubmitting}
                     color="primary"
                   >
-                    Tallenna muutokset
+                    {messages.form.saveChanges}
                   </Button>
                   <Button
                     type="submit"
@@ -394,18 +415,40 @@ export function EventForm({ editId }: EventFormProps) {
                     loading={isSubmitting}
                     variant="bordered"
                   >
-                    {isDraft ? "Julkaise" : "Muuta luonnokseksi"}
+                    {isDraft
+                      ? messages.form.publish
+                      : messages.form.makeDraft}
                   </Button>
                   <Button.Link
                     type="button"
                     variant="text"
                     href={`/events/${editId}`}
                   >
-                    Siirry ilmosivulle
+                    {messages.form.openSignupPage}
                   </Button.Link>
                 </>
               )}
             </div>
+          </div>
+
+          <div
+            role="tablist"
+            aria-label={messages.languages.label}
+            className="flex gap-1 rounded-control bg-stone-100 p-1"
+          >
+            {(["fi", "en"] as const).map((language) => (
+              <button
+                key={language}
+                type="button"
+                role="tab"
+                aria-selected={activeLanguage === language}
+                aria-controls={`translated-content-${language}`}
+                className="focus-visible:ring-brand-secondary flex-1 rounded-control px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden aria-selected:bg-white aria-selected:text-brand-dark aria-selected:shadow-soft"
+                onClick={() => setActiveLanguage(language)}
+              >
+                {messages.languages[language]}
+              </button>
+            ))}
           </div>
 
           <BasicInfoFields
@@ -414,6 +457,7 @@ export function EventForm({ editId }: EventFormProps) {
             watch={watch}
             setValue={setValue}
             errors={errors}
+            activeLanguage={activeLanguage}
           />
 
           <Divider spacingY="none" />
@@ -427,6 +471,7 @@ export function EventForm({ editId }: EventFormProps) {
             editId={editId}
             seatHoldingSignupCounts={seatHoldingSignupCounts}
             signupCounts={signupCounts}
+            activeLanguage={activeLanguage}
           />
 
           <Divider spacingY="none" />
@@ -438,29 +483,26 @@ export function EventForm({ editId }: EventFormProps) {
             errors={errors}
             eventId={editEvent?.id}
             signupCount={signups ? signups.length : 0}
+            activeLanguage={activeLanguage}
           />
-
-          <Divider spacingY="none" />
-
-          <FieldSet title="Vahvistusviesti sähköpostiin">
-            <TextArea {...register("verificationEmail")} rows={5} fullWidth />
-          </FieldSet>
 
           {editId && (
             <>
               <Divider spacingY="none" />
-              <FieldSet title="Ilmoittautuneet">
+              <FieldSet title={messages.form.signups}>
                 {signups ? (
                   <SignupsTable
                     signups={signups}
                     disabled={staleData || busy || needsReload}
                     eventId={editId}
-                    eventName={editEvent?.title}
+                    eventName={eventName}
                     quotas={editEvent?.Quotas ?? []}
                     questions={editEvent?.Questions ?? []}
                   />
                 ) : (
-                  <p className="text-sm text-gray-600">Ei ilmoittautuneita</p>
+                  <p className="text-sm text-gray-600">
+                    {messages.form.noSignups}
+                  </p>
                 )}
               </FieldSet>
             </>

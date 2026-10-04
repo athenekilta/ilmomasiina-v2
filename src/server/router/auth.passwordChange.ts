@@ -5,6 +5,7 @@ import { router } from "../trpc/trpc";
 import { userSignUpSchema } from "@/features/auth/utils/userSignUpSchema";
 import { hashPassword } from "better-auth/crypto";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
+import { localePath, localeSchema } from "@/i18n/config";
 
 export const passwordChangeRouter = router({
   change: publicProcedure
@@ -69,6 +70,7 @@ export const passwordChangeRouter = router({
     .input(
       z.object({
         email: userSignUpSchema.shape.email,
+        locale: localeSchema,
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -82,27 +84,32 @@ export const passwordChangeRouter = router({
         return null;
       }
 
-      const token = await ctx.prisma.passwordChangeToken.create({
-        data: {
-          email: user.email,
-          expiresAt: addDays(new Date(), 7),
-        },
+      const token = await ctx.prisma.$transaction(async (tx) => {
+        await tx.managementUser.update({
+          where: { id: user.id },
+          data: { preferredLocale: input.locale },
+        });
+        return tx.passwordChangeToken.create({
+          data: {
+            email: user.email!,
+            expiresAt: addDays(new Date(), 7),
+          },
+        });
       });
 
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-
-      const nextAuthUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-
-      const passwordChangeUrl = [
-        nextAuthUrl,
-        "auth/password/change?token=",
-        encodeURIComponent(token.id),
-        "&email=",
-        encodeURIComponent(token.email),
-      ].join("/");
+      const passwordChangeUrl = new URL(
+        localePath(input.locale, "/auth/password/change"),
+        baseUrl,
+      );
+      passwordChangeUrl.searchParams.set("token", token.id);
+      passwordChangeUrl.searchParams.set("email", token.email);
 
       await (
-        await ctx.mail.templates.passwordChange({ passwordChangeUrl })
+        await ctx.mail.templates.passwordChange({
+          locale: input.locale,
+          passwordChangeUrl: passwordChangeUrl.toString(),
+        })
       ).send({
         to: { displayName: user.name ?? undefined, address: user.email },
         from: "DoNotReply@athene.fi",

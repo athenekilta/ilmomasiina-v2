@@ -1,8 +1,12 @@
-import type { Quota } from "@/generated/prisma";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Divider } from "@/components/Divider";
 import type { FieldErrorsImpl } from "react-hook-form";
+import type { z } from "zod";
+import { eventFormSchema } from "../utils/eventFormSchema";
+import type { Locale } from "@/i18n/config";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 import {
   Select,
   SelectContent,
@@ -10,6 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/Select";
+
+type EventFormValues = z.input<typeof eventFormSchema>;
+type QuotaValue = EventFormValues["Quotas"][number];
 
 export function QuotaRow({
   quota,
@@ -20,16 +27,19 @@ export function QuotaRow({
   seatHoldingSignupCount,
   moveUnusedPlacesToJokerPlaces,
   errors,
+  activeLanguage,
 }: {
-  quota: Quota;
-  onChange: (value: Quota) => void;
+  quota: QuotaValue;
+  onChange: (value: QuotaValue) => void;
   deleteQuota: (id: string) => void;
   quotasLength: number;
   signupCount: number;
   seatHoldingSignupCount: number;
   moveUnusedPlacesToJokerPlaces: (id: string, usedPlaces: number) => void;
-  errors: FieldErrorsImpl<Quota> | undefined;
+  errors: FieldErrorsImpl<QuotaValue> | undefined;
+  activeLanguage: Locale;
 }) {
+  const messages = useTranslations(eventAdminMessages);
   const canDelete = quotasLength >= 2 && signupCount === 0;
   const protectedPlacesUsed =
     quota.size === null
@@ -46,27 +56,33 @@ export function QuotaRow({
     <div className="surface-muted flex flex-col gap-5 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <label
-          htmlFor={`quota-title-${quota.id}`}
+          htmlFor={`quota-title-${quota.id}-${activeLanguage}`}
           className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
         >
-          Kiintiön nimi
+          {messages.quotas.name}
         </label>
         <Input
-          id={`quota-title-${quota.id}`}
-          title="Nimi"
-          value={quota.title}
-          onChange={(value) =>
-            onChange({ ...quota, title: value.target.value })
+          id={`quota-title-${quota.id}-${activeLanguage}`}
+          title={messages.quotas.nameTitle}
+          value={quota.translations[activeLanguage]}
+          onChange={(event) =>
+            onChange({
+              ...quota,
+              translations: {
+                ...quota.translations,
+                [activeLanguage]: event.target.value,
+              },
+            })
           }
           fullWidth
-          error={!!errors?.title}
-          helperText={errors?.title ? errors.title.message : undefined}
+          error={!!errors?.translations?.[activeLanguage]}
+          helperText={errors?.translations?.[activeLanguage]?.message}
         />
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <label className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold">
-          Jokeripaikat
+          {messages.quotas.sharedPlaces}
         </label>
         <div className="flex w-full flex-col gap-1">
           <Select
@@ -75,7 +91,7 @@ export function QuotaRow({
               onChange({
                 ...quota,
                 sharedPlacesAllocation:
-                  sharedPlacesAllocation as Quota["sharedPlacesAllocation"],
+                  sharedPlacesAllocation as QuotaValue["sharedPlacesAllocation"],
               })
             }
           >
@@ -83,20 +99,19 @@ export function QuotaRow({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="NEVER">Ei käytä jokeripaikkoja</SelectItem>
-              <SelectItem value="IMMEDIATE">Käyttää jokeripaikkoja</SelectItem>
+              <SelectItem value="NEVER">
+                {messages.quotas.sharedOptions.NEVER}
+              </SelectItem>
+              <SelectItem value="IMMEDIATE">
+                {messages.quotas.sharedOptions.IMMEDIATE}
+              </SelectItem>
               <SelectItem value="AFTER_REGISTRATION_CLOSE">
-                Käyttää jäljelle jääneitä jokeripaikkoja ilmoittautumisen
-                päätyttyä
+                {messages.quotas.sharedOptions.AFTER_REGISTRATION_CLOSE}
               </SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs leading-relaxed text-gray-600">
-            {quota.sharedPlacesAllocation === "NEVER"
-              ? "Paikat jaetaan vain tämän kiintiön paikoista."
-              : quota.sharedPlacesAllocation === "IMMEDIATE"
-                ? "Kiintiöpaikkojen täytyttyä käytetään jokeripaikkoja."
-                : "Kiintiöpaikkojen täytyttyä ilmoittautumiset odottavat jokeripaikkojen jakoa ilmoittautumisen päättymiseen asti."}
+            {messages.quotas.sharedHelp[quota.sharedPlacesAllocation]}
           </p>
         </div>
       </div>
@@ -106,7 +121,7 @@ export function QuotaRow({
           htmlFor={`quota-size-${quota.id}`}
           className="text-brand-dark w-32 shrink-0 pt-2 text-sm font-semibold"
         >
-          Kiintiöpaikat
+          {messages.quotas.places}
         </label>
         <div className="flex w-full flex-col gap-1 sm:max-w-xs">
           <Input
@@ -124,27 +139,26 @@ export function QuotaRow({
             fullWidth
           />
           <p className="text-xs leading-relaxed text-gray-600">
-            Nämä paikat on varattu tämän kiintiön ilmoittautujille.
-            Käyttämättömiä kiintiöpaikkoja ei siirretä automaattisesti muille.
+            {messages.quotas.placesHelp}
           </p>
         </div>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
         <p className="text-brand-dark w-32 shrink-0 text-sm font-semibold">
-          Kiintiön täyttö
+          {messages.quotas.occupancy}
         </p>
         <div className="flex w-full flex-col gap-2">
           <div>
             <div className="mb-1 flex items-center justify-between gap-3 text-xs text-gray-600">
               <span>
                 {quota.size === null
-                  ? "Paikkamäärää ei ole rajattu"
-                  : `${protectedPlacesUsed} / ${quota.size} kiintiöpaikkaa käytössä`}
+                  ? messages.quotas.unlimited
+                  : messages.quotas.used(protectedPlacesUsed, quota.size)}
               </span>
               {quota.size !== null && (
                 <span className="shrink-0 tabular-nums">
-                  {unusedPlaces} vapaana
+                  {messages.quotas.available(unusedPlaces)}
                 </span>
               )}
             </div>
@@ -153,8 +167,8 @@ export function QuotaRow({
               role="img"
               aria-label={
                 quota.size === null
-                  ? "Kiintiön paikkamäärää ei ole rajattu"
-                  : `${protectedPlacesUsed} / ${quota.size} kiintiöpaikkaa käytössä`
+                  ? messages.quotas.unlimitedAria
+                  : messages.quotas.used(protectedPlacesUsed, quota.size)
               }
             >
               <div
@@ -174,7 +188,7 @@ export function QuotaRow({
                 moveUnusedPlacesToJokerPlaces(quota.id, seatHoldingSignupCount)
               }
             >
-              Siirrä vapaat paikat jokeripaikoiksi
+              {messages.quotas.moveUnused}
             </Button>
           </div>
         </div>
@@ -190,19 +204,16 @@ export function QuotaRow({
           disabled={!canDelete}
           color="danger"
         >
-          Poista kiintiö
+          {messages.quotas.remove}
         </Button>
         {signupCount > 0 && (
           <p className="text-xs leading-relaxed text-gray-600">
-            Kiintiössä on {signupCount}{" "}
-            {signupCount === 1 ? "ilmo" : "ilmoittautumista"},
-            joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset
-            toiseen kiintiöön ennen tämän kiintiön poistamista.
+            {messages.quotas.hasSignups(signupCount)}
           </p>
         )}
         {quotasLength < 2 && (
           <p className="text-xs leading-relaxed text-gray-600">
-            Tapahtuman ainoaa kiintiötä ei voi poistaa.
+            {messages.quotas.onlyQuota}
           </p>
         )}
       </div>

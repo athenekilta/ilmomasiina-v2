@@ -5,6 +5,7 @@ import { router } from "../trpc/trpc";
 import { userSignUpSchema } from "@/features/auth/utils/userSignUpSchema";
 import { sendNewEmailVerificationToken } from "@/features/emailVerification/sendNewEmailVerificationToken";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
+import { localeSchema } from "@/i18n/config";
 
 export const emailVerificationRouter = router({
   verify: publicProcedure
@@ -55,7 +56,8 @@ export const emailVerificationRouter = router({
     .input(
       z.object({
         email: userSignUpSchema.shape.email,
-      })
+        locale: localeSchema,
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       await sendNewEmailVerificationToken(ctx, input, { force: true });

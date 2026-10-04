@@ -5,7 +5,6 @@ import { QuotaRow } from "./QuotaRow";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import type { DragUpdate } from "@hello-pangea/dnd";
 import cuid from "cuid";
-import type { Quota } from "@/generated/prisma/client";
 import { eventFormSchema } from "../utils/eventFormSchema";
 import type {
   FieldErrors,
@@ -16,8 +15,12 @@ import type {
 } from "react-hook-form";
 import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";
+import type { Locale } from "@/i18n/config";
+import { useTranslations } from "@/i18n/I18nProvider";
+import { eventAdminMessages } from "@/i18n/messages/eventAdmin";
 
 type EventFormValues = z.input<typeof eventFormSchema>;
+type QuotaValue = EventFormValues["Quotas"][number];
 
 type QuotasProps = {
   getValues: UseFormGetValues<EventFormValues>;
@@ -28,6 +31,7 @@ type QuotasProps = {
   editId?: number;
   seatHoldingSignupCounts: Record<string, number>;
   signupCounts: Record<string, number>;
+  activeLanguage: Locale;
 };
 
 export function Quotas({
@@ -39,7 +43,9 @@ export function Quotas({
   editId,
   seatHoldingSignupCounts,
   signupCounts,
+  activeLanguage,
 }: QuotasProps) {
+  const messages = useTranslations(eventAdminMessages);
   const extraCapacity = watch("extraCapacity");
   const [extraCapacityInput, setExtraCapacityInput] = useState<string | null>(
     null,
@@ -53,12 +59,11 @@ export function Quotas({
       ...quotas,
       {
         id,
-        title: "",
+        translations: { fi: "", en: "" },
         size: null,
         sharedPlacesAllocation: "NEVER",
         sortId,
         eventId: eventId ?? NaN,
-
       },
     ]);
   }, [eventId, getValues, setValue]);
@@ -123,11 +128,11 @@ export function Quotas({
   );
 
   return (
-    <FieldSet title="Kiintiöt">
+    <FieldSet title={messages.quotas.title}>
 
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuota()} type="button">
-          Lisää kiintiö
+          {messages.quotas.add}
         </Button>
       </div>
 
@@ -147,7 +152,7 @@ export function Quotas({
           <p className="text-sm text-rose-800">
             {typeof errors.Quotas.message === "string"
               ? errors.Quotas.message
-              : "Please add at least one valid quota"}
+              : messages.quotas.invalid}
           </p>
         </div>
       )}
@@ -185,9 +190,10 @@ export function Quotas({
                         moveUnusedPlacesToJokerPlaces={
                           moveUnusedPlacesToJokerPlaces
                         }
+                        activeLanguage={activeLanguage}
                         errors={
                           errors.Quotas &&
-                          (errors.Quotas[index] as FieldErrorsImpl<Quota>)
+                          (errors.Quotas[index] as FieldErrorsImpl<QuotaValue>)
                         }
                       />
                     </div>
@@ -201,14 +207,11 @@ export function Quotas({
       </DragDropContext>
 
       <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
-        <p>
-        Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. 
-        Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. 
-        Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti, 
-        ilmoittautumisen päätyttyä tai ei lainkaan.
-        </p>
+        <p>{messages.quotas.extraHelp}</p>
         <div className="mt-4 max-w-xs">
-          <label className="mb-1 block font-semibold">Jokeripaikat</label>
+          <label className="mb-1 block font-semibold">
+            {messages.quotas.extraCapacity}
+          </label>
           <Input
             type="number"
             min={0}
@@ -224,9 +227,12 @@ export function Quotas({
           />
         </div>
         <p className="mt-3 font-semibold">
-          Paikkoja yhteensä:{" "}
-          {watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
-            extraCapacity}
+          {messages.quotas.total(
+            watch("Quotas").reduce(
+              (sum, quota) => sum + (quota.size ?? 0),
+              0,
+            ) + extraCapacity,
+          )}
         </p>
       </div>
     </FieldSet>
