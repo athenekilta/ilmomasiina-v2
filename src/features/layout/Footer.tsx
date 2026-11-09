@@ -21,19 +21,12 @@ export function Footer() {
 
   return (
     <footer className="bg-brand-dark flex flex-wrap items-center justify-center gap-x-1 gap-y-2 px-3 py-3 text-center text-white sm:py-4">
-      <Link
-        href={isLoggedIn ? routes.app.admin : routes.auth.login}
-        className={linkClass}
-      >
-        {messages.management}
-      </Link>
-      {isLoggedIn && (
-        <>
-          <span className="text-stone-500 select-none" aria-hidden>
-            ·
-          </span>
-          <ManagementMenu />
-        </>
+      {isLoggedIn ? (
+        <ManagementMenu />
+      ) : (
+        <Link href={routes.auth.login} className={linkClass}>
+          {messages.management}
+        </Link>
       )}
       <span className="text-stone-500 select-none" aria-hidden>
         ·

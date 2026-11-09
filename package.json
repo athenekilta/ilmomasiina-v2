@@ -104,5 +104,11 @@
   "overrides": {
     "@types/react": "19.2.10",
     "@types/react-dom": "19.2.3"
+  },
+  "allowScripts": {
+    "prisma@7.10.1": true,
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.2": true,
+    "@prisma/engines@7.10.1": true
   }
 }

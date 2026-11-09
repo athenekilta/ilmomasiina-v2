@@ -27,5 +27,25 @@ export function localePath(locale: Locale, path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   if (locale === defaultLocale) return normalized;
   if (normalized === "/") return `/${locale}`;
+  if (normalized.startsWith("/?") || normalized.startsWith("/#")) {
+    return `/${locale}${normalized.slice(1)}`;
+  }
   return `/${locale}${normalized}`;
+}
+
+export function stripLocalePrefix(path: string): string {
+  const locale = locales.find((candidate) => {
+    const prefix = `/${candidate}`;
+    return (
+      path === prefix ||
+      path.startsWith(`${prefix}/`) ||
+      path.startsWith(`${prefix}?`) ||
+      path.startsWith(`${prefix}#`)
+    );
+  });
+  if (!locale) return path;
+
+  const suffix = path.slice(locale.length + 1);
+  if (!suffix) return "/";
+  return suffix.startsWith("/") ? suffix : `/${suffix}`;
 }

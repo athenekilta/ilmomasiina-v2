@@ -42,10 +42,12 @@ async function allocate({
   quotas,
   sharedPlaces,
   afterClose = false,
+  cancelledSignupId,
 }: {
   quotas: TestQuota[];
   sharedPlaces: number;
   afterClose?: boolean;
+  cancelledSignupId?: string;
 }) {
   const updates = new Map<string, SignupStatus>();
   const event = {
@@ -55,7 +57,12 @@ async function allocate({
     registrationEndDate: afterClose
       ? new Date(2026, 0, 1)
       : new Date(2099, 0, 1),
-    Quotas: quotas,
+    Quotas: quotas.map((quota) => ({
+      ...quota,
+      Signups: quota.Signups.filter(
+        (signup) => signup.id !== cancelledSignupId,
+      ),
+    })),
   };
   const tx = {
     $executeRaw: async () => 0,
@@ -261,4 +268,139 @@ test("an unlimited legacy quota does not consume finite shared places", async ()
   });
 
   assert.equal(result.allocated.has("finite-shared"), true);
+});
+
+test("cancelling a protected place promotes the first person in that quota", async () => {
+  const result = await allocate({
+    quotas: [
+      {
+        id: "protected",
+        size: 1,
+        sharedPlacesAllocation: SharedPlacesAllocation.NEVER,
+        sortId: 1,
+        Signups: [
+          signup("cancelled", 1, SignupStatus.CONFIRMED),
+          signup("next", 3),
+          signup("later", 4),
+        ],
+      },
+      {
+        id: "other",
+        size: 0,
+        sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+        sortId: 2,
+        Signups: [signup("earlier-other-quota", 2)],
+      },
+    ],
+    sharedPlaces: 0,
+    cancelledSignupId: "cancelled",
+  });
+
+  assert.deepEqual([...result.allocated], ["next"]);
+  assert.equal(result.updates.get("next"), SignupStatus.CONFIRMED);
+  assert.equal(result.updates.get("later"), SignupStatus.WAITLISTED);
+  assert.deepEqual(result.queueAcceptedNotification, {
+    eventId: 1,
+    signupIds: ["next"],
+  });
+});
+
+test("cancelling a shared place promotes the earliest eligible signup across quotas", async () => {
+  const result = await allocate({
+    quotas: [
+      {
+        id: "first",
+        size: 1,
+        sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+        sortId: 1,
+        Signups: [
+          signup("first-own", 1, SignupStatus.CONFIRMED),
+          signup("cancelled", 3, SignupStatus.CONFIRMED),
+          signup("later", 5),
+        ],
+      },
+      {
+        id: "second",
+        size: 1,
+        sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+        sortId: 2,
+        Signups: [
+          signup("second-own", 2, SignupStatus.CONFIRMED),
+          signup("next", 4),
+        ],
+      },
+      {
+        id: "deferred",
+        size: 0,
+        sharedPlacesAllocation: SharedPlacesAllocation.AFTER_REGISTRATION_CLOSE,
+        sortId: 3,
+        Signups: [signup("pending", 0, SignupStatus.PENDING)],
+      },
+    ],
+    sharedPlaces: 1,
+    cancelledSignupId: "cancelled",
+  });
+
+  assert.equal(result.updates.get("next"), SignupStatus.CONFIRMED);
+  assert.equal(result.updates.get("later"), SignupStatus.WAITLISTED);
+  assert.equal(result.updates.get("pending"), SignupStatus.PENDING);
+  assert.deepEqual(result.queueAcceptedNotification.signupIds, ["next"]);
+});
+
+test("leaving a queue does not release a place or notify existing participants", async () => {
+  const result = await allocate({
+    quotas: [
+      {
+        id: "quota",
+        size: 1,
+        sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+        sortId: 1,
+        Signups: [
+          signup("confirmed", 1, SignupStatus.CONFIRMED),
+          signup("cancelled", 2),
+          signup("waiting", 3),
+        ],
+      },
+    ],
+    sharedPlaces: 0,
+    cancelledSignupId: "cancelled",
+  });
+
+  assert.deepEqual([...result.allocated], ["confirmed"]);
+  assert.equal(result.updates.get("waiting"), SignupStatus.WAITLISTED);
+  assert.deepEqual(result.queueAcceptedNotification.signupIds, []);
+});
+
+test("a promoted participant is not notified again on subsequent reconciliation", async () => {
+  const quotas: TestQuota[] = [
+    {
+      id: "quota",
+      size: 1,
+      sharedPlacesAllocation: SharedPlacesAllocation.IMMEDIATE,
+      sortId: 1,
+      Signups: [
+        signup("cancelled", 1, SignupStatus.CONFIRMED),
+        signup("next", 2),
+      ],
+    },
+  ];
+  const first = await allocate({
+    quotas,
+    sharedPlaces: 0,
+    cancelledSignupId: "cancelled",
+  });
+  assert.deepEqual(first.queueAcceptedNotification.signupIds, ["next"]);
+
+  for (const quota of quotas) {
+    for (const signup of quota.Signups) {
+      signup.status = first.updates.get(signup.id) ?? signup.status;
+    }
+  }
+  const second = await allocate({
+    quotas,
+    sharedPlaces: 0,
+    cancelledSignupId: "cancelled",
+  });
+  assert.deepEqual([...second.allocated], ["next"]);
+  assert.deepEqual(second.queueAcceptedNotification.signupIds, []);
 });

@@ -1,7 +1,11 @@
 import { Languages } from "lucide-react";
 import { useRouter } from "next/router";
 import { useLocale, useTranslations } from "@/i18n/I18nProvider";
-import { type Locale } from "@/i18n/config";
+import {
+  localePath,
+  stripLocalePrefix,
+  type Locale,
+} from "@/i18n/config";
 import { commonMessages } from "@/i18n/messages/common";
 
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
@@ -14,7 +18,8 @@ export function LanguageSelector() {
   const changeLocale = (nextLocale: Locale) => {
     if (nextLocale === locale) return;
     document.cookie = `NEXT_LOCALE=${nextLocale}; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-    void router.push(router.asPath, router.asPath, { locale: nextLocale });
+    const target = localePath(nextLocale, stripLocalePrefix(router.asPath));
+    window.location.assign(target);
   };
 
   return (

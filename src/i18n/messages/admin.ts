@@ -2,7 +2,10 @@ import { defineMessages } from "../messages";
 
 export const adminMessages = defineMessages({
   fi: {
-    title: "Hallinta",
+    title: "Tapahtumien hallinta",
+    searchEvents: "Hae tapahtuman nimellä",
+
+    noEvents: "Ei tapahtumia valituilla suodattimilla.",
     loading: "Ladataan…",
     noSuperadminTitle: "Ei pääkäyttäjän oikeuksia",
     noSuperadminDescription:
@@ -30,7 +33,10 @@ export const adminMessages = defineMessages({
       `Haluatko varmasti muuttaa käyttäjän ${email} rooliksi ”${role}”?`,
   },
   en: {
-    title: "Administration",
+    title: "Event management",
+    searchEvents: "Search by event name",
+
+    noEvents: "No events match the selected filters.",
     loading: "Loading…",
     noSuperadminTitle: "Superadmin access required",
     noSuperadminDescription:

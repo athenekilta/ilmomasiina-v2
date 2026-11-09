@@ -1,190 +1,42 @@
-import {
-  CalendarClock,
-  Eye,
-  EyeOff,
-  History,
-  Loader2,
-  Plus,
-} from "lucide-react";
-import { api } from "@/utils/api";
-import { PageHead } from "@/features/layout/PageHead";
-import { Layout } from "../features/layout/Layout";
 import { useManagementUser } from "@/features/auth/hooks/useManagementUser";
-import { useState } from "react";
-import { useNow } from "@/hooks/useNow";
-import { EventCard } from "@/features/eventCard/EventCard";
 import { IdentityPromptCard } from "@/features/eventCard/IdentityPromptCard";
-
-import { groupEventsForList } from "@/features/eventCard/eventOrder";
-import { Button } from "@/components/Button";
+import { EventListLoading } from "@/features/eventList/EventListLoading";
+import { ManagementToolbar } from "@/features/layout/ManagementToolbar";
+import { PublicEventList } from "@/features/eventList/PublicEventList";
+import { Layout } from "@/features/layout/Layout";
+import { PageHead } from "@/features/layout/PageHead";
 import { ManagementRole } from "@/generated/prisma";
+import { useNow } from "@/hooks/useNow";
 import { useLocale, useTranslations } from "@/i18n/I18nProvider";
 import { publicEventsMessages } from "@/i18n/messages/events";
+import { api } from "@/utils/api";
 
 export default function DesktopPage() {
   const locale = useLocale();
   const messages = useTranslations(publicEventsMessages);
   // Re-render cards and time-derived grouping without refetching event data.
   useNow();
-  const [includeDrafts, setIncludeDrafts] = useState(false);
-  const [includeOlderEvents, setIncludeOlderEvents] = useState(false);
-
   const user = useManagementUser();
   const canEditEvents =
     user.data?.role === ManagementRole.event_editor ||
     user.data?.role === ManagementRole.superadmin;
-
-  const regularEventsQuery = api.events.getEvents.useQuery(
-    { locale },
-    { enabled: !canEditEvents },
-  );
-
-  const adminEventsQuery = api.events.getEventsAdmin.useQuery(
-    { locale, includeDrafts, includeOlderEvents },
-    { enabled: canEditEvents },
-  );
-
-  const eventsData = canEditEvents
-    ? adminEventsQuery.data
-    : regularEventsQuery.data;
-  const events = eventsData
-    ? groupEventsForList(eventsData)
-    : { open: [], closed: [] };
-  const isLoading = canEditEvents
-    ? adminEventsQuery.isLoading
-    : regularEventsQuery.isLoading;
+  const eventsQuery = api.events.getEvents.useQuery({ locale });
 
   return (
     <>
       <PageHead title={messages.list.title} />
       <Layout>
-        {!isLoading && eventsData ? (
+        <ManagementToolbar />
+        {!eventsQuery.isLoading && eventsQuery.data ? (
           <div className="flex-col pb-4">
-            {/* Above the heading, not under it: this is not an event, and
-                under "Tapahtumat" it read as the first item in the list. */}
             <IdentityPromptCard />
-
-            <header className="mt-2 mb-4 w-full">
-              <h1 className="text-brand-secondary px-1 text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
-                {messages.list.title}
-              </h1>
-            </header>
-
-            {canEditEvents && (
-              <section
-                className="mb-8 w-full"
-                aria-label={messages.list.adminFilters}
-              >
-                <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
-                  {messages.list.view}
-                </h2>
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    variant="filled"
-                    color={includeOlderEvents ? "primary" : "neutral"}
-                    size="small"
-                    startIcon={
-                      includeOlderEvents ? (
-                        <History size={18} strokeWidth={2.25} />
-                      ) : (
-                        <CalendarClock size={18} strokeWidth={2.25} />
-                      )
-                    }
-                    onClick={() => setIncludeOlderEvents(!includeOlderEvents)}
-                  >
-                    {includeOlderEvents
-                      ? messages.list.allEvents
-                      : messages.list.upcomingEvents}
-                  </Button>
-
-                  <Button
-                    variant="filled"
-                    color={includeDrafts ? "primary" : "neutral"}
-                    size="small"
-                    startIcon={
-                      includeDrafts ? (
-                        <Eye size={18} strokeWidth={2.25} />
-                      ) : (
-                        <EyeOff size={18} strokeWidth={2.25} />
-                      )
-                    }
-                    onClick={() => setIncludeDrafts(!includeDrafts)}
-                  >
-                    {includeDrafts
-                      ? messages.list.draftsVisible
-                      : messages.list.draftsHidden}
-                  </Button>
-                </div>
-              </section>
-            )}
-
-            <section className="w-full" aria-label={messages.list.eventList}>
-              <h2 className="sr-only">{messages.list.eventList}</h2>
-              {events.open.length === 0 && events.closed.length === 0 && (
-                <p className="text-brand-dark px-1 text-sm">
-                  {messages.list.empty}
-                </p>
-              )}
-              {/* Every card is the same size. Columns are added only once
-                  the previous count would leave cards uncomfortably wide:
-                  two from `md` (768px), three from `xl` (1280px) — below
-                  that a single column keeps the banner from stretching
-                  out of proportion. Cards stretch to fill their row (the
-                  grid default), so a shorter card still lines up with a
-                  taller neighbour. */}
-              <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
-                {events.open.map((event) => (
-                  <li key={event.id} className="min-w-0">
-                    <EventCard event={event} isAdmin={canEditEvents} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            {events.closed.length > 0 && (
-              /* Own section, smaller heading: these are not competing for
-                 attention with the events you can still sign up to. */
-              <section className="mt-14 w-full" aria-labelledby="closed-events">
-                <h2
-                  id="closed-events"
-                  className="text-brand-dark mb-4 px-1 text-lg font-extrabold tracking-tight uppercase sm:text-xl"
-                >
-                  {messages.list.registrationEnded}
-                </h2>
-                <ul className="grid w-full list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 xl:grid-cols-3">
-                  {events.closed.map((event) => (
-                    <li key={event.id} className="min-w-0">
-                      <EventCard event={event} isAdmin={canEditEvents} />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {canEditEvents && (
-              <div className="mt-10 w-full border-t border-stone-300 pt-8">
-                <h2 className="text-brand-secondary mb-4 text-xs font-bold tracking-widest uppercase">
-                  {messages.list.management}
-                </h2>
-                <Button.Link
-                  href="events/create"
-                  variant="filled"
-                  color="primary"
-                  startIcon={<Plus size={20} strokeWidth={2.25} />}
-                >
-                  {messages.list.createEvent}
-                </Button.Link>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex justify-center py-12">
-            <Loader2
-              size={28}
-              strokeWidth={2.25}
-              className="text-brand-primary animate-spin"
+            <PublicEventList
+              events={eventsQuery.data}
+              isAdmin={canEditEvents}
             />
           </div>
+        ) : (
+          <EventListLoading />
         )}
       </Layout>
     </>

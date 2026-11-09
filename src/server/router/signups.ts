@@ -136,6 +136,8 @@ async function deleteSignupAndReconcile(
     throw new TRPCError({ code: "NOT_FOUND", message: "Signup not found" });
   }
 
+  // Serialize cancellation with allocation before modifying any signup rows.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(${signup.Quota.Event.id})`;
   await tx.answer.deleteMany({ where: { signupId } });
   await tx.signup.delete({ where: { id: signupId } });
   const allocation = await reconcileEventAllocations(tx, signup.Quota.Event.id);

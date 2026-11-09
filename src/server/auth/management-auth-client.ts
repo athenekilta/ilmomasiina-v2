@@ -5,4 +5,5 @@ const managementAuthClient = createAuthClient();
 export const managementSignIn = managementAuthClient.signIn;
 export const managementSignUp = managementAuthClient.signUp;
 export const managementSignOut = managementAuthClient.signOut;
+export const managementChangePassword = managementAuthClient.changePassword;
 export const useManagementSession = managementAuthClient.useSession;

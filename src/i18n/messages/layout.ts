@@ -2,9 +2,15 @@ import { defineMessages } from "../messages";
 
 export const layoutMessages = defineMessages({
   fi: {
-    management: "Hallinta",
+    management: "Tapahtumien hallinta",
+    publicEvents: "Julkiset tapahtumat",
     privacy: "Tietosuoja",
-    signOut: "Kirjaudu ulos",
+    signOut: "Kirjaudu ulos hallinnasta",
+    signOutFailed: "Uloskirjautuminen epäonnistui. Yritä uudelleen.",
+    managementUser: (user: string) =>
+      `Olet kirjautunut hallintaan käyttäjänä ${user}.`,
+    userSettings: "Käyttäjäasetukset",
+    manageUsers: "Käyttäjähallinta",
     metaDescription: "Athenen tapahtumien ilmoittautumispalvelu",
     realtime: {
       disconnected: "Reaaliaikainen yhteys katkesi",
@@ -23,9 +29,15 @@ export const layoutMessages = defineMessages({
     },
   },
   en: {
-    management: "Administration",
+    management: "Event management",
+    publicEvents: "Public events",
     privacy: "Privacy",
-    signOut: "Log out",
+    signOut: "Log out from management",
+    signOutFailed: "Could not log out. Please try again.",
+    managementUser: (user: string) =>
+      `You are logged into management as ${user}.`,
+    userSettings: "User settings",
+    manageUsers: "User management",
     metaDescription: "Registration service for Athene events",
     realtime: {
       disconnected: "The real-time connection was interrupted",
