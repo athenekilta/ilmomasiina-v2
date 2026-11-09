@@ -20,7 +20,7 @@ type QuotaSeed = {
    */
   waitlisted?: number;
   /**
-   * Whether this quota may take from the event's jokeripaikat (extraCapacity)
+   * Whether this quota may take from the event's yhteiset paikat (extraCapacity)
    * once its own places run out — right away, only after registration closes,
    * or never. Defaults to NEVER, same as the admin form.
    */
@@ -34,7 +34,7 @@ type EventSeed = {
   date: Date;
   registrationStartDate: Date;
   registrationEndDate: Date;
-  /** Jokeripaikat: places outside every quota, shared by the quotas allowed to use them. */
+  /** Yhteiset paikat: places outside every quota, shared by the quotas allowed to use them. */
   extraCapacity?: number;
   description?: string;
   price?: string;
@@ -79,7 +79,7 @@ const eventSeeds: EventSeed[] = [
     price: "15 €",
     location: "Smökki",
     signupsPublic: true,
-    // One event that exercises all three jokeripaikka policies at once.
+    // One event that exercises all three shared-place policies at once.
     quotas: [
       { title: "Eemil", size: 1, signups: 1, sharedPlaces: "IMMEDIATE" },
       {
@@ -282,7 +282,7 @@ const eventSeeds: EventSeed[] = [
      nearly full, shared places that are nearly gone, and a full quota whose
      members can still get in through the shared ones. */
   {
-    title: "Jokeripaikat: kiintiöt loppumassa",
+    title: "Yhteiset paikat: kiintiöt loppumassa",
     date: days(21),
     registrationStartDate: days(-2),
     registrationEndDate: days(9),
@@ -297,7 +297,7 @@ const eventSeeds: EventSeed[] = [
     ],
   },
   {
-    title: "Jokeripaikat: yhteisiä enää pari",
+    title: "Yhteiset paikat: yhteisiä enää pari",
     date: days(14),
     registrationStartDate: days(-4),
     registrationEndDate: days(3),
@@ -311,7 +311,7 @@ const eventSeeds: EventSeed[] = [
     ],
   },
   {
-    title: "Jokeripaikat: kaikki täynnä, jono käynnissä",
+    title: "Yhteiset paikat: kaikki täynnä, jono käynnissä",
     date: days(18),
     registrationStartDate: days(-6),
     registrationEndDate: days(2),
@@ -337,7 +337,7 @@ const eventSeeds: EventSeed[] = [
     ],
   },
   {
-    title: "Jokeripaikat: neljä kiintiötä",
+    title: "Yhteiset paikat: neljä kiintiötä",
     date: days(28),
     registrationStartDate: days(-1),
     registrationEndDate: days(12),

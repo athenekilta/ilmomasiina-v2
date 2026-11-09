@@ -229,7 +229,7 @@ test("unused protected places are not shared", async () => {
   assert.equal(result.allocated.has("open-waiting"), false);
 });
 
-test("a zero-sized quota can allocate transferred joker places", async () => {
+test("a zero-sized quota can allocate transferred shared places", async () => {
   const result = await allocate({
     quotas: [
       {
