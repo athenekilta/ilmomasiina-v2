@@ -19,7 +19,7 @@ const BRAND_SAND = "#EDE3D7";
 const BRAND_PINK = "#D2497F";
 
 module.exports = {
-  content: ["./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./src/**/*.{js,ts,jsx,tsx}", "!./src/generated/**"],
   darkMode: "class",
   theme: {
     extend: {

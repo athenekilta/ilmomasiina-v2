@@ -90,6 +90,43 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
+## Production build resources
+
+The default `npm run build` uses Turbopack and Next's native compiler (no Babel
+pass). Page generation uses one worker to reduce peak resource usage. Docker
+builds also limit the Rust thread pool to two threads and reuse npm downloads
+and `.next/cache` through BuildKit cache mounts. Keep the builder cache between
+deployments to benefit from incremental builds; the first build is still cold.
+
+On a memory-constrained machine, try:
+
+```bash
+npm run build:low-memory
+```
+
+This uses Webpack with Next's memory optimizations and a 1536 MiB JavaScript
+heap limit per Node process. It may be slower, and can fail with a heap-limit
+error if the project needs more memory. The limit is **not** a total memory cap:
+native allocations and child processes also need RAM. Type checking remains
+enabled in both build modes.
+
+To select this mode for Docker:
+
+```bash
+docker compose build --build-arg BUILD_SCRIPT=build:low-memory app
+```
+
+Normal Docker builds use `BUILD_SCRIPT=build`. BuildKit is required for the
+cache mounts (included with current Docker versions). For non-Docker builds,
+`RAYON_NUM_THREADS=2 npm run build` also limits the Rust thread pool on Linux.
+The page-worker setting alone does not limit all compiler threads.
+
+For a small production server, the safest deployment is to build images in CI
+or on another machine of the same target architecture, then pull and run them
+on the server. These settings reduce build pressure but cannot guarantee that
+a build alongside PostgreSQL and the live application will fit in available
+RAM. Runtime Compose memory limits do not constrain image builds.
+
 ## Demo signup controls
 
 The event page's +1/−1 demo signup buttons are disabled by default. To enable
@@ -324,7 +361,8 @@ docker compose run --rm worker npm run prisma-deploy-migrations
 ## Available Scripts
 
 - `npm run dev` / `npm start` - Start the Next development server
-- `npm run build` - Build the production app
+- `npm run build` - Build the production app with Turbopack
+- `npm run build:low-memory` - Build with Webpack memory optimizations and a bounded JS heap
 - `npm run start:production` - Start the Next production server after building
 - `npm run live` - Start the live-update gateway separately
 - `npm run worker` - Start the single scheduled-task worker separately

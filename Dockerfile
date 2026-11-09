@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:24-trixie-slim AS base
 
 WORKDIR /app
@@ -7,14 +8,16 @@ FROM base AS dependencies
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci
+RUN --mount=type=cache,id=ilmomasiina-npm,target=/root/.npm npm ci --no-audit --no-fund
 
 FROM base AS builder
 
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 COPY --from=dependencies /app/src/generated ./src/generated
-RUN SKIP_ENV_VALIDATION=1 npm run build
+ARG BUILD_SCRIPT=build
+RUN --mount=type=cache,id=ilmomasiina-next,target=/app/.next/cache,sharing=locked \
+    SKIP_ENV_VALIDATION=1 RAYON_NUM_THREADS=2 npm run "$BUILD_SCRIPT"
 
 FROM base AS runner
 

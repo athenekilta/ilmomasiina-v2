@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "next build",
+    "build:low-memory": "node --max-old-space-size=1536 node_modules/next/dist/bin/next build --webpack",
     "gcp-build": "npm run build",
     "dev": "next dev",
     "postinstall": "prisma generate",
@@ -74,10 +75,6 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/preset-env": "^7.29.0",
-    "@babel/preset-react": "^7.28.5",
-    "@babel/preset-typescript": "^7.28.5",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.2.0",

@@ -14,7 +14,9 @@ import {
 } from "@/features/events/utils/eventImage";
 
 export function imageStorageRoot() {
+  // Uploaded files live in runtime storage, not in the standalone build output.
   return path.resolve(
+    /* turbopackIgnore: true */
     process.env.EVENT_IMAGE_STORAGE_DIR || "data/event-images",
   );
 }
