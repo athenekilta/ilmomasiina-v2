@@ -105,7 +105,7 @@ export function SignupForm() {
       </div>
 
       <div className="flex flex-col gap-4 py-4">
-        <Button type="submit" color="black" loading={isSubmitting}>
+        <Button type="submit" color="primary" loading={isSubmitting}>
           {messages.actions.signup}
         </Button>
         {errorMessage && (

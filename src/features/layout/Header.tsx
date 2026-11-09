@@ -11,15 +11,14 @@ export const Header = () => {
         <Link
           href="/"
           aria-label="Athenen Ilmomasiina"
-          className="flex min-w-0 items-baseline gap-3 rounded-sm text-brand-light focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary"
+          className="text-brand-light focus-visible:ring-offset-brand-primary flex min-w-0 items-baseline gap-3 rounded-sm focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-hidden"
         >
-          <span className="font-display text-4xl leading-none italic">athene.</span>
-          <span className="font-secondary hidden text-xs font-extrabold tracking-[0.12em] uppercase md:inline">
-            Ilmomasiina
+          <span className="display-title shrink-0 text-2xl leading-none sm:text-4xl">
+            ilmomasiina
           </span>
         </Link>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-4 sm:gap-7">
           <LanguageSelector />
           <HeaderAccountMenu />
         </div>

@@ -329,15 +329,30 @@ function localizeEvent<
   };
 }
 
-function answerValue(answer: {
-  textValue: string | null;
-  Selections: Array<{ optionId: string; Option: { sortId: number } }>;
-}) {
+/**
+ * What a signup actually answered, as a reader would read it.
+ *
+ * A choice answer is stored as the ids of the options it selected, which are
+ * cuids — meaningless to anyone looking at the participants list. The labels
+ * live in the question's own translations, so they come in from the caller,
+ * already in the reader's language; an id with no label left (an option
+ * deleted after the fact) falls back to itself rather than vanishing.
+ */
+function answerValue(
+  answer: {
+    textValue: string | null;
+    Selections: Array<{ optionId: string; Option: { sortId: number } }>;
+  },
+  optionLabels: ReadonlyMap<string, string>,
+) {
   return (
     answer.textValue ??
     [...answer.Selections]
       .sort((a, b) => a.Option.sortId - b.Option.sortId)
-      .map((selection) => selection.optionId)
+      .map(
+        (selection) =>
+          optionLabels.get(selection.optionId) ?? selection.optionId,
+      )
       .join("\n")
   );
 }
@@ -607,17 +622,26 @@ export const eventsRouter = router({
                 },
           ),
         })),
-        Questions: event.Questions.map((question) => ({
-          ...localizeQuestion(question, input.locale),
-          Answers: question.public
-            ? question.Answers.filter((answer) =>
-                completedSignupIds.has(answer.signupId),
-              ).map((answer) => ({
-                signupId: answer.signupId,
-                answer: answerValue(answer),
-              }))
-            : [],
-        })),
+        Questions: event.Questions.map((question) => {
+          const localizedQuestion = localizeQuestion(question, input.locale);
+          const optionLabels = new Map(
+            localizedQuestion.options.map((option) => [
+              option.id,
+              option.label,
+            ]),
+          );
+          return {
+            ...localizedQuestion,
+            Answers: question.public
+              ? question.Answers.filter((answer) =>
+                  completedSignupIds.has(answer.signupId),
+                ).map((answer) => ({
+                  signupId: answer.signupId,
+                  answer: answerValue(answer, optionLabels),
+                }))
+              : [],
+          };
+        }),
       };
 
       if (event.signupsPublic) return eventWithPublicSignups;

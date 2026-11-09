@@ -95,12 +95,12 @@ export function ValidationSummary({ errors }: ValidationSummaryProps) {
   return (
     <div
       role="alert"
-      className="rounded-card shadow-card fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] border border-rose-400 bg-rose-50 p-3"
+      className="rounded-card shadow-card fixed right-4 bottom-4 z-50 w-[min(100vw-2rem,24rem)] border border-danger-400 bg-danger-50 p-3"
     >
       <div className="flex">
         <svg
           aria-hidden="true"
-          className="h-5 w-5 shrink-0 text-rose-600"
+          className="h-5 w-5 shrink-0 text-danger-600"
           viewBox="0 0 20 20"
           fill="currentColor"
         >

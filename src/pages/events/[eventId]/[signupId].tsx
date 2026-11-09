@@ -62,7 +62,11 @@ function EditSignup() {
     const token = new URLSearchParams(window.location.hash.slice(1)).get(
       "token",
     );
-    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
     if (!token) {
       setAccessReady(true);
       return;
@@ -88,8 +92,7 @@ function EditSignup() {
       locale,
     },
     {
-      enabled:
-        accessReady && !!eventId && !!signupId && deleteMutation.isIdle,
+      enabled: accessReady && !!eventId && !!signupId && deleteMutation.isIdle,
     },
   );
 
@@ -133,9 +136,7 @@ function EditSignup() {
     try {
       const result = await signupQuery.refetch();
       if (result.error || !result.data) {
-        alerts.error(
-          messages.signup.reloadFailed,
-        );
+        alerts.error(messages.signup.reloadFailed);
         return;
       }
       draft.adopt(signupDraftSnapshot(result.data));
@@ -319,7 +320,7 @@ function EditSignup() {
           </Link>
 
           <header className="mb-6">
-            <h1 className="text-brand-dark text-xl font-extrabold tracking-tight uppercase sm:text-2xl">
+            <h1 className="eyebrow text-brand-secondary sm:text-base">
               {isSignupEditingClosed
                 ? messages.signup.detailsTitle
                 : signup.completedAt === null
@@ -355,7 +356,7 @@ function EditSignup() {
 
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
             <div className="surface-muted p-4">
-              <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
+              <p className="label-caps text-brand-secondary">
                 {messages.signup.quota}
               </p>
               <p className="text-brand-dark mt-1.5 text-base font-semibold">
@@ -363,7 +364,7 @@ function EditSignup() {
               </p>
             </div>
             <div className="surface-muted p-4">
-              <p className="text-brand-secondary text-[0.65rem] font-bold tracking-widest uppercase">
+              <p className="label-caps text-brand-secondary">
                 {signup.placement.type === "QUEUE"
                   ? messages.signup.inQueue
                   : messages.signup.inQuota}
@@ -413,7 +414,7 @@ function EditSignup() {
               <input type="hidden" {...register("email")} />
 
               <section className="surface-muted mb-8 p-4 sm:p-5">
-                <h2 className="text-brand-secondary mb-4 text-[0.65rem] font-bold tracking-widest uppercase">
+                <h2 className="label-caps text-brand-secondary mb-4">
                   {messages.signup.participant}
                 </h2>
                 <dl className="space-y-3 text-sm">
@@ -441,7 +442,7 @@ function EditSignup() {
 
               {sortedQuestions.length > 0 && (
                 <section className="mb-8">
-                  <h2 className="text-brand-secondary mb-5 text-[0.65rem] font-bold tracking-widest uppercase">
+                  <h2 className="label-caps text-brand-secondary mb-5">
                     {messages.signup.questions}
                   </h2>
                   <div className="space-y-6">
@@ -510,9 +511,10 @@ function EditSignup() {
                                   );
                                   const selections =
                                     question.type === "checkbox"
-                                      ? decodeCheckboxAnswer(field.value).filter(
-                                          (selection) =>
-                                            optionIds.includes(selection),
+                                      ? decodeCheckboxAnswer(
+                                          field.value,
+                                        ).filter((selection) =>
+                                          optionIds.includes(selection),
                                         )
                                       : [];
                                   return (
@@ -617,7 +619,7 @@ function EditSignup() {
                   <p className="text-center text-xs text-stone-500 sm:text-left">
                     <button
                       type="button"
-                      className="text-danger font-medium underline-offset-2 transition-colors hover:text-rose-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                      className="text-danger font-medium underline-offset-2 transition-colors hover:text-danger-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={
                         deleteMutation.isPending || isSubmitting || !!error

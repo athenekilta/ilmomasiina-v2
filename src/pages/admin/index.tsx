@@ -15,10 +15,9 @@ export default function ManageEvents() {
       <Layout>
         <ManagementToolbar />
         <header className="mb-6">
-          <h1 className="text-brand-dark text-2xl font-semibold">
+          <h1 className="eyebrow text-brand-secondary sm:text-base">
             {messages.title}
           </h1>
-
         </header>
         <ManagementEventList />
       </Layout>

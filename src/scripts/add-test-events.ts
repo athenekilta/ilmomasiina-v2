@@ -20,7 +20,7 @@ type QuotaSeed = {
    */
   waitlisted?: number;
   /**
-   * Whether this quota may take from the event's jokeripaikat (extraCapacity)
+   * Whether this quota may take from the event's yhteiset paikat (extraCapacity)
    * once its own places run out — right away, only after registration closes,
    * or never. Defaults to NEVER, same as the admin form.
    */
@@ -34,7 +34,7 @@ type EventSeed = {
   date: Date;
   registrationStartDate: Date;
   registrationEndDate: Date;
-  /** Jokeripaikat: places outside every quota, shared by the quotas allowed to use them. */
+  /** Yhteiset paikat: places outside every quota, shared by the quotas allowed to use them. */
   extraCapacity?: number;
   description?: string;
   price?: string;
@@ -79,7 +79,7 @@ const eventSeeds: EventSeed[] = [
     price: "15 €",
     location: "Smökki",
     signupsPublic: true,
-    // One event that exercises all three jokeripaikka policies at once.
+    // One event that exercises all three shared-place policies at once.
     quotas: [
       { title: "Eemil", size: 1, signups: 1, sharedPlaces: "IMMEDIATE" },
       {
@@ -89,6 +89,7 @@ const eventSeeds: EventSeed[] = [
         sharedPlaces: "AFTER_REGISTRATION_CLOSE",
       },
       { title: "Lukkaristo", size: 4, signups: 0 },
+      { title: "Muut", size: 0, signups: 2, sharedPlaces: "IMMEDIATE" },
     ],
     questions: [
       {
@@ -96,7 +97,7 @@ const eventSeeds: EventSeed[] = [
         question: "Pöytätoive",
         type: "text",
         required: false,
-        public: true,
+        public: false,
       },
       {
         id: "test-mobiiliesa-diet",
@@ -131,10 +132,17 @@ const eventSeeds: EventSeed[] = [
     location: "Hervannan kylpylä",
     signupsPublic: true,
     quotas: [
-      { title: "Limee", size: 12, signups: 1, sharedPlaces: "IMMEDIATE" },
-      { title: "ristokka", size: 6, signups: 36, sharedPlaces: "IMMEDIATE" },
-      { title: "Lukkaristo", size: 4, signups: 69, sharedPlaces: "IMMEDIATE" },
-      { title: "JEEEJEEJEE", size: 2, signups: 455 },
+      { title: "Athene", size: 30, signups: 30, sharedPlaces: "IMMEDIATE" },
+      { title: "Tietokilta", size: 20, signups: 18, sharedPlaces: "IMMEDIATE" },
+      { title: "Lukkaristo", size: 6, signups: 4 },
+      // Avoinna kaikille muille: ei omia paikkoja, vain nappi yhteisiin.
+      {
+        title: "Muut",
+        size: 0,
+        signups: 14,
+        sharedPlaces: "IMMEDIATE",
+        waitlisted: 20,
+      },
     ],
   },
   {
@@ -150,11 +158,10 @@ const eventSeeds: EventSeed[] = [
     location: "Zoom",
     signupsPublic: true,
     quotas: [
-      { title: "ESAt", size: 4, signups: 4 },
-      { title: "ASEt", size: 6, signups: 5 },
-      { title: "Untot", size: null, signups: 2 },
-      { title: "Skitsofreenikot", size: null, signups: 0 },
-      { title: "Allan paskoo ABC:n lavuaariin", size: null, signups: 1 },
+      { title: "Athene", size: 24, signups: 24 },
+      { title: "Muut killat", size: 12, signups: 9 },
+      // Yksi rajaton kiintiö riittää sen tilan testaamiseen.
+      { title: "Alumnit", size: null, signups: 3 },
     ],
   },
   {
@@ -168,9 +175,10 @@ const eventSeeds: EventSeed[] = [
     location: "Flamingo",
     signupsPublic: true,
     quotas: [
-      { title: "Esa", size: 15, signups: 0, sharedPlaces: "IMMEDIATE" },
+      { title: "Athene", size: 15, signups: 0, sharedPlaces: "IMMEDIATE" },
       { title: "Prodeko", size: 15, signups: 0, sharedPlaces: "IMMEDIATE" },
       { title: "Lukkaristo", size: 4, signups: 0 },
+      { title: "Muut", size: 0, signups: 0, sharedPlaces: "IMMEDIATE" },
     ],
   },
   {
@@ -192,15 +200,29 @@ const eventSeeds: EventSeed[] = [
     date: days(18),
     registrationStartDate: days(-2),
     registrationEndDate: days(10),
-    extraCapacity: 0,
+    extraCapacity: 6,
     description:
-      "Suositut sitsit rajatulla osallistujamäärällä. Ilmoittaudu ajoissa!",
+      "Fuksikiintiö on täynnä, mutta avoimissa paikoissa on vielä tilaa.",
     price: "25 €",
     location: "Ilmatorjuntamuseo",
     signupsPublic: true,
     quotas: [
-      { title: "Fuksit", size: 20, signups: 14 },
-      { title: "Vanhemmat opiskelijat", size: 10, signups: 9 },
+      { title: "Fuksit", size: 20, signups: 20, sharedPlaces: "IMMEDIATE" },
+      {
+        title: "Vanhemmat opiskelijat",
+        size: 10,
+        signups: 9,
+        sharedPlaces: "IMMEDIATE",
+      },
+      // Sama kiintiötyyppi kuin muiden tapahtumien "Muut", mutta nimi on
+      // tapahtuman oma: vuosikurssi-ilmossa se on tämä. Siksi palkin nimi ei
+      // voi tulla kiintiöltä.
+      {
+        title: "Muut vuosikurssit",
+        size: 0,
+        signups: 0,
+        sharedPlaces: "IMMEDIATE",
+      },
     ],
   },
   {
@@ -225,6 +247,12 @@ const eventSeeds: EventSeed[] = [
         sharedPlaces: "AFTER_REGISTRATION_CLOSE",
       },
       { title: "aitosHuoltaja", size: 4, signups: 0 },
+      {
+        title: "Ulkopuolinen osallistuja",
+        size: 0,
+        signups: 2,
+        sharedPlaces: "IMMEDIATE",
+      },
     ],
   },
   {
@@ -254,7 +282,7 @@ const eventSeeds: EventSeed[] = [
      nearly full, shared places that are nearly gone, and a full quota whose
      members can still get in through the shared ones. */
   {
-    title: "Jokeripaikat: kiintiöt loppumassa",
+    title: "Yhteiset paikat: kiintiöt loppumassa",
     date: days(21),
     registrationStartDate: days(-2),
     registrationEndDate: days(9),
@@ -265,10 +293,11 @@ const eventSeeds: EventSeed[] = [
     quotas: [
       { title: "Athene", size: 40, signups: 37, sharedPlaces: "IMMEDIATE" },
       { title: "Prodeko", size: 40, signups: 38, sharedPlaces: "IMMEDIATE" },
+      { title: "Muut", size: 0, signups: 0, sharedPlaces: "IMMEDIATE" },
     ],
   },
   {
-    title: "Jokeripaikat: yhteisiä enää pari",
+    title: "Yhteiset paikat: yhteisiä enää pari",
     date: days(14),
     registrationStartDate: days(-4),
     registrationEndDate: days(3),
@@ -282,7 +311,7 @@ const eventSeeds: EventSeed[] = [
     ],
   },
   {
-    title: "Jokeripaikat: kaikki täynnä, jono käynnissä",
+    title: "Yhteiset paikat: kaikki täynnä, jono käynnissä",
     date: days(18),
     registrationStartDate: days(-6),
     registrationEndDate: days(2),
@@ -308,19 +337,21 @@ const eventSeeds: EventSeed[] = [
     ],
   },
   {
-    title: "Jokeripaikat: neljä kiintiötä",
+    title: "Yhteiset paikat: neljä kiintiötä",
     date: days(28),
     registrationStartDate: days(-1),
     registrationEndDate: days(12),
     extraCapacity: 25,
     location: "Otaniemi",
     description:
-      "Athene on täynnä mutta pääsee yhä yhteisiin paikkoihin. Lukkarit ei pääse, joten sen rivi päättyy omaan palkkiinsa.",
+      "Athene on täynnä mutta pääsee yhä avoimiin paikkoihin. Lukkarit ei pääse, joten sen rivi päättyy omaan palkkiinsa. Muut-kiintiöllä ei ole omia paikkoja lainkaan.",
     quotas: [
       { title: "Athene", size: 40, signups: 49, sharedPlaces: "IMMEDIATE" },
-      { title: "Prodeko", size: 40, signups: 22, sharedPlaces: "IMMEDIATE" },
+      { title: "Prodeko", size: 40, signups: 24, sharedPlaces: "IMMEDIATE" },
       { title: "Lukkarit ja valokuvaajat", size: 6, signups: 4 },
-      { title: "Muut", size: 3, signups: 3, sharedPlaces: "IMMEDIATE" },
+      // Kiintiö ilman omia paikkoja: se on olemassa vain nappina, josta
+      // ilmotaan suoraan avoimeen. Ei omaa palkkia, koska ei omia paikkoja.
+      { title: "Muut", size: 0, signups: 5, sharedPlaces: "IMMEDIATE" },
     ],
   },
   {

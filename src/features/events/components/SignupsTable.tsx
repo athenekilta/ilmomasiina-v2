@@ -33,10 +33,7 @@ const signupStatusClasses = {
   REJECTED: "bg-red-100 text-red-800",
 } as const;
 
-function localizedValue(
-  translations: Record<Locale, string>,
-  locale: Locale,
-) {
+function localizedValue(translations: Record<Locale, string>, locale: Locale) {
   return translations[locale].trim() || translations.fi.trim();
 }
 
@@ -88,9 +85,8 @@ export function SignupsTable({
       timeStyle: "short",
     });
   const [isDownloading, setIsDownloading] = useState(false);
-  const [signupToDelete, setSignupToDelete] = useState<SignupWithAnswers | null>(
-    null,
-  );
+  const [signupToDelete, setSignupToDelete] =
+    useState<SignupWithAnswers | null>(null);
   const [expandedSignupIds, setExpandedSignupIds] = useState<Set<string>>(
     new Set(),
   );
@@ -169,9 +165,7 @@ export function SignupsTable({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-gray-600">
-          {messages.signups.intro}
-        </p>
+        <p className="text-sm text-gray-600">{messages.signups.intro}</p>
         <Button
           type="button"
           onClick={handleDownload}
@@ -196,35 +190,37 @@ export function SignupsTable({
           <thead className="border-b border-stone-200 bg-stone-100">
             <tr>
               <th scope="col" className="px-2 py-2">
-                <span className="sr-only">{messages.signups.expandAnswers}</span>
+                <span className="sr-only">
+                  {messages.signups.expandAnswers}
+                </span>
               </th>
               <th
                 scope="col"
-                className="text-brand-dark hidden px-2 py-2 text-left text-xs font-semibold tracking-wide uppercase md:table-cell"
+                className="label-caps text-brand-dark hidden px-2 py-2 text-left md:table-cell"
               >
                 {messages.signups.number}
               </th>
               <th
                 scope="col"
-                className="text-brand-dark px-2 py-2 text-left text-xs font-semibold tracking-wide uppercase sm:px-3"
+                className="label-caps text-brand-dark px-2 py-2 text-left sm:px-3"
               >
                 {messages.signups.signup}
               </th>
               <th
                 scope="col"
-                className="text-brand-dark hidden px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase md:table-cell"
+                className="label-caps text-brand-dark hidden px-3 py-2 text-left md:table-cell"
               >
                 {messages.signups.status}
               </th>
               <th
                 scope="col"
-                className="text-brand-dark px-2 py-2 text-left text-xs font-semibold tracking-wide uppercase sm:px-3"
+                className="label-caps text-brand-dark px-2 py-2 text-left sm:px-3"
               >
                 {messages.signups.quota}
               </th>
               <th
                 scope="col"
-                className="text-brand-dark hidden px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase md:table-cell"
+                className="label-caps text-brand-dark hidden px-3 py-2 text-left md:table-cell"
               >
                 {messages.signups.signupTime}
               </th>
@@ -486,9 +482,7 @@ function SignupTableRows({
                 })}
               </dl>
             ) : (
-              <p className="text-sm text-gray-600">
-                {messages.noQuestions}
-              </p>
+              <p className="text-sm text-gray-600">{messages.noQuestions}</p>
             )}
           </td>
         </tr>
@@ -508,9 +502,7 @@ function DetailItem({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="mb-1 text-xs font-semibold tracking-wide text-gray-600 uppercase">
-        {label}
-      </dt>
+      <dt className="label-caps mb-1 text-gray-600">{label}</dt>
       <dd
         className={`wrap-break-word whitespace-pre-wrap ${muted ? "text-gray-500 italic" : "text-brand-dark"}`}
       >

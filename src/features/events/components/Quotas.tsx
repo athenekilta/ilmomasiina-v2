@@ -50,6 +50,11 @@ export function Quotas({
   const [extraCapacityInput, setExtraCapacityInput] = useState<string | null>(
     null,
   );
+  // Shared places need someone to be shared with: with a single quota they
+  // are that quota's own places under another name, so the event does not
+  // have them at all. Kept as a stored value rather than zeroed here, so
+  // splitting the quota in two again brings the places back untouched.
+  const hasSharedPlaces = watch("Quotas").length > 1;
 
   const createQuota = useCallback(() => {
     const quotas = getValues("Quotas");
@@ -85,7 +90,7 @@ export function Quotas({
     [getValues, setValue],
   );
 
-  const moveUnusedPlacesToJokerPlaces = useCallback(
+  const moveUnusedPlacesToSharedPlaces = useCallback(
     (id: string, usedPlaces: number) => {
       const quotas = [...getValues("Quotas")];
       const quotaIndex = quotas.findIndex((quota) => quota.id === id);
@@ -128,8 +133,7 @@ export function Quotas({
   );
 
   return (
-    <FieldSet title={messages.quotas.title}>
-
+    <FieldSet title={messages.quotas.title} level="section">
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuota()} type="button">
           {messages.quotas.add}
@@ -137,7 +141,7 @@ export function Quotas({
       </div>
 
       {errors.Quotas && (
-        <div className="rounded-inner mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
+        <div className="rounded-inner mb-4 flex items-start gap-3 border border-danger-400 bg-danger-50 p-3">
           <svg
             className="text-danger mt-0.5 h-5 w-5 shrink-0"
             viewBox="0 0 20 20"
@@ -149,7 +153,7 @@ export function Quotas({
               clipRule="evenodd"
             />
           </svg>
-          <p className="text-sm text-rose-800">
+          <p className="text-sm text-danger-800">
             {typeof errors.Quotas.message === "string"
               ? errors.Quotas.message
               : messages.quotas.invalid}
@@ -187,8 +191,8 @@ export function Quotas({
                         seatHoldingSignupCount={
                           seatHoldingSignupCounts[quota.id] ?? 0
                         }
-                        moveUnusedPlacesToJokerPlaces={
-                          moveUnusedPlacesToJokerPlaces
+                        moveUnusedPlacesToSharedPlaces={
+                          moveUnusedPlacesToSharedPlaces
                         }
                         activeLanguage={activeLanguage}
                         errors={
@@ -206,32 +210,39 @@ export function Quotas({
         </Droppable>
       </DragDropContext>
 
-      <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="surface-muted text-brand-dark my-5 p-4 text-sm">
         <p>{messages.quotas.extraHelp}</p>
-        <div className="mt-4 max-w-xs">
-          <label className="mb-1 block font-semibold">
-            {messages.quotas.extraCapacity}
-          </label>
-          <Input
-            type="number"
-            min={0}
-            value={extraCapacityInput ?? extraCapacity}
-            onBlur={() => setExtraCapacityInput(null)}
-            onChange={(event) => {
-              const value = event.target.value;
-              setExtraCapacityInput(value);
-              setValue("extraCapacity", value === "" ? 0 : event.target.valueAsNumber);
-            }}
-            error={!!errors.extraCapacity}
-            helperText={errors.extraCapacity?.message}
-          />
-        </div>
+        {hasSharedPlaces ? (
+          <div className="mt-4 max-w-xs">
+            <label className="mb-1 block font-semibold">
+              {messages.quotas.extraCapacity}
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={extraCapacityInput ?? extraCapacity}
+              onBlur={() => setExtraCapacityInput(null)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setExtraCapacityInput(value);
+                setValue(
+                  "extraCapacity",
+                  value === "" ? 0 : event.target.valueAsNumber,
+                );
+              }}
+              error={!!errors.extraCapacity}
+              helperText={errors.extraCapacity?.message}
+            />
+          </div>
+        ) : (
+          <p className="mt-4 font-semibold">
+            {messages.quotas.extraNeedsTwoQuotas}
+          </p>
+        )}
         <p className="mt-3 font-semibold">
           {messages.quotas.total(
-            watch("Quotas").reduce(
-              (sum, quota) => sum + (quota.size ?? 0),
-              0,
-            ) + extraCapacity,
+            watch("Quotas").reduce((sum, quota) => sum + (quota.size ?? 0), 0) +
+              extraCapacity,
           )}
         </p>
       </div>

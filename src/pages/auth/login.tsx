@@ -13,7 +13,7 @@ export default function LoginPage() {
       <PageHead title={messages.login.title} />
       <Layout>
         <div className="surface-panel mx-auto mt-8 flex max-w-md flex-col items-center gap-6 p-6 sm:mt-10 sm:p-8">
-          <h1 className="text-brand-dark text-2xl font-semibold tracking-tight">
+          <h1 className="eyebrow text-brand-secondary sm:text-base">
             {messages.login.title}
           </h1>
           <LoginForm />

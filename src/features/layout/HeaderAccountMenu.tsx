@@ -71,10 +71,7 @@ function HeaderDropdownPanel({
       className="bg-brand-light text-brand-dark rounded-card shadow-card absolute top-full right-0 z-300 mt-2 max-h-[min(85vh,calc(100vh-5rem))] w-[min(calc(100vw-24px),320px)] overflow-y-auto border border-stone-200 ring-1 ring-stone-900/10"
     >
       <div className="bg-brand-light sticky top-0 flex items-center justify-between gap-2 border-b border-stone-200 px-4 py-3">
-        <h2
-          id={titleId}
-          className="text-brand-dark pr-2 text-sm font-bold tracking-wide uppercase"
-        >
+        <h2 id={titleId} className="label-caps text-brand-dark pr-2">
           {title}
         </h2>
         <button
@@ -123,9 +120,7 @@ export function HeaderAccountMenu() {
 
   const displayLine =
     storedUser?.name?.trim() || storedUser?.email?.split("@")[0] || null;
-  const subLine = storedUser?.email ?? null;
   const triggerLabel = displayLine ?? messages.identity.menuLabel;
-  const triggerSub = subLine ?? messages.identity.missingDetails;
 
   return (
     <div className="relative shrink-0">
@@ -140,7 +135,7 @@ export function HeaderAccountMenu() {
             ? messages.identity.openWithName(displayLine)
             : messages.identity.openWithoutDetails
         }
-        className="rounded-control focus-visible:ring-offset-brand-primary flex cursor-pointer items-center gap-1 p-2 text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:py-1.5 sm:pr-1.5 sm:pl-2.5"
+        className="focus-visible:ring-offset-brand-primary flex cursor-pointer items-center gap-1 p-2 text-white/90 transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:outline-hidden sm:max-w-xs sm:gap-1.5 sm:p-0"
       >
         <span className="relative shrink-0 sm:hidden">
           <UserRound size={24} strokeWidth={2.25} aria-hidden />
@@ -154,13 +149,8 @@ export function HeaderAccountMenu() {
           )}
         </span>
 
-        <span className="hidden min-w-0 flex-1 text-left sm:block">
-          <span className="block truncate text-xs font-semibold sm:text-sm">
-            {triggerLabel}
-          </span>
-          <span className="block truncate text-[0.65rem] text-white/75 sm:text-xs">
-            {triggerSub}
-          </span>
+        <span className="label-caps hidden min-w-0 flex-1 truncate text-left sm:block">
+          {triggerLabel}
         </span>
         <Icon
           icon="expand_more"

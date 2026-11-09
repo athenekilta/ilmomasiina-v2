@@ -135,9 +135,7 @@ export function EventForm({ editId }: EventFormProps) {
     try {
       const [result, signupResult] = await retryQueries();
       if (result.error || !result.data || signupResult.error) {
-        alert.error(
-          messages.form.reloadFailed,
-        );
+        alert.error(messages.form.reloadFailed);
         return;
       }
       draft.adopt(eventDraftSnapshot(result.data));
@@ -206,9 +204,7 @@ export function EventForm({ editId }: EventFormProps) {
           ) === "conflict"
         ) {
           setNeedsReload(true);
-          alert.warning(
-            messages.form.changedDuringUpload,
-          );
+          alert.warning(messages.form.changedDuringUpload);
           return;
         }
         const event = await updateMutation.mutateAsync({
@@ -231,15 +227,11 @@ export function EventForm({ editId }: EventFormProps) {
           setNeedsReload(false);
         } catch {
           setNeedsReload(true);
-          alert.warning(
-            messages.form.savedReloadFailed,
-          );
+          alert.warning(messages.form.savedReloadFailed);
         }
         alert.success(messages.form.updated);
         if (event.notificationWarning)
-          alert.warning(
-            messages.form.notificationFailed,
-          );
+          alert.warning(messages.form.notificationFailed);
       } else {
         creationRequestId.current ??= crypto.randomUUID();
         const event = await createMutation.mutateAsync({
@@ -279,9 +271,7 @@ export function EventForm({ editId }: EventFormProps) {
         imageSelection.forgetUpload();
       }
       alert.error(
-        error instanceof Error
-          ? error.message
-          : messages.form.saveFailed,
+        error instanceof Error ? error.message : messages.form.saveFailed,
       );
     } finally {
       submitting.current = false;
@@ -383,10 +373,8 @@ export function EventForm({ editId }: EventFormProps) {
         />
         <div className="flex flex-col gap-6 p-4 sm:px-7 sm:py-6">
           <div className="flex flex-row flex-wrap items-start justify-between gap-3">
-            <h1 className="text-brand-dark text-2xl font-semibold sm:text-3xl">
-              {editId
-                ? messages.form.editHeading
-                : messages.form.createHeading}
+            <h1 className="eyebrow text-brand-secondary sm:text-base">
+              {editId ? messages.form.editHeading : messages.form.createHeading}
             </h1>
 
             <div className="flex flex-wrap gap-2">
@@ -415,9 +403,7 @@ export function EventForm({ editId }: EventFormProps) {
                     loading={isSubmitting}
                     variant="bordered"
                   >
-                    {isDraft
-                      ? messages.form.publish
-                      : messages.form.makeDraft}
+                    {isDraft ? messages.form.publish : messages.form.makeDraft}
                   </Button>
                   <Button.Link
                     type="button"
@@ -434,7 +420,7 @@ export function EventForm({ editId }: EventFormProps) {
           <div
             role="tablist"
             aria-label={messages.languages.label}
-            className="flex gap-1 rounded-control bg-stone-100 p-1"
+            className="rounded-control flex gap-1 bg-stone-100 p-1"
           >
             {(["fi", "en"] as const).map((language) => (
               <button
@@ -443,7 +429,7 @@ export function EventForm({ editId }: EventFormProps) {
                 role="tab"
                 aria-selected={activeLanguage === language}
                 aria-controls={`translated-content-${language}`}
-                className="focus-visible:ring-brand-secondary flex-1 rounded-control px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden aria-selected:bg-white aria-selected:text-brand-dark aria-selected:shadow-soft"
+                className="focus-visible:ring-brand-secondary rounded-control aria-selected:text-brand-dark aria-selected:shadow-soft flex-1 px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-hidden aria-selected:bg-white"
                 onClick={() => setActiveLanguage(language)}
               >
                 {messages.languages[language]}
@@ -489,7 +475,7 @@ export function EventForm({ editId }: EventFormProps) {
           {editId && (
             <>
               <Divider spacingY="none" />
-              <FieldSet title={messages.form.signups}>
+              <FieldSet title={messages.form.signups} level="section">
                 {signups ? (
                   <SignupsTable
                     signups={signups}

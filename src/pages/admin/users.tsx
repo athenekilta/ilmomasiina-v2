@@ -31,7 +31,7 @@ export default function ManageUsers() {
           <p className="text-center text-stone-600">{messages.loading}</p>
         ) : !isSuperadmin ? (
           <div className="surface-panel mx-auto max-w-xl p-6 text-center">
-            <h1 className="text-brand-dark text-xl font-semibold">
+            <h1 className="eyebrow text-brand-secondary">
               {messages.noSuperadminTitle}
             </h1>
             <p className="mt-2 text-stone-600">
@@ -40,7 +40,7 @@ export default function ManageUsers() {
           </div>
         ) : (
           <section>
-            <h1 className="text-brand-dark text-2xl font-semibold">
+            <h1 className="eyebrow text-brand-secondary sm:text-base">
               {messages.users}
             </h1>
 

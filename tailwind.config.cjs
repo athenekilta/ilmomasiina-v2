@@ -8,7 +8,9 @@ const BRAND_LIGHT = "#FAFAFA";
 const BRAND_BEIGE = "#F4EEE7";
 const BRAND_PAPER_SHADOW = "#ECE4DB";
 
-const BRAND_DARK = "#333333";
+const BRAND_DARK = "#33302B";
+/* Metadata and other quiet text: the same ink, lightened, never a cold grey. */
+const BRAND_MUTED = "#6E665C";
 const BRAND_DANGER = "#E07A5F";
 const BRAND_LIME = "#DDE8B8";
 /* Background colour the event images are drawn on — the card banner fades
@@ -37,14 +39,31 @@ module.exports = {
         card: "0 4px 6px -1px rgba(51, 51, 51, 0.06), 0 2px 4px -2px rgba(51, 51, 51, 0.04)",
       },
       borderRadius: {
-        /* Shared buttons, inputs, selects — tight, not pill-shaped */
-        control: "0.3125rem",
-        /* Cards and other large surfaces — clearly rounded, reads softer
-           than the controls sitting inside them */
-        card: "0.75rem",
-        /* Boxes nested inside a card: a step tighter than the card itself,
-           so the nesting reads as nesting rather than as two equal cards */
-        inner: "0.5rem",
+        /*
+          Nearly square, and deliberately not square.
+
+          The guild's site draws blocks as rectangles, so a 12px radius read
+          as a generic product that had wandered in. But a true 90° corner
+          reads as an engineering guild's house style, and Athene is not
+          that: its own shared principles are "kunnioita, ole avoin, puutu,
+          kannusta, rentoudu", and the programme describes itself as
+          technology, communications, social science, design and business
+          combined in a creative way. Warm, open, relaxed.
+
+          So the corner is cut just enough to be felt and not enough to be
+          seen as a shape of its own. The warmth is carried by the things
+          that should carry it — the paper tones, the illustrations, the
+          tags taped on at an angle — rather than by rounding everything.
+        */
+        /* Buttons, inputs, selects: the smallest step, because a control is
+           the densest thing on the page and the only one with many corners
+           close together. */
+        control: "0.125rem",
+        /* Cards and other large surfaces. */
+        card: "0.25rem",
+        /* Boxes nested inside a card: a step tighter than the card, so the
+           nesting still reads as nesting. */
+        inner: "0.1875rem",
       },
       colors: {
         ...colors,
@@ -59,6 +78,7 @@ module.exports = {
 
           light: BRAND_LIGHT,
           dark: BRAND_DARK,
+          muted: BRAND_MUTED,
           danger: BRAND_DANGER,
           lime: BRAND_LIME,
           sand: BRAND_SAND,
@@ -69,7 +89,29 @@ module.exports = {
         secondary: colors.lime,
         success: { ...colors.emerald, DEFAULT: colors.emerald[600] },
         warning: { ...colors.amber, DEFAULT: colors.amber[600] },
-        danger: { ...colors.rose, DEFAULT: colors.rose[600] },
+        /*
+          Danger in the brand's own coral rather than Tailwind's rose.
+
+          Rose is a cold magenta red. On this warm paper it read as a
+          different product's alert colour, and it sat uncomfortably close to
+          the hype badge's pink — two unrelated meanings in nearly the same
+          hue. The ramp below is built around the brand's existing
+          `#E07A5F`, so a destructive control is unmistakably a warning and
+          unmistakably ours.
+        */
+        danger: {
+          50: "#FCF1EC",
+          100: "#F8DFD5",
+          200: "#F1C4B1",
+          300: "#E9A88D",
+          400: "#E49174",
+          500: BRAND_DANGER,
+          600: BRAND_DANGER,
+          700: "#C6624A",
+          800: "#A14E3B",
+          900: "#7E3E2F",
+          DEFAULT: BRAND_DANGER,
+        },
       },
       keyframes: {
         "float-custom": {

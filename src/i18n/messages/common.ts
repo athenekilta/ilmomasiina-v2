@@ -5,6 +5,10 @@ export const commonMessages = defineMessages({
     language: "Kieli",
     finnish: "Suomi",
     english: "English",
+    /* The header carries one link, not a picker: with two languages the only
+       thing worth saying is where the link goes. The guild's own site says
+       exactly this. */
+    switchLanguage: "In English",
     close: "Sulje",
     loading: "Ladataan…",
     retry: "Yritä uudelleen",
@@ -21,6 +25,7 @@ export const commonMessages = defineMessages({
     language: "Language",
     finnish: "Suomi",
     english: "English",
+    switchLanguage: "Suomeksi",
     close: "Close",
     loading: "Loading…",
     retry: "Try again",

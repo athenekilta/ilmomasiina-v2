@@ -162,7 +162,7 @@ const variableButtonClassNames: Record<
       secondary:
         "bg-brand-secondary text-white enabled:hover:bg-brand-darkgreen enabled:active:bg-stone-800",
       danger:
-        "bg-danger text-white enabled:hover:bg-rose-700 enabled:active:bg-rose-800",
+        "bg-danger text-white enabled:hover:bg-danger-700 enabled:active:bg-danger-800",
       warning:
         "bg-warning text-white enabled:hover:bg-amber-600 enabled:active:bg-amber-700",
       neutral:
@@ -181,7 +181,7 @@ const variableButtonClassNames: Record<
       secondary:
         "border-brand-secondary bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "border-rose-700 bg-rose-100 text-rose-900 enabled:hover:bg-rose-200 enabled:active:bg-rose-300",
+        "border-danger-700 bg-danger-100 text-danger-900 enabled:hover:bg-danger-200 enabled:active:bg-danger-300",
       warning:
         "border-amber-600 bg-amber-100 text-amber-950 enabled:hover:bg-amber-200 enabled:active:bg-amber-300",
       neutral:
@@ -200,7 +200,7 @@ const variableButtonClassNames: Record<
       secondary:
         "bg-brand-lime text-brand-dark enabled:hover:bg-brand-primary enabled:hover:text-white enabled:active:bg-brand-secondary",
       danger:
-        "bg-rose-50 text-danger enabled:hover:bg-rose-100 enabled:active:bg-rose-200",
+        "bg-danger-50 text-danger enabled:hover:bg-danger-100 enabled:active:bg-danger-200",
       warning:
         "bg-amber-50 text-warning enabled:hover:bg-amber-100 enabled:active:bg-amber-200",
       neutral:

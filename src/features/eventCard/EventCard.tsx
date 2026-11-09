@@ -11,10 +11,7 @@ import { getEventFill } from "./eventFill";
 import { BADGE_TONE_CLASS } from "./badgeTone";
 import { EventCapacityBar } from "./EventCapacityBar";
 import { getRegistrationStatus } from "./registrationStatus";
-import {
-  useLocale,
-  useTranslations,
-} from "@/i18n/I18nProvider";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
 import { publicEventsMessages } from "@/i18n/messages/events";
 
 /* A real, fixed aspect ratio rather than a min-height fighting for
@@ -76,7 +73,7 @@ export function EventCard({
     <article className="surface-panel flex h-full w-full min-w-0 flex-col overflow-hidden">
       <Link
         href={routes.app.events.event(event.id)}
-        className="focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
+        className="group focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
       >
         {/* The shared sand fade keeps text legible on uploaded photos as
             well as illustrations, and blends into the missing-image fill. */}
@@ -93,7 +90,7 @@ export function EventCard({
           />
 
           {event.draft && (
-            <span className="absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
+            <span className="label-caps absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] text-white">
               {messages.card.draft}
             </span>
           )}
@@ -105,20 +102,19 @@ export function EventCard({
                 actionable — the drained image and this padlock say so
                 before any text is read. */}
             {isClosed && (
-              <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase sm:text-[0.8125rem]">
+              <span className="label-caps shadow-card flex items-center gap-1.5 bg-stone-900/70 px-2.5 py-1 text-[0.6875rem] text-white sm:text-xs">
                 <Lock size={13} strokeWidth={2.75} aria-hidden />
                 {messages.card.registrationEnded}
               </span>
             )}
 
-            {/* Editorial tag ("Vuoden haippisin"). Deliberately not the
-                solid rectangle glued to the corner: a floating pill that
-                reads as a sticker on the picture. Dropped once the event
-                is closed: hype has nothing left to sell, and two stacked
-                pills crowd the image for no gain. */}
+            {/* Editorial tag ("Vuoden haippisin"), as the note the guild's
+                site tapes to a photo. Dropped once the event is closed: hype
+                has nothing left to sell, and two stacked tags crowd the
+                image for no gain. */}
             {event.badgeText && !isClosed && (
               <span
-                className={`shadow-card max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                className={`label-caps sticker max-w-full truncate px-2.5 py-1 text-[0.6875rem] sm:text-xs ${BADGE_TONE_CLASS[event.badgeTone]}`}
               >
                 {event.badgeText}
               </span>
@@ -130,6 +126,7 @@ export function EventCard({
           <div className="absolute inset-x-0 bottom-0">
             <div className="event-banner-fade" aria-hidden />
             <div className="event-banner-caption px-4 pb-3 sm:px-5">
+              <div className="event-banner-paper" aria-hidden />
               <h2
                 className={`event-title line-clamp-2 text-base sm:text-lg ${
                   isClosed ? "text-stone-600" : "text-brand-secondary"
