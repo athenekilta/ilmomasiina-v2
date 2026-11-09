@@ -25,7 +25,7 @@ export function QuotaRow({
   quotasLength,
   signupCount,
   seatHoldingSignupCount,
-  moveUnusedPlacesToJokerPlaces,
+  moveUnusedPlacesToSharedPlaces,
   errors,
   activeLanguage,
 }: {
@@ -35,7 +35,7 @@ export function QuotaRow({
   quotasLength: number;
   signupCount: number;
   seatHoldingSignupCount: number;
-  moveUnusedPlacesToJokerPlaces: (id: string, usedPlaces: number) => void;
+  moveUnusedPlacesToSharedPlaces: (id: string, usedPlaces: number) => void;
   errors: FieldErrorsImpl<QuotaValue> | undefined;
   activeLanguage: Locale;
 }) {
@@ -191,7 +191,7 @@ export function QuotaRow({
               variant="bordered"
               disabled={quota.size === null || unusedPlaces === 0}
               onClick={() =>
-                moveUnusedPlacesToJokerPlaces(quota.id, seatHoldingSignupCount)
+                moveUnusedPlacesToSharedPlaces(quota.id, seatHoldingSignupCount)
               }
             >
               {messages.quotas.moveUnused}

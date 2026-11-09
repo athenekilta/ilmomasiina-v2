@@ -108,18 +108,18 @@ export const eventAdminMessages = defineMessages({
       invalid: "Lisää vähintään yksi kelvollinen kiintiö.",
       name: "Kiintiön nimi",
       nameTitle: "Nimi",
-      sharedPlaces: "Jokeripaikat",
+      sharedPlaces: "Yhteiset paikat",
       sharedOptions: {
-        NEVER: "Ei käytä jokeripaikkoja",
-        IMMEDIATE: "Käyttää jokeripaikkoja heti",
+        NEVER: "Ei käytä yhteisiä paikkoja",
+        IMMEDIATE: "Käyttää yhteisiä paikkoja heti",
         AFTER_REGISTRATION_CLOSE:
-          "Käyttää jäljelle jääneitä jokeripaikkoja ilmoittautumisen päätyttyä",
+          "Käyttää jäljelle jääneitä yhteisiä paikkoja ilmoittautumisen päätyttyä",
       },
       sharedHelp: {
         NEVER: "Paikat jaetaan vain tämän kiintiön paikoista.",
-        IMMEDIATE: "Kiintiöpaikkojen täytyttyä käytetään jokeripaikkoja.",
+        IMMEDIATE: "Kiintiöpaikkojen täytyttyä käytetään yhteisiä paikkoja.",
         AFTER_REGISTRATION_CLOSE:
-          "Kiintiöpaikkojen täytyttyä ilmoittautumiset odottavat jokeripaikkojen jakoa ilmoittautumisen päättymiseen asti.",
+          "Kiintiöpaikkojen täytyttyä ilmoittautumiset odottavat yhteisten paikkojen jakoa ilmoittautumisen päättymiseen asti.",
       },
       places: "Kiintiöpaikat",
       placesHelp:
@@ -130,16 +130,16 @@ export const eventAdminMessages = defineMessages({
       used: (used: number, total: number) =>
         `${used} / ${total} kiintiöpaikkaa käytössä`,
       available: (count: number) => `${count} vapaana`,
-      moveUnused: "Siirrä vapaat paikat jokeripaikoiksi",
+      moveUnused: "Siirrä vapaat paikat yhteisiksi paikoiksi",
       remove: "Poista kiintiö",
       hasSignups: (count: number) =>
         `Kiintiössä on ${count} ${count === 1 ? "ilmoittautuminen" : "ilmoittautumista"}, joten sitä ei voi poistaa. Poista tai siirrä ilmoittautumiset toiseen kiintiöön ennen tämän kiintiön poistamista.`,
       onlyQuota: "Tapahtuman ainoaa kiintiötä ei voi poistaa.",
       extraHelp:
-        "Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti, ilmoittautumisen päätyttyä tai ei lainkaan.",
-      extraCapacity: "Jokeripaikat",
+        "Yhteiset paikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. Niitä käytetään, jos oma kiintiö on täynnä, mutta yhteisissä paikoissa on vielä tilaa. Kiintiökohtaisesti valitaan, voiko kiintiö käyttää yhteisiä paikkoja heti, ilmoittautumisen päätyttyä tai ei lainkaan.",
+      extraCapacity: "Yhteiset paikat",
       extraNeedsTwoQuotas:
-        "Yhden kiintiön tapahtumassa ei ole jokeripaikkoja: ne olisivat sen saman kiintiön paikkoja toisella nimellä. Lisää toinen kiintiö, jos haluat jokeripaikkoja.",
+        "Yhden kiintiön tapahtumassa ei ole yhteisiä paikkoja: ne olisivat sen saman kiintiön paikkoja toisella nimellä. Lisää toinen kiintiö, jos haluat yhteisiä paikkoja.",
       total: (count: number) => `Paikkoja yhteensä: ${count}`,
     },
     questions: {
@@ -239,9 +239,9 @@ export const eventAdminMessages = defineMessages({
         location: "Paikka",
         price: "Hinta",
         webpageUrl: "Verkkosivu",
-        extraCapacity: "Jokeripaikat",
+        extraCapacity: "Yhteiset paikat",
         size: "Paikkamäärä",
-        sharedPlacesAllocation: "Jokeripaikkojen käyttö",
+        sharedPlacesAllocation: "Yhteisten paikkojen käyttö",
         type: "Tyyppi",
         required: "Pakollisuus",
         public: "Julkisuus",

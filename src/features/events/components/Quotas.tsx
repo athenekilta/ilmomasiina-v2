@@ -90,7 +90,7 @@ export function Quotas({
     [getValues, setValue],
   );
 
-  const moveUnusedPlacesToJokerPlaces = useCallback(
+  const moveUnusedPlacesToSharedPlaces = useCallback(
     (id: string, usedPlaces: number) => {
       const quotas = [...getValues("Quotas")];
       const quotaIndex = quotas.findIndex((quota) => quota.id === id);
@@ -191,8 +191,8 @@ export function Quotas({
                         seatHoldingSignupCount={
                           seatHoldingSignupCounts[quota.id] ?? 0
                         }
-                        moveUnusedPlacesToJokerPlaces={
-                          moveUnusedPlacesToJokerPlaces
+                        moveUnusedPlacesToSharedPlaces={
+                          moveUnusedPlacesToSharedPlaces
                         }
                         activeLanguage={activeLanguage}
                         errors={

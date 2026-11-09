@@ -9,7 +9,7 @@ import { getQuotaColor } from "./quotaColors";
 /*
  * How full each quota is, and how many places are left where.
  *
- * One bar per quota plus one for the open places. Each bar carries its own
+ * One bar per quota plus one for the shared places. Each bar carries its own
  * figure inside the filled part, anchored to that part's right edge, so the
  * figure is always white on colour and never has to change colour with the
  * situation. That anchoring is the reason the filled part has a floor: a
@@ -17,7 +17,7 @@ import { getQuotaColor } from "./quotaColors";
  *
  * A quota's bar shows ONLY that quota's own places, so `40 / 40` is a solid
  * block and `22 / 40` is half a block, and the two can never be mistaken for
- * each other. Places its people took from the open pool live in the open bar
+ * each other. Places its people took from the shared pool live in that bar
  * instead, in that quota's own colour — an earlier version drew them as a
  * lighter band at the end of the quota's own bar, where they read exactly
  * like free places, which is the opposite of what they are.
@@ -43,7 +43,7 @@ const WALL = 1.5;
 const SURFACE = "#ffffff";
 const GREY = "#d8d3cc";
 /**
- * The cut between two quotas inside the open bar.
+ * The cut between two quotas inside the shared-places bar.
  *
  * This is the only place in the whole component where two full-strength
  * colours meet, and a straight hairline between them was not enough to see:
@@ -87,7 +87,7 @@ const share = (part: number, whole: number) => `${(part / whole) * 100}%`;
 
 export function QuotaBars({ event }: { event: QuotaBarsInput }) {
   const { rows, totalSignupCount, shared, queuedCount } = buildQuotaBars(event);
-  if (rows.length === 0) return null;
+  if (rows.length === 0 && shared === null) return null;
 
   return (
     <section className="flex flex-col gap-[18px]">
@@ -101,7 +101,7 @@ export function QuotaBars({ event }: { event: QuotaBarsInput }) {
         ))}
       </ul>
 
-      {shared !== null && <OpenBar shared={shared} />}
+      {shared !== null && <SharedPlacesBar shared={shared} />}
 
       {queuedCount > 0 && (
         <div className="flex flex-col items-end text-[12.5px] text-stone-600">
@@ -156,7 +156,7 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
   const color = getQuotaColor(row.colorIndex);
   const size = row.size;
   // Capped on purpose: a quota's own bar never runs past its own size. The
-  // people beyond it are in the open bar, in this quota's colour.
+  // people beyond it are in the shared-places bar, in this quota's colour.
   const taken =
     size === null ? row.signupCount : Math.min(row.signupCount, size);
   const free = size === null ? 0 : Math.max(size - taken, 0);
@@ -165,9 +165,22 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
 
   return (
     <li className="flex flex-col gap-1.5">
-      <span className="truncate text-[12.5px] font-bold text-stone-600">
-        {row.title}
-      </span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="text-[12.5px] font-bold text-stone-600">
+          {row.title}
+        </span>
+        {note !== null && (
+          <span
+            className={`text-[12px] ${
+              note.urgent
+                ? "text-brand-secondary font-semibold"
+                : "text-stone-600"
+            }`}
+          >
+            {note.text}
+          </span>
+        )}
+      </div>
 
       <Track label={describeRow(row)}>
         {taken === 0 ? (
@@ -198,30 +211,12 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
           </>
         )}
       </Track>
-
-      {/* Every quota that can reach the open places says so, full or not.
-          Waiting until it fills is too late: a member choosing a quota wants
-          to know beforehand whether it dead-ends, and that is exactly what
-          the grey tail used to carry. Tucked up against the bar it belongs
-          to and flush with its right edge, so it reads as that bar's
-          footnote rather than as the next row's heading. */}
-      {note !== null && (
-        <span
-          className={`-mt-[3px] self-end text-[12px] ${
-            note.urgent
-              ? "text-brand-secondary font-semibold"
-              : "font-medium text-stone-400"
-          }`}
-        >
-          {note.text}
-        </span>
-      )}
     </li>
   );
 }
 
 /**
- * The open places: one bar, split between the quotas whose people are sitting
+ * The shared places: one bar, split between the quotas whose people are sitting
  * in them, then the free remainder in grey.
  *
  * The floor belongs to the group of holders rather than to any one of them.
@@ -229,15 +224,20 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
  * would lie about the very thing it exists to show; on the group it only
  * moves the boundary between taken and free, like every other bar.
  */
-function OpenBar({ shared }: { shared: SharedPlaces }) {
+function SharedPlacesBar({ shared }: { shared: SharedPlaces }) {
   const taken = shared.total - shared.remaining;
   const figure = `${taken} / ${shared.total}`;
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="truncate text-[12.5px] font-bold text-stone-600">
-        Avoin
-      </span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h4 className="text-[12.5px] font-bold text-stone-700">
+          Yhteiset paikat
+        </h4>
+        <span className="text-[12px] font-semibold text-stone-600 tabular-nums">
+          {shared.remaining} vapaana
+        </span>
+      </div>
 
       <Track label={describeShared(shared)}>
         {taken === 0 ? (
@@ -270,8 +270,8 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
                     )}
                   >
                     {/* The cut is in the pool's own grey, not the card's
-                        white: between two quotas sitting in the open places
-                        it should read as the open places showing through,
+                        white: between two quotas sitting in the shared
+                        places it should read as the pool showing through,
                         not as the card slicing the bar in half. Laid over
                         the boundary rather than inside either zone, so
                         neither quota's share is measured a pixel short. */}
@@ -312,8 +312,6 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
         )}
       </Track>
 
-      {/* The only row that carries more than one quota's colour, so the only
-          one that needs saying who they are. */}
       {shared.holders.length > 0 && (
         <div className="-mt-px flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-stone-500">
           {shared.holders.map((holder) => (
@@ -335,7 +333,7 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
 }
 
 /**
- * What the open places mean for this row, in the words that fit its state.
+ * What the shared places mean for this row, in the words that fit its state.
  * Only the one the reader can act on right now is given the brand colour;
  * the rest are quiet, because they are context rather than news.
  */
@@ -343,22 +341,27 @@ function sharedNote(
   row: QuotaBarRow,
   isFull: boolean,
 ): { text: string; urgent: boolean } | null {
-  // Which quotas may use the open places is answered once, by the key under
-  // the open bar. Repeating it under every row was four lines saying what one
-  // line already said. What the row still owes its reader is what happens
-  // now that it is full, which the key cannot know.
-  // Nothing for a quota that only reaches the pool once registration closes:
-  // the key under the open bar already lists it, and spelling out the timing
-  // on the row said little for the line it took.
-  if (row.sharedAccess !== "now" || !isFull) return null;
+  if (row.sharedAccess === "never" || row.size === null) return null;
+  if (row.sharedAccess === "afterClose") {
+    return {
+      text: "+ yhteiset paikat ilmoittautumisen päätyttyä",
+      urgent: false,
+    };
+  }
+  if (!isFull) {
+    return {
+      text: "+ yhteiset paikat kiintiön täytyttyä",
+      urgent: false,
+    };
+  }
   return row.continuesToShared
-    ? { text: "Avoimessa on tilaa", urgent: true }
-    : { text: "Avoin on täynnä", urgent: false };
+    ? { text: "→ yhteisiä paikkoja vapaana", urgent: true }
+    : { text: "Myös yhteiset paikat täynnä", urgent: false };
 }
 
 function describeShared(shared: SharedPlaces): string {
   const parts = [
-    `Avoin: ${shared.total - shared.remaining} / ${shared.total} otettu`,
+    `Yhteiset paikat: ${shared.total - shared.remaining} / ${shared.total} käytössä`,
   ];
   for (const holder of shared.holders) {
     parts.push(`${holder.title} ${holder.count}`);
@@ -375,7 +378,7 @@ function describeRow(row: QuotaBarRow): string {
     const taken = Math.min(row.signupCount, row.size);
     parts.push(`kiintiössä ${taken} / ${row.size}`);
     if (row.sharedPlacesUsed > 0) {
-      parts.push(`lisäksi ${row.sharedPlacesUsed} avoimilla paikoilla`);
+      parts.push(`lisäksi ${row.sharedPlacesUsed} yhteisillä paikoilla`);
     }
   }
   const note = sharedNote(row, row.freePlaces === 0);
