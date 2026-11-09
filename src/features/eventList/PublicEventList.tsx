@@ -17,7 +17,7 @@ export function PublicEventList({
   return (
     <>
       <header className="mt-2 mb-4 w-full">
-        <h1 className="font-display text-brand-secondary px-1 text-4xl leading-tight italic sm:text-5xl">
+        <h1 className="display-title text-brand-secondary px-1 text-4xl sm:text-5xl">
           {messages.list.title}
         </h1>
       </header>
@@ -32,7 +32,7 @@ export function PublicEventList({
         <section className="mt-14 w-full" aria-labelledby="closed-events">
           <h2
             id="closed-events"
-            className="font-secondary text-brand-dark mb-4 px-1 text-base font-extrabold tracking-[0.12em] uppercase sm:text-lg"
+            className="eyebrow text-brand-dark mb-4 px-1 sm:text-base"
           >
             {messages.list.registrationEnded}
           </h2>

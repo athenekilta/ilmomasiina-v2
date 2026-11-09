@@ -11,10 +11,7 @@ import { getEventFill } from "./eventFill";
 import { BADGE_TONE_CLASS } from "./badgeTone";
 import { EventCapacityBar } from "./EventCapacityBar";
 import { getRegistrationStatus } from "./registrationStatus";
-import {
-  useLocale,
-  useTranslations,
-} from "@/i18n/I18nProvider";
+import { useLocale, useTranslations } from "@/i18n/I18nProvider";
 import { publicEventsMessages } from "@/i18n/messages/events";
 
 /* A real, fixed aspect ratio rather than a min-height fighting for
@@ -93,7 +90,7 @@ export function EventCard({
           />
 
           {event.draft && (
-            <span className="absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] font-bold tracking-wide text-white uppercase">
+            <span className="label-caps absolute top-0 left-0 z-10 bg-amber-600 px-2 py-1 text-[11px] text-white">
               {messages.card.draft}
             </span>
           )}
@@ -105,7 +102,7 @@ export function EventCard({
                 actionable — the drained image and this padlock say so
                 before any text is read. */}
             {isClosed && (
-              <span className="shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-3 py-1.5 text-xs font-bold tracking-wide text-white uppercase sm:text-[0.8125rem]">
+              <span className="label-caps shadow-card flex items-center gap-1.5 rounded-full bg-stone-900/70 px-2.5 py-1 text-[0.6875rem] text-white sm:text-xs">
                 <Lock size={13} strokeWidth={2.75} aria-hidden />
                 {messages.card.registrationEnded}
               </span>
@@ -118,7 +115,7 @@ export function EventCard({
                 pills crowd the image for no gain. */}
             {event.badgeText && !isClosed && (
               <span
-                className={`shadow-card max-w-full truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                className={`label-caps shadow-card max-w-full truncate rounded-full px-2.5 py-1 text-[0.6875rem] sm:text-xs ${BADGE_TONE_CLASS[event.badgeTone]}`}
               >
                 {event.badgeText}
               </span>
@@ -130,6 +127,10 @@ export function EventCard({
           <div className="absolute inset-x-0 bottom-0">
             <div className="event-banner-fade" aria-hidden />
             <div className="event-banner-caption px-4 pb-3 sm:px-5">
+              <div
+                className="event-banner-blur backdrop-blur-[3px]"
+                aria-hidden
+              />
               <h2
                 className={`event-title line-clamp-2 text-base sm:text-lg ${
                   isClosed ? "text-stone-600" : "text-brand-secondary"

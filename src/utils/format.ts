@@ -57,6 +57,33 @@ export const formatEventDateTime = (
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
+/**
+ * Signup time for the participants list: "16.9. 11.08.33".
+ *
+ * The list has to fit one signup per line on a phone, and the year is the
+ * part that never earns its width — every signup on an event page is from
+ * the same few days, and the year is already in the event's own date. The
+ * seconds stay: in a popular event they are the thing people compare.
+ */
+export const formatSignupTime = (
+  value: DateValue,
+  locale: Locale = defaultLocale,
+) => {
+  const date = asDate(value);
+  const day = new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
+    day: "numeric",
+    month: "numeric",
+  }).format(date);
+  const time = new Intl.DateTimeFormat(intlLocale[locale], {
+    timeZone: appTimeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+  return `${day} ${time}`;
+};
+
 type RegistrationFormatMessages = {
   periodEnded: string;
   openUntil: (dateTime: string) => string;

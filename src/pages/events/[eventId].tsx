@@ -228,7 +228,7 @@ function Registration({
             own heading twice and left the deadline owned by nothing. */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-brand-secondary text-base font-extrabold tracking-[0.015em] uppercase">
+            <h2 className="eyebrow text-brand-secondary">
               {messages.registration.title}
             </h2>
             <p className="text-brand-primary text-[13px] font-semibold">
@@ -246,7 +246,7 @@ function Registration({
               className="surface-muted -mx-[5px] p-4 sm:mx-0"
               onSubmit={saveUserData}
             >
-              <h3 className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-lg">
+              <h3 className="label-caps text-brand-secondary text-[13px]">
                 {messages.identity.completeTitle}
               </h3>
               <p className="text-brand-dark mt-1 text-sm">
@@ -415,7 +415,7 @@ function Registration({
              the uppercase heading say "this is settled" at a glance, and the
              values below are what you check before pressing the button. */
             <div className="surface-muted -mx-[5px] flex flex-col gap-2 p-3.5 sm:mx-0">
-              <span className="text-brand-secondary text-xs font-bold tracking-wide uppercase">
+              <span className="label-caps text-brand-secondary">
                 {messages.registration.title}
               </span>
               {/* The badge sits beside the values it vouches for, not beside
@@ -462,124 +462,129 @@ function Registration({
             undifferentiated block. The label carries the context and the
             button carries what varies — the quota names when there is a
             choice, the verb when there is only one quota. */}
-          {((!hasExistingSignup && !isRegistrationClosed) || showDemoControls) && !isEditingUserData && (
-            <div className="flex flex-col gap-3 pt-2">
-              <h3 className="text-[13px] font-bold tracking-[0.06em] text-stone-500 uppercase">
-                {messages.registration.signUp}
-              </h3>
-              <div className="flex flex-col gap-2">
-                {quotas.map((quota) => {
-                  const protectedPlacesAreFull =
-                    quota.size !== null &&
-                    seatHoldingSignupCount(quota) >= quota.size;
-                  const signupGoesToQueue =
-                    protectedPlacesAreFull &&
-                    (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
-                      sharedPlacesAreFull);
+          {((!hasExistingSignup && !isRegistrationClosed) ||
+            showDemoControls) &&
+            !isEditingUserData && (
+              <div className="flex flex-col gap-3 pt-2">
+                <h3 className="label-caps text-stone-500">
+                  {messages.registration.signUp}
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {quotas.map((quota) => {
+                    const protectedPlacesAreFull =
+                      quota.size !== null &&
+                      seatHoldingSignupCount(quota) >= quota.size;
+                    const signupGoesToQueue =
+                      protectedPlacesAreFull &&
+                      (quota.sharedPlacesAllocation !== "IMMEDIATE" ||
+                        sharedPlacesAreFull);
 
-                  return (
-                    <div key={quota.id} className="flex items-center gap-1">
-                      {showDemoControls && (
-                        <Button
-                          type="button"
-                          size="small"
-                          className="min-w-8 px-2"
-                          color="neutral"
-                          variant="bordered"
-                          title={messages.registration.removeDemoSignup(
-                            quota.title,
-                          )}
-                          aria-label={messages.registration.removeDemoSignup(
-                            quota.title,
-                          )}
-                          onClick={() =>
-                            removeDemoSignupMutation.mutate({
-                              quotaId: quota.id,
-                            })
-                          }
-                          disabled={
-                            addDemoSignupMutation.isPending ||
-                            removeDemoSignupMutation.isPending
-                          }
-                          loading={
-                            removeDemoSignupMutation.isPending &&
-                            removeDemoSignupMutation.variables?.quotaId ===
-                              quota.id
-                          }
-                        >
-                          −1
-                        </Button>
-                      )}
-                      {hasExistingSignup || isRegistrationClosed ? (
-                        // Nothing to click — already signed up, or the window
-                        // has closed — but the demo controls still need to say
-                        // which quota they act on.
-                        <span className="min-w-0 grow truncate px-2 text-sm font-semibold text-stone-500">
-                          {quota.title}
-                        </span>
-                      ) : (
-                        /* Joining a queue is not the same act as taking a
+                    return (
+                      <div key={quota.id} className="flex items-center gap-1">
+                        {showDemoControls && (
+                          <Button
+                            type="button"
+                            size="small"
+                            className="min-w-8 px-2"
+                            color="neutral"
+                            variant="bordered"
+                            title={messages.registration.removeDemoSignup(
+                              quota.title,
+                            )}
+                            aria-label={messages.registration.removeDemoSignup(
+                              quota.title,
+                            )}
+                            onClick={() =>
+                              removeDemoSignupMutation.mutate({
+                                quotaId: quota.id,
+                              })
+                            }
+                            disabled={
+                              addDemoSignupMutation.isPending ||
+                              removeDemoSignupMutation.isPending
+                            }
+                            loading={
+                              removeDemoSignupMutation.isPending &&
+                              removeDemoSignupMutation.variables?.quotaId ===
+                                quota.id
+                            }
+                          >
+                            −1
+                          </Button>
+                        )}
+                        {hasExistingSignup || isRegistrationClosed ? (
+                          // Nothing to click — already signed up, or the window
+                          // has closed — but the demo controls still need to say
+                          // which quota they act on.
+                          <span className="min-w-0 grow truncate px-2 text-sm font-semibold text-stone-500">
+                            {quota.title}
+                          </span>
+                        ) : (
+                          /* Joining a queue is not the same act as taking a
                          place, so the button is not the same button: filled
                          means a place, outlined means a wait. In a list where
                          some quotas are full and some are not, that shows at
                          a glance — and "jonoon" rides along as its own small
                          label rather than as punctuation in the name. */
-                        <Button
-                          className="min-w-0 grow"
-                          color="primary"
-                          variant={signupGoesToQueue ? "bordered" : "filled"}
-                          onClick={handleSubmit(getHandleSignup(quota.id))}
-                          disabled={!isRegistrationOpen || isSubmitting}
-                          loading={
-                            isSubmitting &&
-                            createSignupMutation.variables?.quotaId === quota.id
-                          }
-                        >
-                          <span className="flex min-w-0 items-baseline justify-center gap-2">
-                            <span className="truncate">{quota.title}</span>
-                            {signupGoesToQueue && (
-                              <span className="shrink-0 text-[11px] font-bold tracking-wide uppercase opacity-70">
-                                {messages.registration.joinQueue}
-                              </span>
+                          <Button
+                            className="min-w-0 grow"
+                            color="primary"
+                            variant={signupGoesToQueue ? "bordered" : "filled"}
+                            onClick={handleSubmit(getHandleSignup(quota.id))}
+                            disabled={!isRegistrationOpen || isSubmitting}
+                            loading={
+                              isSubmitting &&
+                              createSignupMutation.variables?.quotaId ===
+                                quota.id
+                            }
+                          >
+                            <span className="flex min-w-0 items-baseline justify-center gap-2">
+                              <span className="truncate">{quota.title}</span>
+                              {signupGoesToQueue && (
+                                <span className="label-caps shrink-0 text-[11px] opacity-70">
+                                  {messages.registration.joinQueue}
+                                </span>
+                              )}
+                            </span>
+                          </Button>
+                        )}
+                        {showDemoControls && (
+                          <Button
+                            type="button"
+                            size="small"
+                            className="min-w-8 px-2"
+                            color="neutral"
+                            variant="bordered"
+                            title={messages.registration.addDemoSignup(
+                              quota.title,
                             )}
-                          </span>
-                        </Button>
-                      )}
-                      {showDemoControls && (
-                        <Button
-                          type="button"
-                          size="small"
-                          className="min-w-8 px-2"
-                          color="neutral"
-                          variant="bordered"
-                          title={messages.registration.addDemoSignup(
-                            quota.title,
-                          )}
-                          aria-label={messages.registration.addDemoSignup(
-                            quota.title,
-                          )}
-                          onClick={() =>
-                            addDemoSignupMutation.mutate({ quotaId: quota.id })
-                          }
-                          disabled={
-                            addDemoSignupMutation.isPending ||
-                            removeDemoSignupMutation.isPending
-                          }
-                          loading={
-                            addDemoSignupMutation.isPending &&
-                            addDemoSignupMutation.variables?.quotaId ===
-                              quota.id
-                          }
-                        >
-                          +1
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
+                            aria-label={messages.registration.addDemoSignup(
+                              quota.title,
+                            )}
+                            onClick={() =>
+                              addDemoSignupMutation.mutate({
+                                quotaId: quota.id,
+                              })
+                            }
+                            disabled={
+                              addDemoSignupMutation.isPending ||
+                              removeDemoSignupMutation.isPending
+                            }
+                            loading={
+                              addDemoSignupMutation.isPending &&
+                              addDemoSignupMutation.variables?.quotaId ===
+                                quota.id
+                            }
+                          >
+                            +1
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <QuotaBars event={event} />
@@ -782,7 +787,7 @@ export default function EventPage() {
 
               {event?.badgeText && !registrationClosed && (
                 <span
-                  className={`shadow-card absolute top-4 right-4 z-10 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                  className={`label-caps shadow-card absolute top-4 right-4 z-10 max-w-[70%] truncate rounded-full px-3 py-1.5 sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
                 >
                   {event.badgeText}
                 </span>
@@ -792,11 +797,15 @@ export default function EventPage() {
                 <div className="absolute inset-x-0 bottom-0">
                   <div className="event-banner-fade" aria-hidden />
                   <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
-                    <h1 className="event-title text-brand-dark text-2xl sm:text-3xl">
+                    <div
+                      className="event-banner-blur backdrop-blur-[3px]"
+                      aria-hidden
+                    />
+                    <h1 className="display-title text-brand-dark text-3xl sm:text-4xl">
                       {event.title}
                     </h1>
                     {event.draft && (
-                      <span className="rounded-control inline-flex items-center border border-amber-400 bg-amber-200 px-2.5 py-1 text-xs font-bold tracking-wide text-amber-950 uppercase">
+                      <span className="label-caps rounded-control inline-flex items-center border border-amber-400 bg-amber-200 px-2.5 py-1 text-amber-950">
                         <Icon icon="draft" className="mr-1.5 h-3.5 w-3.5" />
                         {messages.detail.draft}
                       </span>
@@ -823,7 +832,7 @@ export default function EventPage() {
 
                   <div className="flex w-full flex-col gap-8 sm:flex-row sm:items-start sm:gap-8 lg:gap-10">
                     <div className="w-full min-w-0 space-y-1 text-sm sm:flex-1 sm:basis-0 sm:pr-2 sm:text-base">
-                      <h2 className="text-brand-secondary mb-3 text-base font-extrabold tracking-[0.015em] uppercase">
+                      <h2 className="eyebrow text-brand-secondary mb-3">
                         {messages.detail.information}
                       </h2>
                       <p>

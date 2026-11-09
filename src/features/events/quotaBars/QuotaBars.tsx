@@ -1,299 +1,378 @@
 import {
   buildQuotaBars,
   type QuotaBarRow,
+  type SharedPlaces,
   type QuotaBarsInput,
 } from "./quotaBarModel";
 import { getQuotaColor } from "./quotaColors";
-import { BenchIcon, ChairIcon, PersonIcon } from "./seatIcons";
 
 /*
- * How full each quota is, and whether a full one still lets you in.
+ * How full each quota is, and how many places are left where.
  *
- * One row per quota: the name above, a bar below. Inside the bar the taken
- * places carry the signup count and the free ones carry what is left, so each
- * figure sits in the zone it describes and nothing has to be matched up by
- * eye. When a quota can overflow into the shared places, its bar continues
- * past the track into a grey that fades out — a full quota is then visibly
- * not a dead end, which is the whole reason this component exists.
+ * One bar per quota plus one for the open places. Each bar carries its own
+ * figure inside the filled part, anchored to that part's right edge, so the
+ * figure is always white on colour and never has to change colour with the
+ * situation. That anchoring is the reason the filled part has a floor: a
+ * figure cannot sit inside a zone narrower than itself.
  *
- * The component owns its white card because the 1.5px walls that separate the
- * bar from the grey are painted in the card's own background colour. Moving
- * it onto a tinted surface means changing SURFACE to match.
+ * A quota's bar shows ONLY that quota's own places, so `40 / 40` is a solid
+ * block and `22 / 40` is half a block, and the two can never be mistaken for
+ * each other. Places its people took from the open pool live in the open bar
+ * instead, in that quota's own colour — an earlier version drew them as a
+ * lighter band at the end of the quota's own bar, where they read exactly
+ * like free places, which is the opposite of what they are.
+ *
+ * The component owns its white card because the 1.5px wall around each bar is
+ * painted in the card's own background colour. Moving it onto a tinted
+ * surface means changing SURFACE to match.
  */
 
 const BAR_HEIGHT = 23;
 const RADIUS = 7;
 /**
- * Gap between the bar and the grey continuation, and the colour the
- * continuation fades out into. Both are the card's own background, so they
- * have to move together with it: the signup column sits on the page panel's white.
+ * The hairline around each bar, in the card's own background colour — so it
+ * has to move with the card: the signup column sits on the page panel's white.
  */
 const WALL = 1.5;
 const SURFACE = "#ffffff";
-/** Width kept clear on the right for the continuation. */
-const LANE = 42;
-/**
- * How far the grey runs past the bars' own right edge, into whatever padding
- * surrounds them. Nothing clips it: the gradient has to reach the background
- * colour in free space, or it ends mid-fade on a hard edge.
- */
-const OVERSHOOT = 5;
-/**
- * The grey reaches back under the bar's rounded end so the wall cuts the
- * notch out of it. Without this the grey stops at a straight edge and the
- * bar's curve is left standing in white.
- */
-const REACH_BACK = RADIUS + WALL;
-/** So the signup count fits even when a quota is at 1 of 30. */
-const MIN_FILL = 54;
-/**
- * And so the last places left still fit: a quota at 38 of 40 has a 5% pale
- * zone, which would swallow the very figure people are watching. Both ends
- * of the bar keep a floor, and the proportion gives way — the figures are
- * what the row is for.
- */
-const MIN_PALE = 58;
-/** Fewer shared places than this and the continuation stops rather than fades. */
-const FEW_SHARED = 5;
-
 const GREY = "#d8d3cc";
-const FADE = `linear-gradient(to right, ${GREY} 0%, ${GREY} 42%, ${SURFACE} 100%)`;
-
-/* The chair covers 59% of its viewBox, the person 67%, the bench 91%, so
-   equal sizes would read as three different weights. Same reason the chair
-   is a shade darker than the bench: less ink over the same area. */
-const PERSON_SIZE = 16;
-const CHAIR_SIZE = 18;
-const BENCH_SIZE = 17;
+/** The hairline between two quotas inside the open bar. Thinner than the
+ *  wall around the bar: it separates rather than encloses. */
+const SEAM = 1;
 const FIGURE = "#5c564f";
-const CHAIR_COLOR = "#6b645c";
-const BENCH_COLOR = "#7a736a";
+/**
+ * Enough for "22 / 40" and its padding. The filled zone never goes below it,
+ * or the figure it carries would not fit inside it. The cost is that a very
+ * short filled zone stretches to this width and overstates itself — 2 of 30
+ * draws as 18% rather than 7%.
+ */
+const MIN_FILLED = 66;
+
+/**
+ * Only the first zone has a rounded left end. The ones after it are square on
+ * the left and slide under the zone before them, so that zone's rounded right
+ * end cuts the notch. Round both ends of both and a lens-shaped hole opens
+ * between the two curves.
+ *
+ * The notch costs RADIUS px, which is added back into the zone's basis:
+ * otherwise every seam shortens the bar and the last zone stops short of the
+ * bar's own right edge.
+ */
+function zoneStyle(
+  index: number,
+  background: string,
+  basis: string | null,
+  minWidth: number,
+): React.CSSProperties {
+  return {
+    flex:
+      basis === null
+        ? "1 1 auto"
+        : index === 0
+          ? `0 1 ${basis}`
+          : `0 1 calc(${basis} + ${RADIUS}px)`,
+    minWidth,
+    height: "100%",
+    background,
+    borderRadius: index === 0 ? RADIUS : `0 ${RADIUS}px ${RADIUS}px 0`,
+    marginLeft: index === 0 ? 0 : -RADIUS,
+    zIndex: 30 - index,
+  };
+}
+
+const share = (part: number, whole: number) => `${(part / whole) * 100}%`;
 
 export function QuotaBars({ event }: { event: QuotaBarsInput }) {
   const { rows, totalSignupCount, shared, queuedCount } = buildQuotaBars(event);
   if (rows.length === 0) return null;
 
-  // The lane exists only for rows that actually run into it. With no shared
-  // places — or none left, or no quota allowed to use them — there is nothing
-  // to keep clear, and the bars take the full width.
-  const lane = rows.some((row) => row.continuesToShared) ? LANE : 0;
-
   return (
     <section className="flex flex-col gap-[18px]">
-      <h3 className="text-brand-dark text-base font-extrabold tracking-[0.015em] uppercase tabular-nums">
+      <h3 className="eyebrow text-brand-secondary tabular-nums">
         {totalSignupCount} ilmonnutta
       </h3>
 
       <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
         {rows.map((row) => (
-          <QuotaBarItem key={row.id} row={row} lane={lane} shared={shared} />
+          <QuotaBarItem key={row.id} row={row} />
         ))}
       </ul>
 
-      {(shared !== null || queuedCount > 0) && (
-        <div className="flex flex-col items-end gap-1.5 pr-2 text-[12.5px]">
-          {shared !== null &&
-            (shared.remaining > 0 ? (
-              <span className="flex items-center gap-[7px] text-stone-600">
-                <BenchIcon size={16} style={{ color: BENCH_COLOR }} />
-                Yhteisiä paikkoja jäljellä:{" "}
-                <b className="text-brand-secondary font-bold tabular-nums">
-                  {shared.remaining}
-                </b>
-              </span>
-            ) : (
-              <span className="flex items-center gap-[7px] text-stone-400">
-                <BenchIcon size={16} />
-                Ei vapaita yhteisiä paikkoja
-              </span>
-            ))}
-          {queuedCount > 0 && (
-            <span className="text-stone-600">
-              Jonossa:{" "}
-              <b className="text-brand-dark font-bold tabular-nums">
-                {queuedCount}
-              </b>
-            </span>
-          )}
+      {shared !== null && <OpenBar shared={shared} />}
+
+      {queuedCount > 0 && (
+        <div className="flex flex-col items-end text-[12.5px] text-stone-600">
+          <span>
+            Jonossa:{" "}
+            <b className="text-brand-dark font-bold tabular-nums">
+              {queuedCount}
+            </b>
+          </span>
         </div>
       )}
-
-      <p className="m-0 flex flex-wrap gap-x-3 gap-y-1 border-t border-stone-100 pt-3 text-[10px] text-stone-400">
-        <span className="flex items-center gap-1">
-          <PersonIcon size={PERSON_SIZE} className="text-stone-300" />
-          Ilmonneita
-        </span>
-        <span className="flex items-center gap-1">
-          <ChairIcon size={CHAIR_SIZE} className="text-stone-300" />
-          Kiintiön paikkoja
-        </span>
-        {shared !== null && (
-          <span className="flex items-center gap-1">
-            <BenchIcon size={BENCH_SIZE} className="text-stone-300" />
-            Yhteisiä paikkoja
-          </span>
-        )}
-      </p>
     </section>
   );
 }
 
-function QuotaBarItem({
-  row,
-  lane,
-  shared,
+function Track({
+  children,
+  label,
 }: {
-  row: QuotaBarRow;
-  lane: number;
-  shared: { total: number; remaining: number } | null;
-}) {
-  const color = getQuotaColor(row.colorIndex);
-  const continues = row.continuesToShared && shared !== null;
-  const isFull = row.fillRatio !== null && row.fillRatio >= 1;
-
-  return (
-    <li className="flex flex-col gap-1.5">
-      <span
-        className="truncate text-[12.5px] font-bold text-stone-600"
-        style={{ paddingRight: continues ? 0 : lane }}
-      >
-        {row.title}
-      </span>
-
-      <div
-        className="flex items-center"
-        role="img"
-        aria-label={describeRow(row, continues)}
-      >
-        <div
-          className="relative z-10 flex"
-          style={{
-            flex: lane === 0 ? "0 0 100%" : `0 0 calc(100% - ${lane}px)`,
-            height: BAR_HEIGHT,
-            borderRadius: RADIUS,
-            boxShadow: `0 0 0 ${WALL}px ${SURFACE}`,
-          }}
-        >
-          <div
-            className="relative z-20 flex h-full items-center gap-1 overflow-hidden px-2"
-            style={{
-              // An unlimited quota has no proportion to draw, so its block is
-              // only as wide as the figure inside it.
-              flex:
-                row.fillRatio === null
-                  ? "0 0 auto"
-                  : `0 1 ${row.fillRatio * 100}%`,
-              minWidth: MIN_FILL,
-              borderRadius: RADIUS,
-              background: color.fill,
-            }}
-          >
-            <Figure value={row.signupCount} className="text-white" />
-            <PersonIcon size={PERSON_SIZE} className="text-white" />
-          </div>
-
-          {!isFull && (
-            <PlacesLeft freePlaces={row.freePlaces} pale={color.pale} />
-          )}
-        </div>
-
-        {continues && <Continuation remaining={shared.remaining} />}
-      </div>
-    </li>
-  );
-}
-
-/** The quota's own free places, shown in the zone that represents them. */
-function PlacesLeft({
-  freePlaces,
-  pale,
-}: {
-  freePlaces: number | null;
-  pale: string;
+  children: React.ReactNode;
+  label: string;
 }) {
   return (
     <div
-      className="relative z-10 flex h-full flex-auto items-center justify-end gap-1 overflow-hidden pr-2"
+      className="relative flex w-full"
+      role="img"
+      aria-label={label}
       style={{
-        marginLeft: -RADIUS,
-        minWidth: MIN_PALE,
-        // Clears the notch the filled block's rounded end cuts into this
-        // one, so the figure never ends up against the seam.
-        paddingLeft: RADIUS + 5,
-        borderRadius: `0 ${RADIUS}px ${RADIUS}px 0`,
-        background: pale,
-      }}
-    >
-      {/* An unlimited quota has no figure here: there is no ceiling to
-          subtract from. */}
-      {freePlaces !== null && (
-        <>
-          <Figure value={freePlaces} style={{ color: FIGURE }} />
-          <ChairIcon size={CHAIR_SIZE} style={{ color: CHAIR_COLOR }} />
-        </>
-      )}
-    </div>
-  );
-}
-
-/**
- * The row running on into the shared places. It fades out while there is room
- * and stops at a rounded end once only a few places are left, so "there is
- * more" and "this is nearly it" never look the same.
- */
-function Continuation({ remaining }: { remaining: number }) {
-  const fading = remaining >= FEW_SHARED;
-  // Only the fade runs past the padding, and only because it needs free space
-  // to finish in. A capped end is a definite end, so it stops on the line.
-  const over = fading ? OVERSHOOT : 0;
-  return (
-    <div
-      className="relative z-0 box-border flex items-center"
-      style={{
-        flex: `0 0 ${LANE + over + REACH_BACK}px`,
-        marginLeft: -REACH_BACK,
-        marginRight: -over,
         height: BAR_HEIGHT,
-        background: fading ? FADE : GREY,
-        borderRadius: fading ? 0 : `0 ${RADIUS}px ${RADIUS}px 0`,
-        // The marks sit at the head of the grey, just clear of the notch the
-        // bar's rounded end cuts into it.
-        paddingLeft: REACH_BACK + 7,
-        color: BENCH_COLOR,
+        borderRadius: RADIUS,
+        boxShadow: `0 0 0 ${WALL}px ${SURFACE}`,
       }}
     >
-      <span className="mr-[3px] text-xs leading-none font-bold">+</span>
-      <BenchIcon size={BENCH_SIZE} />
+      {children}
     </div>
   );
 }
 
-function Figure({
-  value,
-  className,
-  style,
-}: {
-  value: number;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
+function Figure({ value, light }: { value: string; light: boolean }) {
   return (
     <span
-      className={`block text-[12.5px] leading-none font-bold whitespace-nowrap tabular-nums ${className ?? ""}`}
-      style={style}
+      className="block text-[12.5px] leading-none font-bold whitespace-nowrap tabular-nums"
+      style={{ color: light ? "#ffffff" : FIGURE }}
     >
       {value}
     </span>
   );
 }
 
-function describeRow(row: QuotaBarRow, continues: boolean): string {
+function QuotaBarItem({ row }: { row: QuotaBarRow }) {
+  const color = getQuotaColor(row.colorIndex);
+  const size = row.size;
+  // Capped on purpose: a quota's own bar never runs past its own size. The
+  // people beyond it are in the open bar, in this quota's colour.
+  const taken =
+    size === null ? row.signupCount : Math.min(row.signupCount, size);
+  const free = size === null ? 0 : Math.max(size - taken, 0);
+  const figure = size === null ? `${taken}` : `${taken} / ${size}`;
+  const note = sharedNote(row, free === 0);
+
+  return (
+    <li className="flex flex-col gap-1.5">
+      <span className="truncate text-[12.5px] font-bold text-stone-600">
+        {row.title}
+      </span>
+
+      <Track label={describeRow(row)}>
+        {taken === 0 ? (
+          // No filled part, so the figure cannot live inside one. It moves to
+          // the empty zone in dark ink rather than giving an empty quota a
+          // 66px block of colour with nobody in it.
+          <div
+            className="flex items-center px-2"
+            style={zoneStyle(0, color.pale, null, 2 * RADIUS)}
+          >
+            <Figure value={figure} light={false} />
+          </div>
+        ) : (
+          <>
+            <div
+              className="flex items-center justify-end overflow-hidden px-2"
+              style={zoneStyle(
+                0,
+                color.fill,
+                size === null || free === 0 ? null : share(taken, size),
+                MIN_FILLED,
+              )}
+            >
+              <Figure value={figure} light />
+            </div>
+            {free > 0 && size !== null && (
+              <div
+                style={zoneStyle(1, color.pale, share(free, size), 2 * RADIUS)}
+              />
+            )}
+          </>
+        )}
+      </Track>
+
+      {/* Every quota that can reach the open places says so, full or not.
+          Waiting until it fills is too late: a member choosing a quota wants
+          to know beforehand whether it dead-ends, and that is exactly what
+          the grey tail used to carry. Tucked up against the bar it belongs
+          to and flush with its right edge, so it reads as that bar's
+          footnote rather than as the next row's heading. */}
+      {note !== null && (
+        <span
+          className={`-mt-[3px] self-end text-[12px] ${
+            note.urgent
+              ? "text-brand-secondary font-semibold"
+              : "font-medium text-stone-400"
+          }`}
+        >
+          {note.text}
+        </span>
+      )}
+    </li>
+  );
+}
+
+/**
+ * The open places: one bar, split between the quotas whose people are sitting
+ * in them, then the free remainder in grey.
+ *
+ * The floor belongs to the group of holders rather than to any one of them.
+ * On the last holder it would stretch a two-place share to 66px and the bar
+ * would lie about the very thing it exists to show; on the group it only
+ * moves the boundary between taken and free, like every other bar.
+ */
+function OpenBar({ shared }: { shared: SharedPlaces }) {
+  const taken = shared.total - shared.remaining;
+  const figure = `${taken} / ${shared.total}`;
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="truncate text-[12.5px] font-bold text-stone-600">
+        Avoin
+      </span>
+
+      <Track label={describeShared(shared)}>
+        {taken === 0 ? (
+          <div
+            className="flex items-center px-2"
+            style={zoneStyle(0, GREY, null, 2 * RADIUS)}
+          >
+            <Figure value={figure} light={false} />
+          </div>
+        ) : (
+          <>
+            <div
+              className="relative flex"
+              style={{
+                flex: `0 1 ${share(taken, shared.total)}`,
+                minWidth: MIN_FILLED,
+                height: "100%",
+                zIndex: 30,
+              }}
+            >
+              {shared.holders
+                .filter((holder) => holder.count > 0)
+                .map((holder, index) => (
+                  <div
+                    key={holder.id}
+                    style={{
+                      ...zoneStyle(
+                        index,
+                        getQuotaColor(holder.colorIndex).fill,
+                        share(holder.count, taken),
+                        2 * RADIUS,
+                      ),
+                      // A hairline at every seam inside this bar, in the
+                      // pool's own grey rather than the card's white: it
+                      // reads as the open places showing through between two
+                      // quotas, not as the card cutting the bar in half.
+                      // Elsewhere a seam divides a colour from its own pale
+                      // and needs nothing; here two quotas' fills meet at
+                      // full strength and the notch alone is nearly
+                      // invisible. Offset rather than spread, so it traces
+                      // the rounded end and paints over the zone beneath
+                      // instead of eating into this one.
+                      boxShadow: `${SEAM}px 0 0 0 ${GREY}`,
+                    }}
+                  />
+                ))}
+              {/* Above the holders: they carry z-indexes of their own, and a
+                  figure below them is simply invisible. */}
+              <span
+                className="absolute top-0 bottom-0 z-50 flex items-center pr-2"
+                style={{ right: 0 }}
+              >
+                <Figure value={figure} light />
+              </span>
+            </div>
+            {shared.remaining > 0 && (
+              <div
+                style={zoneStyle(
+                  1,
+                  GREY,
+                  share(shared.remaining, shared.total),
+                  2 * RADIUS,
+                )}
+              />
+            )}
+          </>
+        )}
+      </Track>
+
+      {/* The only row that carries more than one quota's colour, so the only
+          one that needs saying who they are. */}
+      {shared.holders.length > 0 && (
+        <div className="-mt-px flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-stone-500">
+          {shared.holders.map((holder) => (
+            <span key={holder.id} className="flex items-center gap-1.5">
+              <span
+                className="size-2 shrink-0 rounded-[2px]"
+                style={{ background: getQuotaColor(holder.colorIndex).fill }}
+              />
+              <span className="truncate">{holder.title}</span>
+              <b className="font-bold tabular-nums" style={{ color: FIGURE }}>
+                {holder.count}
+              </b>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * What the open places mean for this row, in the words that fit its state.
+ * Only the one the reader can act on right now is given the brand colour;
+ * the rest are quiet, because they are context rather than news.
+ */
+function sharedNote(
+  row: QuotaBarRow,
+  isFull: boolean,
+): { text: string; urgent: boolean } | null {
+  // Which quotas may use the open places is answered once, by the key under
+  // the open bar. Repeating it under every row was four lines saying what one
+  // line already said. What the row still owes its reader is what happens
+  // now that it is full, which the key cannot know.
+  // Nothing for a quota that only reaches the pool once registration closes:
+  // the key under the open bar already lists it, and spelling out the timing
+  // on the row said little for the line it took.
+  if (row.sharedAccess !== "now" || !isFull) return null;
+  return row.continuesToShared
+    ? { text: "Avoimessa on tilaa", urgent: true }
+    : { text: "Avoin on täynnä", urgent: false };
+}
+
+function describeShared(shared: SharedPlaces): string {
+  const parts = [
+    `Avoin: ${shared.total - shared.remaining} / ${shared.total} otettu`,
+  ];
+  for (const holder of shared.holders) {
+    parts.push(`${holder.title} ${holder.count}`);
+  }
+  if (shared.remaining > 0) parts.push(`${shared.remaining} vapaana`);
+  return parts.join(", ");
+}
+
+function describeRow(row: QuotaBarRow): string {
   const parts = [`${row.title}: ${row.signupCount} ilmonnutta`];
   if (row.size === null) {
     parts.push("paikkamäärää ei ole rajattu");
   } else {
-    parts.push(`${row.freePlaces} kiintiön paikkaa vapaana`);
+    const taken = Math.min(row.signupCount, row.size);
+    parts.push(`kiintiössä ${taken} / ${row.size}`);
+    if (row.sharedPlacesUsed > 0) {
+      parts.push(`lisäksi ${row.sharedPlacesUsed} avoimilla paikoilla`);
+    }
   }
-  if (continues) parts.push("lisäksi yhteisiä paikkoja");
+  const note = sharedNote(row, row.freePlaces === 0);
+  if (note) parts.push(note.text.toLowerCase());
   return parts.join(", ");
 }

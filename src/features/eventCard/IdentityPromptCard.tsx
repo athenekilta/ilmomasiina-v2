@@ -61,7 +61,7 @@ export function IdentityPromptCard() {
       <div className="bg-brand-sand col-start-1 row-start-1 min-w-0 p-4 sm:p-5">
         <h2
           id="identity-prompt-title"
-          className="text-brand-secondary text-base font-extrabold tracking-wide uppercase sm:text-xl"
+          className="eyebrow text-brand-secondary sm:text-base"
         >
           {messages.identity.promptTitle}
         </h2>

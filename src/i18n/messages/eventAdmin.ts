@@ -138,6 +138,8 @@ export const eventAdminMessages = defineMessages({
       extraHelp:
         "Jokeripaikat ovat ylimääräisiä paikkoja, jotka eivät kuulu mihinkään kiintiöön. Niitä käytetään, jos oma kiintiö on täynnä, mutta jokeripaikoissa on vielä tilaa. Kiintiökohtaisesti valitaan, voiko kiintiö käyttää jokeripaikkoja heti, ilmoittautumisen päätyttyä tai ei lainkaan.",
       extraCapacity: "Jokeripaikat",
+      extraNeedsTwoQuotas:
+        "Yhden kiintiön tapahtumassa ei ole jokeripaikkoja: ne olisivat sen saman kiintiön paikkoja toisella nimellä. Lisää toinen kiintiö, jos haluat jokeripaikkoja.",
       total: (count: number) => `Paikkoja yhteensä: ${count}`,
     },
     questions: {
@@ -153,8 +155,7 @@ export const eventAdminMessages = defineMessages({
       },
       required: "Pakollinen",
       public: "Julkinen",
-      publicHelp:
-        "Julkiset vastaukset näkyvät julkisessa osallistujalistassa.",
+      publicHelp: "Julkiset vastaukset näkyvät julkisessa osallistujalistassa.",
       option: (number: number) => `Vaihtoehto ${number}`,
       removeOption: "Poista",
       addOption: "Lisää vaihtoehto",
@@ -210,7 +211,7 @@ export const eventAdminMessages = defineMessages({
       queued: (count: number) => `${count} jonossa`,
       position: "Sija",
       name: "Nimi",
-      signupTime: "Ilmoittautumisaika",
+      signupTime: "Aika",
       quota: "Kiintiö",
       unconfirmed: "Vahvistamaton ilmoittautuminen",
       hiddenUntilConfirmed:
@@ -401,6 +402,8 @@ export const eventAdminMessages = defineMessages({
       extraHelp:
         "Shared places are extra places that do not belong to a quota. They are used when a registration’s quota is full but shared places are still available. Each quota can use shared places immediately, after registration closes, or not at all.",
       extraCapacity: "Shared places",
+      extraNeedsTwoQuotas:
+        "An event with a single quota has no shared places: they would be that same quota’s places under another name. Add a second quota if you want shared places.",
       total: (count: number) => `Total places: ${count}`,
     },
     questions: {
@@ -472,11 +475,10 @@ export const eventAdminMessages = defineMessages({
       queued: (count: number) => `${count} in queue`,
       position: "Position",
       name: "Name",
-      signupTime: "Registration time",
+      signupTime: "Time",
       quota: "Quota",
       unconfirmed: "Unconfirmed registration",
-      hiddenUntilConfirmed:
-        "Registrant details are shown after confirmation.",
+      hiddenUntilConfirmed: "Registrant details are shown after confirmation.",
       noParticipants: "No participants yet.",
     },
     validation: {
