@@ -16,10 +16,15 @@ import type { EventFill } from "./eventFill";
  * -- and the same colour would mean a different group on every card, since
  * each event's quotas start at the top of the palette. Which quota you can
  * actually reach is the event page's job.
+ *
+ * The track carries the corner and clips what is inside it, so the two zones
+ * stay square and flush and the boundary between them — the one point the bar
+ * exists to show — is a straight edge rather than two curves meeting.
  */
 
 const BAR_HEIGHT = 23;
-const RADIUS = 7;
+/** Matches `rounded-control`: felt, not seen. */
+const TRACK_RADIUS = 2;
 /**
  * Enough for "18 / 30" and its padding. The filled zone never goes below it,
  * or the figure it carries would not fit inside it.
@@ -63,7 +68,8 @@ export function EventCapacityBar({
         className="-mr-4 flex items-center px-2 sm:-mr-5"
         style={{
           height: BAR_HEIGHT,
-          borderRadius: `${RADIUS}px 0 0 ${RADIUS}px`,
+          // Only the left end: the right one runs off the card on purpose.
+          borderRadius: `${TRACK_RADIUS}px 0 0 ${TRACK_RADIUS}px`,
           background: noLimitFade(fillColor),
         }}
         role="img"
@@ -82,8 +88,8 @@ export function EventCapacityBar({
 
   return (
     <div
-      className="relative flex w-full"
-      style={{ height: BAR_HEIGHT, borderRadius: RADIUS }}
+      className="flex w-full overflow-hidden"
+      style={{ height: BAR_HEIGHT, borderRadius: TRACK_RADIUS }}
       role="img"
       aria-label={`${signupCount} ilmonnutta, ${free} paikkaa vapaana`}
     >
@@ -92,40 +98,28 @@ export function EventCapacityBar({
         // the empty zone rather than giving an empty event a block of colour.
         <div
           className="flex items-center px-2"
-          style={{
-            flex: "1 1 auto",
-            height: "100%",
-            borderRadius: RADIUS,
-            background: paleColor,
-          }}
+          style={{ flex: "1 1 auto", background: paleColor }}
         >
           <Figure value={figure} light={false} />
         </div>
       ) : (
         <>
           <div
-            className="relative z-20 flex h-full items-center justify-end overflow-hidden px-2"
+            className="flex h-full items-center justify-end overflow-hidden px-2"
             style={{
               flex:
                 free === 0 ? "1 1 auto" : `0 1 ${(taken / capacity) * 100}%`,
               minWidth: MIN_FILLED,
-              borderRadius: RADIUS,
               background: fillColor,
             }}
           >
             <Figure value={figure} light />
           </div>
-
           {free > 0 && (
             <div
-              className="relative z-10 h-full"
+              className="h-full"
               style={{
-                // The notch costs RADIUS px and it is added back here, or the
-                // bar stops that far short of its own right edge.
-                flex: `0 1 calc(${(free / capacity) * 100}% + ${RADIUS}px)`,
-                minWidth: 2 * RADIUS,
-                marginLeft: -RADIUS,
-                borderRadius: `0 ${RADIUS}px ${RADIUS}px 0`,
+                flex: `0 1 ${(free / capacity) * 100}%`,
                 background: paleColor,
               }}
             />

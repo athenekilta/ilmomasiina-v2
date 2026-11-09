@@ -787,7 +787,7 @@ export default function EventPage() {
 
               {event?.badgeText && !registrationClosed && (
                 <span
-                  className={`label-caps shadow-card absolute top-4 right-4 z-10 max-w-[70%] truncate rounded-full px-3 py-1.5 sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
+                  className={`label-caps sticker absolute top-4 right-4 z-10 max-w-[70%] truncate px-3 py-1.5 sm:text-[0.8125rem] ${BADGE_TONE_CLASS[event.badgeTone]}`}
                 >
                   {event.badgeText}
                 </span>
@@ -797,10 +797,7 @@ export default function EventPage() {
                 <div className="absolute inset-x-0 bottom-0">
                   <div className="event-banner-fade" aria-hidden />
                   <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
-                    <div
-                      className="event-banner-blur backdrop-blur-[3px]"
-                      aria-hidden
-                    />
+                    <div className="event-banner-paper" aria-hidden />
                     <h1 className="display-title text-brand-dark text-3xl sm:text-4xl">
                       {event.title}
                     </h1>

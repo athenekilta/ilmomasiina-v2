@@ -57,7 +57,7 @@ export function Realtime() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed right-3 bottom-3 z-50 max-w-xs rounded-full border border-stone-200 bg-white/95 px-3 py-1.5 text-xs text-stone-600 shadow-sm"
+      className="fixed right-3 bottom-3 z-50 max-w-xs border border-stone-200 bg-white/95 px-3 py-1.5 text-xs text-stone-600 shadow-sm"
       title={messages.retryHint}
     >
       <span

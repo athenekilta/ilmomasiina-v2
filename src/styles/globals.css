@@ -42,8 +42,18 @@
     and a colour utility on top of the voice — not a fourth voice.
   */
 
-  /* The subject of the page: the event's own name, "Tapahtumat", "athene.".
-     Never a section heading, and never more than one per screen. */
+  /*
+    The display voice is for NAMES, and for nothing else.
+
+    Two of them exist: the product's, in the header, and an event's, on its
+    own page. A heading that is a label ("Tapahtumat") or an action ("Muokkaa
+    tapahtumaa") is not a name, and setting one in this face was what made the
+    front page read as if it had two wordmarks stacked on top of each other.
+    Those are signposts and they take `.eyebrow`, whatever their size.
+
+    Kept rare on purpose: a face used for one thing says that thing is the
+    subject. A face used for every heading says nothing at all.
+  */
   .display-title {
     @apply font-display leading-[1.05] font-normal tracking-normal normal-case italic;
     overflow-wrap: anywhere;
@@ -60,6 +70,36 @@
      at a heading's size and a problem at twelve pixels in a table header. */
   .label-caps {
     @apply font-primary text-xs leading-tight font-bold tracking-[0.08em] uppercase;
+  }
+
+  /*
+    A note laid on a picture, the way the guild's site lays its asides on a
+    photo: a flat rectangle, a degree or two off true, with a shadow under it.
+
+    The tilt is the whole mechanism. Set square, the same rectangle reads as a
+    piece of the layout that happens to overlap the image; set a degree off,
+    it reads as something placed on top of it. A pill did the same job by
+    being a shape nothing else on the page is — which is also why it looked
+    like a UI chip from another product.
+
+    Straightened on hover is deliberate on a card: the tag is on a link, and
+    the picture moving under the cursor is what says so.
+  */
+  .sticker {
+    @apply shadow-card rotate-[-1.75deg];
+    border-radius: 0;
+    transition: transform 150ms ease;
+  }
+
+  .group:hover .sticker,
+  a:hover > .sticker {
+    @apply rotate-0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sticker {
+      transition: none;
+    }
   }
 
   /* Event names are proper names, so they keep the casing their organiser
@@ -136,14 +176,14 @@
        over the image. The separate strip above is what used to carry the
        ramp, and splitting it in two is what made it step. */
     --event-overlay-fade-height: 0px;
-    --event-overlay-tint: var(--event-overlay-color);
-    --event-overlay-caption-lead: 26px;
-    --event-overlay-caption-fade: 26px;
+    --event-overlay-caption-lead: 44px;
+    --event-overlay-caption-fade: 38px;
   }
 
   .event-banner--detail {
     /* The detail title is larger, so the band has to reach that bit higher. */
-    --event-overlay-caption-lead: 28px;
+    --event-overlay-caption-lead: 54px;
+    --event-overlay-caption-fade: 46px;
   }
 
   .event-banner--muted {
@@ -179,38 +219,49 @@
     padding-top: var(--event-overlay-caption-lead);
   }
 
-  /* A real element rather than a pseudo: Tailwind's backdrop-blur utility is
-     what actually survives the build here, and a utility needs a class on a
-     node. The veil and the mask stay in CSS because they are not utilities we
-     want to spell out in markup. */
-  .event-banner-blur {
+  /*
+    The strip of paper the title sits on.
+
+    It used to be a frosted panel: a translucent white veil over a
+    `backdrop-blur`. Blur is the wrong tool here. It has to end somewhere, and
+    wherever it ends it leaves a seam across the picture — on an illustration
+    with hard edges that seam reads as a smudge someone left behind, which is
+    the first thing the eye finds on the page.
+
+    So the band is opaque, in the guild's own paper colour, and it melts into
+    the image instead of ending. The ramp is sampled from 3t² − 2t³ rather
+    than drawn straight: a linear ramp has a corner at each end, and a corner
+    in a gradient is visible as a line even when the colours either side of it
+    are not. Eleven stops is enough that nothing bands.
+
+    What this buys, beyond losing the smudge: the title is always on a flat,
+    known colour, so its contrast no longer depends on what happens to be in
+    the photograph behind it.
+  */
+  .event-banner-paper {
     position: absolute;
     inset: 0;
     z-index: 0;
-    /* White carries the contrast; the tint on top of it keeps the band from
-       reading as a grey card pasted over the picture. `--event-overlay-tint`
-       is the event's own colour when one is known — nothing computes a
-       dominant colour from the image yet, so it falls back to the brand sand
-       and every banner gets the same warmth. */
-    background:
-      linear-gradient(
-        color-mix(in srgb, var(--event-overlay-tint) 24%, transparent),
-        color-mix(in srgb, var(--event-overlay-tint) 24%, transparent)
-      ),
-      rgb(255 255 255 / 0.6);
-    -webkit-mask-image: linear-gradient(
+    background: var(--event-overlay-color);
+    --event-overlay-ramp: linear-gradient(
       to bottom,
-      transparent 0,
-      #000 var(--event-overlay-caption-fade)
+      rgb(0 0 0 / 0) 0,
+      rgb(0 0 0 / 0.028) calc(var(--event-overlay-caption-fade) * 0.1),
+      rgb(0 0 0 / 0.104) calc(var(--event-overlay-caption-fade) * 0.2),
+      rgb(0 0 0 / 0.216) calc(var(--event-overlay-caption-fade) * 0.3),
+      rgb(0 0 0 / 0.352) calc(var(--event-overlay-caption-fade) * 0.4),
+      rgb(0 0 0 / 0.5) calc(var(--event-overlay-caption-fade) * 0.5),
+      rgb(0 0 0 / 0.648) calc(var(--event-overlay-caption-fade) * 0.6),
+      rgb(0 0 0 / 0.784) calc(var(--event-overlay-caption-fade) * 0.7),
+      rgb(0 0 0 / 0.896) calc(var(--event-overlay-caption-fade) * 0.8),
+      rgb(0 0 0 / 0.972) calc(var(--event-overlay-caption-fade) * 0.9),
+      rgb(0 0 0 / 1) var(--event-overlay-caption-fade)
     );
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0,
-      #000 var(--event-overlay-caption-fade)
-    );
+    -webkit-mask-image: var(--event-overlay-ramp);
+    mask-image: var(--event-overlay-ramp);
   }
 
-  .event-banner-caption > *:not(.event-banner-blur) {
+  .event-banner-caption > *:not(.event-banner-paper) {
     position: relative;
     z-index: 1;
   }

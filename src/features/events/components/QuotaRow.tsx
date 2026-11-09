@@ -169,7 +169,7 @@ export function QuotaRow({
               )}
             </div>
             <div
-              className="h-2 overflow-hidden rounded-full bg-stone-200"
+              className="h-2 overflow-hidden bg-stone-200"
               role="img"
               aria-label={
                 quota.size === null
@@ -178,7 +178,7 @@ export function QuotaRow({
               }
             >
               <div
-                className="bg-brand-primary h-full rounded-full"
+                className="bg-brand-primary h-full"
                 style={{ width: `${fillPercentage}%` }}
               />
             </div>

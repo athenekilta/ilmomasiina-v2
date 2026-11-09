@@ -320,7 +320,7 @@ function EditSignup() {
           </Link>
 
           <header className="mb-6">
-            <h1 className="display-title text-brand-dark text-2xl sm:text-3xl">
+            <h1 className="eyebrow text-brand-secondary sm:text-base">
               {isSignupEditingClosed
                 ? messages.signup.detailsTitle
                 : signup.completedAt === null
@@ -619,7 +619,7 @@ function EditSignup() {
                   <p className="text-center text-xs text-stone-500 sm:text-left">
                     <button
                       type="button"
-                      className="text-danger font-medium underline-offset-2 transition-colors hover:text-rose-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                      className="text-danger font-medium underline-offset-2 transition-colors hover:text-danger-800 hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={
                         deleteMutation.isPending || isSubmitting || !!error

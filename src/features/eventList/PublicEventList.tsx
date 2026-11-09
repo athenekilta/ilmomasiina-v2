@@ -17,7 +17,7 @@ export function PublicEventList({
   return (
     <>
       <header className="mt-2 mb-4 w-full">
-        <h1 className="display-title text-brand-secondary px-1 text-4xl sm:text-5xl">
+        <h1 className="eyebrow text-brand-secondary px-1 sm:text-base">
           {messages.list.title}
         </h1>
       </header>

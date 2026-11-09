@@ -25,10 +25,16 @@ import { getQuotaColor } from "./quotaColors";
  * The component owns its white card because the 1.5px wall around each bar is
  * painted in the card's own background colour. Moving it onto a tinted
  * surface means changing SURFACE to match.
+ *
+ * The track carries the corner and clips what is inside it, so the zones
+ * themselves stay square and flush. Rounding each zone instead was what used
+ * to open a lens-shaped hole exactly at the boundary between taken and free
+ * -- the one place in the bar a reader actually looks.
  */
 
 const BAR_HEIGHT = 23;
-const RADIUS = 7;
+/** Matches `rounded-control`: felt, not seen. */
+const TRACK_RADIUS = 2;
 /**
  * The hairline around each bar, in the card's own background colour — so it
  * has to move with the card: the signup column sits on the page panel's white.
@@ -36,9 +42,17 @@ const RADIUS = 7;
 const WALL = 1.5;
 const SURFACE = "#ffffff";
 const GREY = "#d8d3cc";
-/** The hairline between two quotas inside the open bar. Thinner than the
- *  wall around the bar: it separates rather than encloses. */
-const SEAM = 1;
+/**
+ * The cut between two quotas inside the open bar.
+ *
+ * This is the only place in the whole component where two full-strength
+ * colours meet, and a straight hairline between them was not enough to see:
+ * at a glance the bar read as one long block that happened to change hue.
+ * So the cut is wider than a hairline and leans, which no other edge on the
+ * page does — the eye finds it before it has read anything.
+ */
+const SEAM = 3;
+const SEAM_LEAN = "-14deg";
 const FIGURE = "#5c564f";
 /**
  * Enough for "22 / 40" and its padding. The filled zone never goes below it,
@@ -49,36 +63,25 @@ const FIGURE = "#5c564f";
 const MIN_FILLED = 66;
 
 /**
- * Only the first zone has a rounded left end. The ones after it are square on
- * the left and slide under the zone before them, so that zone's rounded right
- * end cuts the notch. Round both ends of both and a lens-shaped hole opens
- * between the two curves.
- *
- * The notch costs RADIUS px, which is added back into the zone's basis:
- * otherwise every seam shortens the bar and the last zone stops short of the
- * bar's own right edge.
+ * A zone of the bar: its share of the width, or the rest of it when `basis` is
+ * null. Zones sit flush against each other and add up to the whole track, so
+ * nothing here has to compensate for anything.
  */
 function zoneStyle(
-  index: number,
   background: string,
   basis: string | null,
   minWidth: number,
 ): React.CSSProperties {
   return {
-    flex:
-      basis === null
-        ? "1 1 auto"
-        : index === 0
-          ? `0 1 ${basis}`
-          : `0 1 calc(${basis} + ${RADIUS}px)`,
+    flex: basis === null ? "1 1 auto" : `0 1 ${basis}`,
     minWidth,
     height: "100%",
     background,
-    borderRadius: index === 0 ? RADIUS : `0 ${RADIUS}px ${RADIUS}px 0`,
-    marginLeft: index === 0 ? 0 : -RADIUS,
-    zIndex: 30 - index,
   };
 }
+
+/** A sliver of a zone still has to be visible as one. */
+const MIN_ZONE = 4;
 
 const share = (part: number, whole: number) => `${(part / whole) * 100}%`;
 
@@ -128,7 +131,8 @@ function Track({
       aria-label={label}
       style={{
         height: BAR_HEIGHT,
-        borderRadius: RADIUS,
+        borderRadius: TRACK_RADIUS,
+        overflow: "hidden",
         boxShadow: `0 0 0 ${WALL}px ${SURFACE}`,
       }}
     >
@@ -172,7 +176,7 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
           // 66px block of colour with nobody in it.
           <div
             className="flex items-center px-2"
-            style={zoneStyle(0, color.pale, null, 2 * RADIUS)}
+            style={zoneStyle(color.pale, null, MIN_ZONE)}
           >
             <Figure value={figure} light={false} />
           </div>
@@ -181,7 +185,6 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
             <div
               className="flex items-center justify-end overflow-hidden px-2"
               style={zoneStyle(
-                0,
                 color.fill,
                 size === null || free === 0 ? null : share(taken, size),
                 MIN_FILLED,
@@ -190,9 +193,7 @@ function QuotaBarItem({ row }: { row: QuotaBarRow }) {
               <Figure value={figure} light />
             </div>
             {free > 0 && size !== null && (
-              <div
-                style={zoneStyle(1, color.pale, share(free, size), 2 * RADIUS)}
-              />
+              <div style={zoneStyle(color.pale, share(free, size), MIN_ZONE)} />
             )}
           </>
         )}
@@ -242,7 +243,7 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
         {taken === 0 ? (
           <div
             className="flex items-center px-2"
-            style={zoneStyle(0, GREY, null, 2 * RADIUS)}
+            style={zoneStyle(GREY, null, MIN_ZONE)}
           >
             <Figure value={figure} light={false} />
           </div>
@@ -254,39 +255,45 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
                 flex: `0 1 ${share(taken, shared.total)}`,
                 minWidth: MIN_FILLED,
                 height: "100%",
-                zIndex: 30,
               }}
             >
               {shared.holders
                 .filter((holder) => holder.count > 0)
-                .map((holder, index) => (
+                .map((holder, index, holders) => (
                   <div
                     key={holder.id}
-                    style={{
-                      ...zoneStyle(
-                        index,
-                        getQuotaColor(holder.colorIndex).fill,
-                        share(holder.count, taken),
-                        2 * RADIUS,
-                      ),
-                      // A hairline at every seam inside this bar, in the
-                      // pool's own grey rather than the card's white: it
-                      // reads as the open places showing through between two
-                      // quotas, not as the card cutting the bar in half.
-                      // Elsewhere a seam divides a colour from its own pale
-                      // and needs nothing; here two quotas' fills meet at
-                      // full strength and the notch alone is nearly
-                      // invisible. Offset rather than spread, so it traces
-                      // the rounded end and paints over the zone beneath
-                      // instead of eating into this one.
-                      boxShadow: `${SEAM}px 0 0 0 ${GREY}`,
-                    }}
-                  />
+                    className="relative"
+                    style={zoneStyle(
+                      getQuotaColor(holder.colorIndex).fill,
+                      share(holder.count, taken),
+                      MIN_ZONE,
+                    )}
+                  >
+                    {/* The cut is in the pool's own grey, not the card's
+                        white: between two quotas sitting in the open places
+                        it should read as the open places showing through,
+                        not as the card slicing the bar in half. Laid over
+                        the boundary rather than inside either zone, so
+                        neither quota's share is measured a pixel short. */}
+                    {index < holders.length - 1 && (
+                      <span
+                        aria-hidden
+                        className="absolute inset-y-0"
+                        style={{
+                          right: -SEAM / 2,
+                          width: SEAM,
+                          background: GREY,
+                          transform: `skewX(${SEAM_LEAN})`,
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
-              {/* Above the holders: they carry z-indexes of their own, and a
-                  figure below them is simply invisible. */}
+              {/* Over the holders rather than inside the last of them: the
+                  figure counts the whole filled part, not one quota's share
+                  of it. */}
               <span
-                className="absolute top-0 bottom-0 z-50 flex items-center pr-2"
+                className="absolute top-0 bottom-0 z-10 flex items-center pr-2"
                 style={{ right: 0 }}
               >
                 <Figure value={figure} light />
@@ -295,10 +302,9 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
             {shared.remaining > 0 && (
               <div
                 style={zoneStyle(
-                  1,
                   GREY,
                   share(shared.remaining, shared.total),
-                  2 * RADIUS,
+                  MIN_ZONE,
                 )}
               />
             )}
@@ -313,7 +319,7 @@ function OpenBar({ shared }: { shared: SharedPlaces }) {
           {shared.holders.map((holder) => (
             <span key={holder.id} className="flex items-center gap-1.5">
               <span
-                className="size-2 shrink-0 rounded-[2px]"
+                className="size-2 shrink-0"
                 style={{ background: getQuotaColor(holder.colorIndex).fill }}
               />
               <span className="truncate">{holder.title}</span>

@@ -25,13 +25,13 @@ export function UsersTable({
       <table className="surface-panel my-4 min-w-full divide-y divide-stone-200">
         <thead className="bg-stone-100">
           <tr>
-            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
+            <th className="label-caps text-brand-dark px-3 py-2 text-left">
               {messages.columns.name}
             </th>
-            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
+            <th className="label-caps text-brand-dark px-3 py-2 text-left">
               {messages.columns.email}
             </th>
-            <th className="text-brand-dark px-3 py-2 text-left text-xs font-semibold tracking-wide uppercase">
+            <th className="label-caps text-brand-dark px-3 py-2 text-left">
               {messages.columns.role}
             </th>
           </tr>

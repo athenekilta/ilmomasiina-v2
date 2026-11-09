@@ -111,7 +111,13 @@ function ImageControls({
         <ConfirmationDialog
           title={messages.image.removeTitle}
           message={removalChanged ? messages.image.changed : undefined}
-          confirmLabel={!selection.hasImage ? messages.image.close : removalChanged ? messages.image.checkCurrent : messages.image.remove}
+          confirmLabel={
+            !selection.hasImage
+              ? messages.image.close
+              : removalChanged
+                ? messages.image.checkCurrent
+                : messages.image.remove
+          }
           pending={disabled}
           onCancelAction={() => {
             setRemovalTarget(undefined);
@@ -119,8 +125,14 @@ function ImageControls({
           }}
           onConfirmAction={() => {
             if (disabled) return;
-            if (!selection.hasImage) { setRemovalTarget(undefined); return; }
-            if (removalChanged) { setRemovalTarget(currentTarget); return; }
+            if (!selection.hasImage) {
+              setRemovalTarget(undefined);
+              return;
+            }
+            if (removalChanged) {
+              setRemovalTarget(currentTarget);
+              return;
+            }
             setRemovalTarget(undefined);
             selection.removeImage();
           }}
@@ -163,12 +175,16 @@ export function EventImageBanner({
             selection.image?.url ??
             getEventImage(eventId ?? 0, selection.savedImageId)
           }
-          alt={title?.trim() ? messages.image.previewFor(title.trim()) : messages.image.preview}
+          alt={
+            title?.trim()
+              ? messages.image.previewFor(title.trim())
+              : messages.image.preview
+          }
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         {badgeText?.trim() && (
           <span
-            className={`shadow-card absolute top-4 right-4 max-w-[70%] truncate rounded-full px-3 py-1.5 text-xs font-bold tracking-wide uppercase sm:text-[0.8125rem] ${BADGE_TONE_CLASS[badgeTone]}`}
+            className={`label-caps sticker absolute top-4 right-4 max-w-[70%] truncate px-3 py-1.5 sm:text-[0.8125rem] ${BADGE_TONE_CLASS[badgeTone]}`}
           >
             {badgeText.trim()}
           </span>

@@ -133,7 +133,7 @@ export function Quotas({
   );
 
   return (
-    <FieldSet title={messages.quotas.title}>
+    <FieldSet title={messages.quotas.title} level="section">
       <div className="mt-2 mb-5 flex flex-row gap-4">
         <Button onClick={() => createQuota()} type="button">
           {messages.quotas.add}
@@ -141,7 +141,7 @@ export function Quotas({
       </div>
 
       {errors.Quotas && (
-        <div className="rounded-inner mb-4 flex items-start gap-3 border border-rose-400 bg-rose-50 p-3">
+        <div className="rounded-inner mb-4 flex items-start gap-3 border border-danger-400 bg-danger-50 p-3">
           <svg
             className="text-danger mt-0.5 h-5 w-5 shrink-0"
             viewBox="0 0 20 20"
@@ -153,7 +153,7 @@ export function Quotas({
               clipRule="evenodd"
             />
           </svg>
-          <p className="text-sm text-rose-800">
+          <p className="text-sm text-danger-800">
             {typeof errors.Quotas.message === "string"
               ? errors.Quotas.message
               : messages.quotas.invalid}
@@ -210,7 +210,7 @@ export function Quotas({
         </Droppable>
       </DragDropContext>
 
-      <div className="rounded-inner my-5 bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="surface-muted text-brand-dark my-5 p-4 text-sm">
         <p>{messages.quotas.extraHelp}</p>
         {hasSharedPlaces ? (
           <div className="mt-4 max-w-xs">

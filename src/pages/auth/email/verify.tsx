@@ -11,7 +11,7 @@ export default function VerifyEmailPage() {
       <PageHead title={messages.emailVerification.title} />
       <Layout>
         <div className="surface-panel mx-auto mt-8 flex w-full max-w-lg flex-col items-center gap-6 p-6 sm:mt-10 sm:p-8">
-          <h1 className="text-primary-950 text-4xl font-semibold tracking-tight">
+          <h1 className="eyebrow text-brand-secondary sm:text-base">
             {messages.emailVerification.title}
           </h1>
           <EmailVerifier />

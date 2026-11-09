@@ -63,7 +63,7 @@ export function BasicInfoFields({
         <div>
           <h2
             id={`translated-content-${activeLanguage}`}
-            className="text-brand-dark text-lg font-semibold"
+            className="eyebrow text-brand-secondary"
           >
             {messages.languages.section(languageName)}
           </h2>
@@ -115,11 +115,7 @@ export function BasicInfoFields({
           />
         </FieldSet>
         <FieldSet title={messages.form.verificationEmail}>
-          <TextArea
-            {...register(verificationEmailName)}
-            rows={5}
-            fullWidth
-          />
+          <TextArea {...register(verificationEmailName)} rows={5} fullWidth />
         </FieldSet>
       </section>
 
@@ -127,10 +123,7 @@ export function BasicInfoFields({
         aria-labelledby="shared-event-content"
         className="flex flex-col gap-6"
       >
-        <h2
-          id="shared-event-content"
-          className="text-brand-dark text-lg font-semibold"
-        >
+        <h2 id="shared-event-content" className="eyebrow text-brand-secondary">
           {messages.basic.sharedSection}
         </h2>
         <FieldSet title={messages.basic.eventTime}>
