@@ -134,6 +134,7 @@ export const publicEventsMessages = defineMessages({
       removeDemoSignup: (title: string) =>
         `Poista demoilmo kiintiöstä ${title}`,
       addDemoSignup: (title: string) => `Lisää demoilmo kiintiöön ${title}`,
+
       joinQueue: "Ilmoa jonoon",
       signUp: "Ilmoa",
       conflictTitle: "Vaihda kiintiötä?",
@@ -360,6 +361,7 @@ export const publicEventsMessages = defineMessages({
       removeDemoSignup: (title: string) =>
         `Remove demo registration from ${title}`,
       addDemoSignup: (title: string) => `Add demo registration to ${title}`,
+
       joinQueue: "Join queue",
       signUp: "Register",
       conflictTitle: "Change quota?",

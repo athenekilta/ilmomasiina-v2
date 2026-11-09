@@ -90,6 +90,19 @@ npx prisma generate
 npx prisma migrate deploy
 ```
 
+## Demo signup controls
+
+The event page's +1/−1 demo signup buttons are disabled by default. To enable
+both the buttons and their server mutations during development, add to `.env`:
+
+```dotenv
+NEXT_PUBLIC_ENABLE_DEMO_CONTROLS=true
+```
+
+Set it to `false` (or remove it) to disable them. Restart `npm run dev` after
+changing the setting. These controls remain disabled in production regardless
+of the flag. This public flag contains no secrets.
+
 ## Scheduled task worker
 
 The worker removes expired signup reservations and finalizes allocations once per minute. Run it alongside the web server:

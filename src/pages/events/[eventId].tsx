@@ -2,6 +2,7 @@ import { useRouter } from "next/router";
 import { api } from "@/utils/api";
 import { Layout } from "@/features/layout/Layout";
 import { Button } from "@/components/Button";
+import { env } from "@/env/client.mjs";
 import { ParticipantsTable } from "@/features/events/components/ParticipantsTable";
 import { MarkdownContent } from "@/features/events/components/MarkdownContent";
 import { PageHead } from "@/features/layout/PageHead";
@@ -95,7 +96,9 @@ function Registration({
   const removeDemoSignupMutation = api.signups.removeDemoSignup.useMutation({
     onError: () => alert.error(messages.registration.signupFailed),
   });
-  const showDemoControls = process.env.NODE_ENV === "development";
+  const showDemoControls =
+    process.env.NODE_ENV === "development" &&
+    env.NEXT_PUBLIC_ENABLE_DEMO_CONTROLS === "true";
   const signupStatus = signupStatusQuery.data;
   const hasExistingSignup =
     signupStatusQuery.isPending ||
@@ -237,6 +240,7 @@ function Registration({
               )}
             </p>
           </div>
+
           {isEditingUserData && !isRegistrationClosed ? (
             <form
               className="surface-muted -mx-[5px] p-4 sm:mx-0"
@@ -747,7 +751,7 @@ export default function EventPage() {
     <>
       <PageHead title={event?.title || messages.detail.loading} />
       <Layout>
-        <div className="mx-auto w-full max-w-5xl min-w-0">
+        <div className="w-full min-w-0">
           {error && (
             <div role="alert" className="surface-muted mb-4 p-4 text-sm">
               {messages.detail.staleData}

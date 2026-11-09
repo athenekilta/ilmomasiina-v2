@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { env } from "@/env/client.mjs";
 import { router } from "../trpc/trpc";
 import { RegistrationDate } from "@/features/events/utils/utils";
 import { publicProcedure } from "../trpc/procedures/publicProcedure";
@@ -105,7 +106,10 @@ function getSignupPlacement(signups: SignupPlacementItem[], signupId: string) {
 }
 
 function ensureDevelopment() {
-  if (process.env.NODE_ENV !== "development") {
+  if (
+    process.env.NODE_ENV !== "development" ||
+    env.NEXT_PUBLIC_ENABLE_DEMO_CONTROLS !== "true"
+  ) {
     throw new TRPCError({ code: "NOT_FOUND" });
   }
 }

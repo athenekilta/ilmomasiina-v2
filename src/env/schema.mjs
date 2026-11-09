@@ -36,6 +36,7 @@ export const serverSchema = z.object({
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
+  NEXT_PUBLIC_ENABLE_DEMO_CONTROLS: z.enum(["false", "true"]).default("false"),
   NEXT_PUBLIC_DEV_TRPC_LOG: z
     .enum(["false", "true", "up", "down", "error"])
     .optional()
@@ -57,6 +58,9 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  NEXT_PUBLIC_ENABLE_DEMO_CONTROLS: process.env.NEXT_PUBLIC_ENABLE_DEMO_CONTROLS,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   NEXT_PUBLIC_DEV_TRPC_LOG: process.env.NEXT_PUBLIC_DEV_TRPC_LOG,
