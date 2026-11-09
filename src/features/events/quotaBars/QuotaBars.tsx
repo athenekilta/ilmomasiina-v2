@@ -42,16 +42,7 @@ const TRACK_RADIUS = 2;
 const WALL = 1.5;
 const SURFACE = "#ffffff";
 const GREY = "#d8d3cc";
-/**
- * The cut between two quotas inside the shared-places bar.
- *
- * This is the only place in the whole component where two full-strength
- * colours meet, and a straight hairline between them was not enough to see:
- * at a glance the bar read as one long block that happened to change hue.
- * So the cut is wider than a hairline and leans, which no other edge on the
- * page does — the eye finds it before it has read anything.
- */
-const SEAM = 3;
+/** Adjacent quota colours meet along a diagonal with a thin separator. */
 const SEAM_LEAN = "-14deg";
 const FIGURE = "#5c564f";
 /**
@@ -250,7 +241,7 @@ function SharedPlacesBar({ shared }: { shared: SharedPlaces }) {
         ) : (
           <>
             <div
-              className="relative flex"
+              className="relative flex overflow-hidden"
               style={{
                 flex: `0 1 ${share(taken, shared.total)}`,
                 minWidth: MIN_FILLED,
@@ -264,29 +255,27 @@ function SharedPlacesBar({ shared }: { shared: SharedPlaces }) {
                     key={holder.id}
                     className="relative"
                     style={zoneStyle(
-                      getQuotaColor(holder.colorIndex).fill,
+                      "transparent",
                       share(holder.count, taken),
                       MIN_ZONE,
                     )}
                   >
-                    {/* The cut is in the pool's own grey, not the card's
-                        white: between two quotas sitting in the shared
-                        places it should read as the pool showing through,
-                        not as the card slicing the bar in half. Laid over
-                        the boundary rather than inside either zone, so
-                        neither quota's share is measured a pixel short. */}
-                    {index < holders.length - 1 && (
-                      <span
-                        aria-hidden
-                        className="absolute inset-y-0"
-                        style={{
-                          right: -SEAM / 2,
-                          width: SEAM,
-                          background: GREY,
-                          transform: `skewX(${SEAM_LEAN})`,
-                        }}
-                      />
-                    )}
+                    {/* Extend the outer ends beyond the clipped group to
+                        keep them square while internal joins stay diagonal. */}
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-0"
+                      style={{
+                        left: index === 0 ? -BAR_HEIGHT : 0,
+                        right: index === holders.length - 1 ? -BAR_HEIGHT : 0,
+                        background: getQuotaColor(holder.colorIndex).fill,
+                        borderRight:
+                          index < holders.length - 1
+                            ? `1px solid ${GREY}`
+                            : undefined,
+                        transform: `skewX(${SEAM_LEAN})`,
+                      }}
+                    />
                   </div>
                 ))}
               {/* Over the holders rather than inside the last of them: the
