@@ -24,15 +24,18 @@
   }
 }
 
-/* Shared surfaces: minimal white cards on the beige page background, no
-   glass / wash effects. `rounded-card` (not `rounded-control`) so panels
-   across the app match the event cards on the front page — controls inside
-   them keep the tighter radius. */
+/* Paper-toned surfaces echo the website without irregular edges that could
+   clip form controls, event images, or keyboard focus indicators. */
 @layer components {
+  /* Event names share typography across cards, details, and signup views. */
+  .event-title {
+    @apply font-primary min-w-0 font-bold leading-snug tracking-normal normal-case not-italic;
+    overflow-wrap: anywhere;
+  }
+
   .surface-panel {
-    /* Border only, no shadow — same treatment as the event cards on the
-       front page, so panels across the app sit on the page the same way. */
-    @apply rounded-card border border-stone-200 bg-white;
+    @apply rounded-card border border-brand-paperShadow bg-brand-light;
+    box-shadow: 3px 4px 0 theme("colors.brand.paperShadow");
   }
 
   /* Nested inside a panel: the page background colour, one radius step

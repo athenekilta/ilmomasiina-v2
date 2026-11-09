@@ -16,10 +16,12 @@ export default class MyDocument extends Document {
     return (
       <Html lang={locale}>
         <Head>
-          <link href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-          <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Lexend:wght@400;500;600;700;800&family=Lexend+Exa:wght@800&display=swap"
+            rel="stylesheet"
+          />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
           <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
           <meta charSet="utf-8" />

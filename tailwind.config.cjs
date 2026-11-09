@@ -2,10 +2,11 @@
 const colors = require("tailwindcss/colors");
 const plugin = require("tailwindcss/plugin");
 
-const BRAND_GREEN = "#5E8C63";
+const BRAND_GREEN = "#5E8C64";
 const BRAND_DARKGREEN = "#355E3B";
-const BRAND_LIGHT = "#FCFAF7";
+const BRAND_LIGHT = "#FAFAFA";
 const BRAND_BEIGE = "#F4EEE7";
+const BRAND_PAPER_SHADOW = "#ECE4DB";
 const BRAND_DARK = "#333333";
 const BRAND_DANGER = "#E07A5F";
 const BRAND_LIME = "#DDE8B8";
@@ -26,8 +27,9 @@ module.exports = {
         85: "0.85",
       },
       fontFamily: {
-        primary: ["Open Sans", "sans-serif"],
-        secondary: ["Open Sans", "sans-serif"],
+        primary: ["Lexend", "sans-serif"],
+        secondary: ["Lexend Exa", "sans-serif"],
+        display: ["DM Serif Display", "Georgia", "serif"],
       },
       boxShadow: {
         soft: "0 1px 2px rgba(51, 51, 51, 0.05), 0 1px 3px rgba(51, 51, 51, 0.08)",
@@ -52,6 +54,7 @@ module.exports = {
           green: BRAND_GREEN,
           darkgreen: BRAND_DARKGREEN,
           beige: BRAND_BEIGE,
+                    paperShadow: BRAND_PAPER_SHADOW,
           light: BRAND_LIGHT,
           dark: BRAND_DARK,
           danger: BRAND_DANGER,

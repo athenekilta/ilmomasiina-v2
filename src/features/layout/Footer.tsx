@@ -20,7 +20,7 @@ export function Footer() {
   const isLoggedIn = isClient && !!user.data;
 
   return (
-    <footer className="bg-brand-dark flex flex-wrap items-center justify-center gap-x-1 gap-y-2 px-3 py-3 text-center text-white sm:py-4">
+    <footer className="bg-brand-primary flex flex-wrap items-center justify-center gap-x-1 gap-y-2 px-3 py-3 text-center text-white sm:py-4">
       {isLoggedIn ? (
         <ManagementMenu />
       ) : (
@@ -28,13 +28,13 @@ export function Footer() {
           {messages.management}
         </Link>
       )}
-      <span className="text-stone-500 select-none" aria-hidden>
+      <span className="text-white/60 select-none" aria-hidden>
         ·
       </span>
       <a href="https://athene.fi/hallinto/materiaalit/" className={linkClass}>
         {messages.privacy}
       </a>
-      <span className="text-stone-500 select-none" aria-hidden>
+      <span className="text-white/60 select-none" aria-hidden>
         ·
       </span>
       <a href="https://athene.fi" className={linkClass}>

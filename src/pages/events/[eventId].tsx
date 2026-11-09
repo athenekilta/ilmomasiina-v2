@@ -795,7 +795,7 @@ export default function EventPage() {
                 <div className="absolute inset-x-0 bottom-0">
                   <div className="event-banner-fade" aria-hidden />
                   <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
-                    <h1 className="text-brand-dark text-2xl font-extrabold uppercase sm:text-3xl">
+                    <h1 className="event-title text-brand-dark text-2xl sm:text-3xl">
                       {event.title}
                     </h1>
                     {event.draft && (

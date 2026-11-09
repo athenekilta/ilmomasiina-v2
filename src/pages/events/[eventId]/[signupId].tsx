@@ -326,7 +326,7 @@ function EditSignup() {
                   ? messages.signup.finishTitle
                   : messages.signup.editTitle}
             </h1>
-            <p className="text-brand-primary mt-2 text-sm font-semibold sm:text-base">
+            <p className="event-title text-brand-secondary mt-2 text-base sm:text-lg">
               {signup.event.title}
             </p>
           </header>

@@ -73,7 +73,7 @@ export function EventCard({
   const isClosed = registration.state === "closed";
 
   return (
-    <article className="rounded-card flex h-full w-full min-w-0 flex-col overflow-hidden border border-stone-200 bg-white">
+    <article className="surface-panel flex h-full w-full min-w-0 flex-col overflow-hidden">
       <Link
         href={routes.app.events.event(event.id)}
         className="focus-visible:ring-brand-secondary flex min-w-0 flex-1 flex-col focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden"
@@ -131,7 +131,7 @@ export function EventCard({
             <div className="event-banner-fade" aria-hidden />
             <div className="event-banner-caption px-4 pb-3 sm:px-5">
               <h2
-                className={`line-clamp-2 text-base font-bold tracking-tight sm:text-lg ${
+                className={`event-title line-clamp-2 text-base sm:text-lg ${
                   isClosed ? "text-stone-600" : "text-brand-secondary"
                 }`}
               >
