@@ -7,6 +7,7 @@ const BRAND_DARKGREEN = "#355E3B";
 const BRAND_LIGHT = "#FAFAFA";
 const BRAND_BEIGE = "#F4EEE7";
 const BRAND_PAPER_SHADOW = "#ECE4DB";
+
 const BRAND_DARK = "#333333";
 const BRAND_DANGER = "#E07A5F";
 const BRAND_LIME = "#DDE8B8";
@@ -54,7 +55,8 @@ module.exports = {
           green: BRAND_GREEN,
           darkgreen: BRAND_DARKGREEN,
           beige: BRAND_BEIGE,
-                    paperShadow: BRAND_PAPER_SHADOW,
+          paperShadow: BRAND_PAPER_SHADOW,
+
           light: BRAND_LIGHT,
           dark: BRAND_DARK,
           danger: BRAND_DANGER,

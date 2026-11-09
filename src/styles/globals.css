@@ -34,12 +34,11 @@
   }
 
   .surface-panel {
-    @apply rounded-card border border-brand-paperShadow bg-brand-light;
-    box-shadow: 3px 4px 0 theme("colors.brand.paperShadow");
+    @apply rounded-card border border-brand-paperShadow bg-white;
   }
 
-  /* Nested inside a panel: the page background colour, one radius step
-     tighter than the card around it. */
+  /* Warm inset surfaces contrast with white panels and use a tighter
+     radius than their parent panel. */
   .surface-muted {
     /* No border: inside a panel the colour change is the edge, and a second
        hairline around every nested box turned the page into a grid of

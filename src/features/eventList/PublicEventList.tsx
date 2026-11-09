@@ -23,7 +23,7 @@ export function PublicEventList({
       </header>
       <section className="w-full" aria-label={messages.list.eventList}>
         <h2 className="sr-only">{messages.list.eventList}</h2>
-        {events.length === 0 && (
+        {open.length === 0 && (
           <p className="text-brand-dark px-1 text-sm">{messages.list.empty}</p>
         )}
         <EventGrid events={open} isAdmin={isAdmin} />

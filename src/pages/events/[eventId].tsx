@@ -410,14 +410,7 @@ function Registration({
                 </div>
               )}
             </div>
-          ) : isRegistrationClosed ? (
-            <p
-              className="surface-muted text-brand-dark/80 mb-3 px-3 py-2 text-sm"
-              role="status"
-            >
-              {messages.registration.registrationClosedCannotEdit}
-            </p>
-          ) : (
+          ) : isRegistrationClosed ? null : (
             /* Same shape as the header's identity panel: the green check and
              the uppercase heading say "this is settled" at a glance, and the
              values below are what you check before pressing the button. */
@@ -469,7 +462,7 @@ function Registration({
             undifferentiated block. The label carries the context and the
             button carries what varies — the quota names when there is a
             choice, the verb when there is only one quota. */}
-          {(!hasExistingSignup || showDemoControls) && !isEditingUserData && (
+          {((!hasExistingSignup && !isRegistrationClosed) || showDemoControls) && !isEditingUserData && (
             <div className="flex flex-col gap-3 pt-2">
               <h3 className="text-[13px] font-bold tracking-[0.06em] text-stone-500 uppercase">
                 {messages.registration.signUp}
