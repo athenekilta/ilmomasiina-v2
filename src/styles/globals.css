@@ -173,13 +173,19 @@
        the detail banner. Two separate quantities, so they can be tuned
        without fighting each other: `lead` is how far above the top line of
        text the band reaches, `fade` is how long the transition itself runs.
-       The band is at full strength for `lead - fade` before the text starts,
-       so the text always sits on an even surface and the soft part happens
-       over the image. The separate strip above is what used to carry the
-       ramp, and splitting it in two is what made it step. */
+       When `lead` is shorter than `fade`, the transition continues behind
+       the title. Keeping the ramp in one layer avoids an overlapping seam. */
     --event-overlay-fade-height: 0px;
     --event-overlay-caption-lead: 44px;
     --event-overlay-caption-fade: 38px;
+  }
+
+  .event-banner--card {
+    /* Keep the fade's starting point low, but build coverage faster behind
+       the title without changing the text position. */
+    --event-overlay-caption-fade: clamp(28px, 8.4cqw, 42px);
+    --event-overlay-caption-lead: calc(clamp(40px, 12cqw, 60px) - 36px);
+    --event-overlay-opacity: 0.88;
   }
 
   .event-banner--detail {
@@ -217,34 +223,19 @@
   .event-banner-caption {
     position: relative;
     /* The caption is anchored to the banner's bottom, so this padding grows
-       the blurred box upward and the text itself stays put. */
+       the background upward and the text itself stays put. */
     padding-top: var(--event-overlay-caption-lead);
   }
 
-  /*
-    The strip of paper the title sits on.
-
-    It used to be a frosted panel: a translucent white veil over a
-    `backdrop-blur`. Blur is the wrong tool here. It has to end somewhere, and
-    wherever it ends it leaves a seam across the picture — on an illustration
-    with hard edges that seam reads as a smudge someone left behind, which is
-    the first thing the eye finds on the page.
-
-    So the band is opaque, in the guild's own paper colour, and it melts into
-    the image instead of ending. The ramp is sampled from 3t² − 2t³ rather
-    than drawn straight: a linear ramp has a corner at each end, and a corner
-    in a gradient is visible as a line even when the colours either side of it
-    are not. Eleven stops is enough that nothing bands.
-
-    What this buys, beyond losing the smudge: the title is always on a flat,
-    known colour, so its contrast no longer depends on what happens to be in
-    the photograph behind it.
-  */
+  /* The paper overlay uses a masked ramp without backdrop blur, which
+     can leave a visible seam across the image. Cards retain some photo detail
+     beneath the text; detail banners keep their opaque text surface. */
   .event-banner-paper {
     position: absolute;
     inset: 0;
     z-index: 0;
     background: var(--event-overlay-color);
+    opacity: var(--event-overlay-opacity, 1);
     --event-overlay-ramp: linear-gradient(
       to bottom,
       rgb(0 0 0 / 0) 0,
@@ -261,6 +252,26 @@
     );
     -webkit-mask-image: var(--event-overlay-ramp);
     mask-image: var(--event-overlay-ramp);
+  }
+
+  .event-banner--card .event-banner-paper {
+    /* Ease in gently at the same starting point, then build contrast behind
+       the title. Extra early stops soften the edge without extending the fade. */
+    --event-overlay-ramp: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0) 0,
+      rgb(0 0 0 / 0.023) calc(var(--event-overlay-caption-fade) * 0.05),
+      rgb(0 0 0 / 0.081) calc(var(--event-overlay-caption-fade) * 0.1),
+      rgb(0 0 0 / 0.263) calc(var(--event-overlay-caption-fade) * 0.2),
+      rgb(0 0 0 / 0.472) calc(var(--event-overlay-caption-fade) * 0.3),
+      rgb(0 0 0 / 0.663) calc(var(--event-overlay-caption-fade) * 0.4),
+      rgb(0 0 0 / 0.813) calc(var(--event-overlay-caption-fade) * 0.5),
+      rgb(0 0 0 / 0.913) calc(var(--event-overlay-caption-fade) * 0.6),
+      rgb(0 0 0 / 0.969) calc(var(--event-overlay-caption-fade) * 0.7),
+      rgb(0 0 0 / 0.993) calc(var(--event-overlay-caption-fade) * 0.8),
+      rgb(0 0 0 / 0.999) calc(var(--event-overlay-caption-fade) * 0.9),
+      rgb(0 0 0 / 1) var(--event-overlay-caption-fade)
+    );
   }
 
   .event-banner-caption > *:not(.event-banner-paper) {

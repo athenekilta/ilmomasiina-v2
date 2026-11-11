@@ -78,7 +78,7 @@ export function EventCard({
         {/* The shared sand fade keeps text legible on uploaded photos as
             well as illustrations, and blends into the missing-image fill. */}
         <div
-          className={`event-banner relative w-full overflow-hidden ${BANNER_ASPECT} ${
+          className={`event-banner event-banner--card relative w-full overflow-hidden ${BANNER_ASPECT} ${
             isClosed ? "event-banner--muted bg-stone-200" : "bg-brand-sand"
           }`}
         >
