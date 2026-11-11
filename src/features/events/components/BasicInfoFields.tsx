@@ -56,7 +56,9 @@ export function BasicInfoFields({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Each language needs separate DOM refs and markdown editor state. */}
       <section
+        key={activeLanguage}
         aria-labelledby={`translated-content-${activeLanguage}`}
         className="surface-muted space-y-6 p-4"
       >

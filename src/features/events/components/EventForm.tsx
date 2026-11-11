@@ -46,6 +46,12 @@ export function EventForm({ editId }: EventFormProps) {
   const locale = useLocale();
   const messages = useTranslations(eventAdminMessages);
   const [activeLanguage, setActiveLanguage] = useState<Locale>(locale);
+  const [previousLocale, setPreviousLocale] = useState(locale);
+  if (locale !== previousLocale) {
+    // Follow UI language changes before rendering fields, without resetting the draft.
+    setPreviousLocale(locale);
+    setActiveLanguage(locale);
+  }
   const creationRequestId = useRef<string | null>(null);
   const submitting = useRef(false);
   const utils = api.useUtils();
