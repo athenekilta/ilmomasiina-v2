@@ -775,7 +775,7 @@ export default function EventPage() {
                 : "surface-panel"
             }`}
           >
-            {/* Shared with the cards, with a longer fade for wider banners. */}
+            {/* Match the cards: paper follows the title, leaving the photo clear. */}
             <div className="event-banner event-banner--detail bg-brand-sand relative aspect-[5/2] w-full overflow-hidden">
               {event && (
                 <EventBannerImage
@@ -795,7 +795,6 @@ export default function EventPage() {
 
               {event && (
                 <div className="absolute inset-x-0 bottom-0">
-                  <div className="event-banner-fade" aria-hidden />
                   <div className="event-banner-caption flex flex-wrap items-center gap-3 px-4 pb-3 sm:px-5 lg:px-6">
                     <div className="event-banner-paper" aria-hidden />
                     <h1 className="display-title text-brand-dark text-3xl sm:text-4xl">

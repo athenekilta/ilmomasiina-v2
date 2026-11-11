@@ -180,7 +180,8 @@
     --event-overlay-caption-fade: 38px;
   }
 
-  .event-banner--card {
+  .event-banner--card,
+  .event-banner--detail {
     /* Keep the fade's starting point low, but build coverage faster behind
        the title without changing the text position. */
     --event-overlay-caption-fade: clamp(28px, 8.4cqw, 42px);
@@ -188,11 +189,6 @@
     --event-overlay-opacity: 0.88;
   }
 
-  .event-banner--detail {
-    /* The detail title is larger, so the band has to reach that bit higher. */
-    --event-overlay-caption-lead: 54px;
-    --event-overlay-caption-fade: 46px;
-  }
 
   .event-banner--muted {
     --event-overlay-color: theme("colors.stone.200");
@@ -228,8 +224,8 @@
   }
 
   /* The paper overlay uses a masked ramp without backdrop blur, which
-     can leave a visible seam across the image. Cards retain some photo detail
-     beneath the text; detail banners keep their opaque text surface. */
+     can leave a visible seam across the image. Both cards and detail banners
+     retain some photo detail beneath the text. */
   .event-banner-paper {
     position: absolute;
     inset: 0;
@@ -254,7 +250,8 @@
     mask-image: var(--event-overlay-ramp);
   }
 
-  .event-banner--card .event-banner-paper {
+  .event-banner--card .event-banner-paper,
+  .event-banner--detail .event-banner-paper {
     /* Ease in gently at the same starting point, then build contrast behind
        the title. Extra early stops soften the edge without extending the fade. */
     --event-overlay-ramp: linear-gradient(

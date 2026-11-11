@@ -27,8 +27,17 @@ export function localizedValue<T extends Translation>(
   locale: Locale,
   select: (translation: T) => string | null | undefined,
 ): string {
-  const translation = localizedTranslation(translations, locale);
-  return translation ? (select(translation) ?? "") : "";
+  const candidates = [
+    localizedTranslation(translations, locale),
+    translations.find((translation) => translation.locale === fallbackLocale),
+  ];
+  for (const translation of candidates) {
+    if (!translation) continue;
+    const value = select(translation);
+    // Check presence without trimming meaningful whitespace from Markdown content.
+    if (value?.trim()) return value;
+  }
+  return "";
 }
 
 export function translationRecord<T extends Translation>(

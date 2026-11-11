@@ -14,7 +14,6 @@ import { QUEUE_QUOTA_ID } from "@/features/events/utils/queueQuota";
 import { SignupStatus, type Prisma } from "@/generated/prisma/client";
 import { localeSchema, type Locale } from "@/i18n/config";
 import {
-  localizedTranslation,
   localizedValue,
   translationRecord,
 } from "../features/localization/content";
@@ -319,13 +318,16 @@ function localizeEvent<
   },
 >(event: T, locale: Locale) {
   const { translations, ...data } = event;
-  const selected = localizedTranslation(translations, locale);
   return {
     ...data,
-    title: selected?.title ?? "",
-    badgeText: selected?.badgeText ?? null,
-    description: selected?.description ?? null,
-    verificationEmail: selected?.verificationEmail ?? null,
+    title: localizedValue(translations, locale, (row) => row.title),
+    badgeText:
+      localizedValue(translations, locale, (row) => row.badgeText) || null,
+    description:
+      localizedValue(translations, locale, (row) => row.description) || null,
+    verificationEmail:
+      localizedValue(translations, locale, (row) => row.verificationEmail) ||
+      null,
   };
 }
 
