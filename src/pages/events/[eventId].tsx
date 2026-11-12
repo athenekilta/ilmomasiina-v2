@@ -416,7 +416,7 @@ function Registration({
              values below are what you check before pressing the button. */
             <div className="surface-muted -mx-[5px] flex flex-col gap-2 p-3.5 sm:mx-0">
               <span className="label-caps text-brand-secondary">
-                {messages.registration.title}
+                {messages.registration.detailsTitle}
               </span>
               {/* The badge sits beside the values it vouches for, not beside
                 the heading — and that leaves the row's right end free for the

@@ -90,6 +90,7 @@ export const publicEventsMessages = defineMessages({
     },
     registration: {
       title: "Ilmo",
+      detailsTitle: "Ilmotiedot",
       periodEnded: "Ilmo on päättynyt.",
       openUntil: (dateTime: string) => `Auki ${dateTime} asti`,
       opensAt: (dateTime: string) => `Ilmo aukeaa ${dateTime}`,
@@ -316,6 +317,7 @@ export const publicEventsMessages = defineMessages({
     },
     registration: {
       title: "Registration",
+      detailsTitle: "Registration details",
       periodEnded: "Registration has ended.",
       openUntil: (dateTime: string) => `Open until ${dateTime}`,
       opensAt: (dateTime: string) => `Registration opens ${dateTime}`,
